@@ -4,7 +4,7 @@
 
 "use strict";
 
-const tmi = require("twitch-js");
+const tmi = require("tmi.js");
 const auth = require('../../settings/auth');
 const serverSettings = require('../../settings/server-settings');
 const tmiCommands = require('../tmi-commands');
