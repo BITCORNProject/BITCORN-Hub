@@ -1,0 +1,8 @@
+/node_modules
+/bower_components
+/logs
+/settings/*.json
+/settings/commands
+*.env
+auth.json
+access.json

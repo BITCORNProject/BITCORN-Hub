@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-extensions --disable-plugins --app=http://localhost:3000/control-panel
