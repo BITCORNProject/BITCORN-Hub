@@ -46,7 +46,7 @@ async function tickBitCornSub(limit = 100) {
         total: 0
     };
     
-    const update_reset_result = await mysql.query(`UPDATE users SET subtier = ''`);
+    const update_reset_result = await mysql.query(`UPDATE users SET subtier = '0000'`);
 
     let currentIndex = 0;
     let maxIndex = 1;
