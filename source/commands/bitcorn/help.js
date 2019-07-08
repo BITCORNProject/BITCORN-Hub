@@ -19,7 +19,7 @@ module.exports = Object.create({
     },
     async execute(event) {
 
-        tmi.botWhisper(event.user.username, `@${event.user.username} To see all available commands, please visit https://bitcorntimes.com/help/`);
+        tmi.botSay(event.target, `@${event.user.username} - cttvCorn To see all available BITCORN commands, please visit https://bitcorntimes.com/help cttvCorn`);
     
         return { success: true, event };
     }
