@@ -66,7 +66,10 @@ module.exports = Object.create({
             return { success: false, event, reply };
         }
 
-        const rain_amount_per_user = rain_amount / math.fixed(rain_user_count, 8);
+        const per_user = rain_amount / rain_user_count;
+
+
+        const rain_amount_per_user = per_user % 1 > 0 ? math.fixed(per_user, 8) : per_user;
 
         if(rain_amount_per_user > wallet_max_transaction_amount) {
             const reply = `@${event.user.username}, rain is limited to a maximum ${wallet_max_transaction_amount} CORN per user!`;
