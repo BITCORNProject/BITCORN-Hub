@@ -32,7 +32,9 @@ module.exports = Object.create({
             const { json } = await wallet.makeRequest('getnewaddress', [event.user.username]);
             info.cornaddy = json.result || '';
             info.balance = math.fixed8(0.0);
-            await mysql.query(`INSERT INTO users (id,discordid,twitch_username,cornaddy,balance,token,level,avatar,subtier,twitchid,twitterid,instagramid) VALUES (NULL,'NA','${event.user.username}','${info.cornaddy}','${info.balance}','NA','1000','NA','','','','')`);
+            
+            const twitchid = event.user['user-id'];
+            await mysql.query(`INSERT INTO users (id,discordid,twitch_username,cornaddy,balance,token,level,avatar,subtier,twitchid,twitterid,instagramid) VALUES (NULL,'NA','${event.user.username}','${info.cornaddy}','${info.balance}','NA','1000','NA','','${twitchid}','','')`);
         }
         
         tmi.botWhisper(event.user.username, `Your BITCORN Balance is ${info.balance} CORN`);
