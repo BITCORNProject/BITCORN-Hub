@@ -61,17 +61,21 @@ async function tickBitCornSub(limit = 100) {
             const subscription = subChunk.result.subscriptions[i];
 
             const index = viewers.indexOf(subscription.user.name);
-            if (index === -1) continue;
-            viewers.splice(index, 1);
+            let inChat = false;
+            if (index !== -1) {
+                viewers.splice(index, 1);
+                inChat = true;
+            }
             const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${subscription.user.name}'`);
             if (to_result.length === 0) continue;
             const amount = +sub_plans_bitcorn[subscription.sub_plan];
             const tier = tiers[subscription.sub_plan];
             const to_final_balance = math.fixed8(+(to_result[0].balance)) + amount;
-            const update_from_result = await mysql.query(`UPDATE users SET balance = '${to_final_balance}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
             const update_subtier_result = await mysql.query(`UPDATE users SET subtier = '${subscription.sub_plan}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
             const update_twitchid_result = await mysql.query(`UPDATE users SET twitchid = '${subscription.user._id}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
-
+            if(inChat === false) continue;
+            
+            const update_from_result = await mysql.query(`UPDATE users SET balance = '${to_final_balance}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
             if (update_from_result.affectedRows === 1) {
                 updated_users_success.push({
                     username: subscription.user.name, 
@@ -112,6 +116,13 @@ async function tickBitCornSub(limit = 100) {
     }
     
     console.log(`${(new Date()).toLocaleTimeString()} Finished ${total} subtier maxIndex=${maxIndex} success=${updated_users_success.length} failed=${updated_users_failed.length} [start=${viewers_count} of end=${viewers.length} total=${viewers_count - viewers.length}]`);
+
+    const url = `https://bitcorn-role-sync.azurewebsites.net/discord`;
+    const discord_endpoint = await fetch(url, {
+        method: 'GET'
+    });
+
+    console.log(`Sent Discord Sync ${await discord_endpoint.text()}`);
 }
 
 async function init() {
