@@ -44,7 +44,7 @@ module.exports = Object.create({
         const from_info = {
             cornaddy: from_record.cornaddy,
             balance: math.fixed8(from_record.balance)
-        }
+        };
 
         if(from_info.balance < tip_amount) {
             const reply = `@${event.user.username}, Insufficient Funds, Cannot Tip (Check Balance with: $bitcorn)`;
@@ -108,6 +108,8 @@ module.exports = Object.create({
         }
 
         tmi.botWhisper(event.user.username, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${from_info.cornaddy} :: ${tousername}'s Address: ${to_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcorntimes.com/tx/${txid}`);
+        
+        tmi.botWhisper(tousername, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${to_info.cornaddy} :: ${tousername}'s Address: ${from_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcorntimes.com/tx/${txid}`);
         
         await mysql.logit('Tip Executed', `Executed by ${event.user.username}`);
 
