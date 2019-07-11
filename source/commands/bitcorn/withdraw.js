@@ -27,8 +27,8 @@ module.exports = Object.create({
         // Do not .toLowerCase() the address is case sensitive
         const to_cornaddy = (event.args[1] ? event.args[1].replace('@', '').replace('<','').replace('>','') : '');
         
-        if(withdraw_amount < 0) {
-            const reply = `@${event.user.username}, Cannot Withdraw Negative Amount`;
+        if(withdraw_amount <= 0) {
+            const reply = `@${event.user.username}, Cannot Withdraw Negative or Zero Amount`;
             tmi.botWhisper(event.target, reply);
             return { success: false, event, reply };
         }
