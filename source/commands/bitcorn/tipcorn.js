@@ -107,9 +107,9 @@ module.exports = Object.create({
             return {success: false, event, reply};
         }
 
-        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${from_info.cornaddy} :: ${tousername}'s Address: ${to_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcorntimes.com/tx/${txid}`);
+        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${from_info.cornaddy} :: ${tousername}'s Address: ${to_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcornproject.com/tx/${txid}`);
         
-        tmi.botWhisper(tousername, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${to_info.cornaddy} :: ${tousername}'s Address: ${from_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcorntimes.com/tx/${txid}`);
+        tmi.botWhisper(tousername, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${to_info.cornaddy} :: ${tousername}'s Address: ${from_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcornproject.com/tx/${txid}`);
         
         await mysql.logit('Tip Executed', `Executed by ${event.user.username}`);
 

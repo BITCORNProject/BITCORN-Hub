@@ -87,7 +87,7 @@ module.exports = Object.create({
             return {success: false, event, reply};
         }
 
-        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your withdraw receipt: [BITCORN TRANSACTION] :: Your Address: ${from_info.cornaddy} :: ${fromusername}'s Address: ${to_info.cornaddy} :: Amount Transacted: ${math.fixed8(withdraw_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcorntimes.com/tx/${txid}`);    
+        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your withdraw receipt: [BITCORN TRANSACTION] :: Your Address: ${from_info.cornaddy} :: ${fromusername}'s Address: ${to_info.cornaddy} :: Amount Transacted: ${math.fixed8(withdraw_amount)} CORN :: Transaction ID: ${txid} :: Explorer: https://explorer.bitcornproject.com/tx/${txid}`);    
 
         await mysql.logit('Withdraw Executed', `Executed by ${event.user.username}`);
 
