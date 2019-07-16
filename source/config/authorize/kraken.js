@@ -82,11 +82,11 @@ async function authenticateCode(code) {
     authenticated.expires_in = json.expires_in;
 
     const { result } = await getChannel();
-    channel._id = result._id;
+    channel._id = result ? result._id : '';
 
-    const subs = await getChannelSubscribers();
+    //const subs = await getChannelSubscribers();
 
-    console.log(subs);
+    //console.log(subs);
 
     await keepAlive();
 };
