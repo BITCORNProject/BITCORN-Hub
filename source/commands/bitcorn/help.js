@@ -7,6 +7,10 @@
 const tmi = require('../../config/tmi');
 const tmiCommands = require('../../tmi-commands');
 
+const Pending = require('../../utils/pending');
+
+const pending = new Pending('help');
+
 module.exports = Object.create({
     configs: {
         name: 'help',
@@ -19,8 +23,10 @@ module.exports = Object.create({
     },
     async execute(event) {
 
+        if(pending.started(event)) return pending.reply(event, tmi);
+
         tmi.botSay(event.target, `@${event.user.username} - cttvCorn To see all available BITCORN commands, please visit https://bitcorntimes.com/help cttvCorn`);
     
-        return { success: true, event };
+        return pending.complete(event);
     }
 });

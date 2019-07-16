@@ -26,11 +26,11 @@ const { Ticker } = require('../public/js/server/ticker');
             },
             users: {}
         }
-        //const { json } = await wallet.makeRequest('listaccounts');
+        const { json } = await wallet.makeRequest('listaccounts');
 
-        const json = {
+        /*const json = {
             result: {'clayman666': 0.0}
-        };
+        };*/
 
         console.log(json);
 

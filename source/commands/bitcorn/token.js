@@ -8,6 +8,10 @@ const tmi = require('../../config/tmi');
 const mysql = require('../../config/databases/mysql');
 const crypto = require('crypto');
 
+const Pending = require('../../utils/pending');
+
+const pending = new Pending('token');
+
 module.exports = Object.create({
     configs: {
         name: 'token',
@@ -20,6 +24,8 @@ module.exports = Object.create({
     },
     async execute(event) {
 
+        if(pending.started(event)) return pending.reply(event, tmi);
+
         const buffer = crypto.randomBytes(16);
         const token = buffer.toString('hex');
 
@@ -30,6 +36,7 @@ module.exports = Object.create({
         } else {
             tmi.botSay(event.target, `@${event.user.username} You need to register with the $reg command to request a token`);
         }
-        return { success: true, event };
+
+        return pending.complete(event);
     }
 });

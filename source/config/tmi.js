@@ -103,6 +103,19 @@ async function onMessage(type, target, user, msg, self) {
             }
             if (command.execute) {
 
+                //botSay(target, `@${user.username}, $${command.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
+                //return { success: false };
+                const fs = require('fs');
+                const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
+
+                if(allowed_testers.indexOf(user.username) === -1) {
+                    if(allowed_testers.length > 0) {
+                        const reply = `@${user.username}, system is currently under construction cttvDump System will return soon! cttvDump`;
+                        botSay(target, reply);
+                        return { success: false, message: reply };
+                    }
+                } 
+
                 if(command.configs.whisper && type !== 'whisper')  return { success: false, message: `type=${type}` };
                 if(!command.configs.whisper && type === 'whisper')  return { success: false, message: `type=${type}` };
 
@@ -116,7 +129,7 @@ async function onMessage(type, target, user, msg, self) {
                         user,
                         configs: command.configs
                     }));
-                    timer.stop(`Command Execution: ${result.event.configs.name} `);
+                    timer.stop(`Command Execution: ${result.event.user.username} ${result.event.configs.name} ${result.event.msg} `);
                     console.log(result);
                     if (result.success === false) {
                         console.log(`Command ${result.event.configs.prefix}${result.event.configs.name} execution failed - message: ${result.message}`, result);
@@ -139,6 +152,7 @@ async function onMessage(type, target, user, msg, self) {
     } catch (error) {
         const result = { success: false, message: `Command ${msg.trim()} is not for this bot for user ${user.username}` };
         const logged = await mysql.logit('Auto.Twitch', `Error: ${error}`);
+        console.log(result);
         console.log(logged);
         console.error(error);
         return result;

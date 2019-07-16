@@ -4,9 +4,13 @@
 
 "use strict";
 
+const fetch = require('node-fetch');
 const mysql = require('./config/databases/mysql');
 const math = require('../source/utils/math');
 const wallet = require('./config/wallet');
+
+const minNotifyAmount = math.fixed8(100000);
+const notifyUrl = 'https://bitcorn-role-sync.azurewebsites.net/tx';
 
 async function init() {
 
@@ -53,10 +57,16 @@ async function init() {
                         continue;
                     }
 
-                    const txtracking_result = await mysql.query(`INSERT INTO txtracking (id,account,amount,txid,address,confirmations,category,timereceived,comment) VALUES (NULL,'${account}','${math.fixed8(amount)}','${txid}','${cornaddy}','${confirmations}','${category}','${timereceived}',${mysql.escape(comment)})`);
-                    if (txtracking_result.affectedRows === 0) {
-                        console.log(`Insert tx failed (NULL,'${account}','${math.fixed8(amount)}','${txid}','${cornaddy}','${confirmations}','${category}','${timereceived}','${comment}')`);
-                    }
+                    exports.monitorInsert({
+                        account: account,
+                        amount: math.fixed8(amount),
+                        txid: txid,
+                        cornaddy: cornaddy,
+                        confirmations: confirmations,
+                        category: category,
+                        timereceived: timereceived,
+                        comment: comment
+                    });
 
                     const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${account}'`);
                     if (to_result.length === 0) {
@@ -99,6 +109,39 @@ async function init() {
     setTimeout(() => transactionsCheck(1000, 0), timeValues.SECOND * 60);
 
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
+}
+
+async function insertTX(txdata) {
+    const fields = `(id,account,amount,txid,address,confirmations,category,timereceived,comment)`;
+    const values = `(NULL,
+        '${txdata.account}',
+        '${txdata.amount}',
+        '${txdata.txid}',
+        '${txdata.cornaddy}',
+        '${txdata.confirmations}',
+        '${txdata.category}',
+        '${txdata.timereceived}',
+        ${mysql.escape(txdata.comment)})`;
+    const txtracking_result = await mysql.query(`INSERT INTO txtracking ${fields} VALUES ${values}`);
+    if (txtracking_result.affectedRows === 0) {
+        await mysql.logit("TX-TRACKING-ERROR", `Error: Insert tx failed ${JSON.stringify(txdata)}`);
+        throw(new Error(`Insert tx failed ${values}`));
+    }
+}
+
+async function monitor(txdata){
+    if(txdata.amount >= minNotifyAmount) {
+        const result = await fetch(notifyUrl, { 
+            method: 'POST', 
+            body:  new URLSearchParams(txdata)
+        });
+        console.log(`Sent notify amount ${await result.text()}`);
+    }
+}
+
+exports.monitorInsert = (txdata) => {
+    insertTX(txdata);
+    monitor(txdata);
 }
 
 exports.init = init;

@@ -99,8 +99,11 @@ async function tickBitCornSub(limit = 100) {
             const subscription = subChunk.result.subscriptions[i];
 
             const index = viewers.indexOf(subscription.user.name);
-            if (index === -1) continue;
-            viewers.splice(index, 1);
+            let inChat = false;
+            if (index !== -1) {
+                viewers.splice(index, 1);
+                inChat = true;
+            }
             const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${subscription.user.name}'`);
             if (to_result.length === 0) continue;
             const amount = +sub_plans_bitcorn[subscription.sub_plan];

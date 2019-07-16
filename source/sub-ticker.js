@@ -4,12 +4,15 @@
 
 "use strict";
 
+const fs = require('fs');
+
 const fetch = require('node-fetch');
 const mysql = require('./config/databases/mysql');
 const kraken = require('./config/authorize/kraken');
 const math = require('../source/utils/math');
 const auth = require('../settings/auth');
 const wallet = require('./config/wallet');
+const txMonitor = require('./tx-monitor');
 
 const { Timer } = require('../public/js/server/timer');
 const { Ticker } = require('../public/js/server/ticker');
@@ -26,103 +29,181 @@ const sub_plans_bitcorn = {
     '3000': math.fixed8(1.00 * MINUTE_AWARD_MULTIPLIER)
 };
 
-const tiers = {
-    '1000': '1',
-    '2000': '2',
-    '3000': '3'
-};
-
 async function tickBitCornSub(limit = 100) {
 
-    const timer = new Timer();
-
-    timer.start();
-    const viewers_count = viewers.length;
-    //console.log(`Sub tier ticker for ${viewers_count} viewers`);
+    const timers = {
+        tval: 0,
+        total: new Timer()
+    };
+    timers.total.start();
 
     const walletSend = {
         batch: {},
+        subscribers: [],
         count: 0,
         total: 0
     };
-    
-    const update_reset_result = await mysql.query(`UPDATE users SET subtier = '0000'`);
+
+    // ----------------------------
+    timers.get_all_subs = new Timer();
+    timers.get_all_subs.start();
 
     let currentIndex = 0;
     let maxIndex = 1;
     let total = 0;
-    const updated_users_success = [];
-    const updated_users_failed = [];
+    let subscriptions = [];
     while (currentIndex < maxIndex) {
         const offset = limit * currentIndex;
         const subChunk = await kraken.getLimitedSubscribers(limit, offset);
         if (subChunk.success === false) break;
-        for (let i = 0; i < subChunk.result.subscriptions.length; i++) {
-            const subscription = subChunk.result.subscriptions[i];
-
-            const index = viewers.indexOf(subscription.user.name);
-            let inChat = false;
-            if (index !== -1) {
-                viewers.splice(index, 1);
-                inChat = true;
-            }
-            const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${subscription.user.name}'`);
-            if (to_result.length === 0) continue;
-            const amount = +sub_plans_bitcorn[subscription.sub_plan];
-            const tier = tiers[subscription.sub_plan];
-            const to_final_balance = math.fixed8(+(to_result[0].balance)) + amount;
-            const update_subtier_result = await mysql.query(`UPDATE users SET subtier = '${subscription.sub_plan}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
-            const update_twitchid_result = await mysql.query(`UPDATE users SET twitchid = '${subscription.user._id}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
-            if(inChat === false) continue;
-            
-            const update_from_result = await mysql.query(`UPDATE users SET balance = '${to_final_balance}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
-            if (update_from_result.affectedRows === 1) {
-                updated_users_success.push({
-                    username: subscription.user.name, 
-                    amount: amount,
-                    tier: tier
-                });
-                
-                walletSend.batch[to_result[0].cornaddy] = math.fixed8(amount);
-                walletSend.total += math.fixed8(amount);
-                walletSend.count++;
-            } else {
-                updated_users_failed.push(`${subscription.user.name} ${subscription.sub_plan} ${to_final_balance}`);
-            }
-
-            //await new Promise(resolve => setTimeout(resolve, 100));
-        }
+        subscriptions = subscriptions.concat(subChunk.result.subscriptions);
 
         currentIndex++;
         total = subChunk.result._total;
         maxIndex = Math.ceil(subChunk.result._total / limit);
     }
 
-    timer.stop(`Sub tier ticker complete ${walletSend.total} CORN for ${walletSend.count} time: `);
+    if (subscriptions.length === 0) {
+        return;
+    }
 
-    const { json } = await wallet.makeRequest('sendmany', [
+    timers.tval = timers.get_all_subs.stop();
+    console.log(`Get all subscriptions from Twitch API ${total} count - Process Time: ${timers.tval}`);
+
+    // ----------------------------
+
+    timers.update_subtier = new Timer();
+    timers.update_subtier.start();
+
+    const select_subtier_promises = [];
+    const update_reset_result = await mysql.query(`UPDATE users SET subtier = '0000' WHERE subtier <> '0000'`);
+    timers.tval = timers.update_subtier.stop();
+    console.log(`Reset db subtier ${update_reset_result.affectedRows} count - Process Time: ${timers.tval}`);
+
+    // ----------------------------
+
+    timers.set_sub_tiers = new Timer();
+    timers.set_sub_tiers.start();
+    const fileNoDbEntry = 'entry-errors\\subs-not-in-database.txt';
+    const fileManyDbEntry = 'entry-errors\\subs-many-database-entries.txt';
+    fs.writeFileSync(fileNoDbEntry, '');
+    fs.writeFileSync(fileManyDbEntry, '');
+
+    for (let i = 0; i < subscriptions.length; i++) {
+        const subscription = subscriptions[i];
+        select_subtier_promises.push(new Promise(async (resolve) => {
+
+            const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${subscription.user.name}'`);
+            if (to_result.length === 0) {
+                fs.appendFileSync(fileNoDbEntry, `${subscription.user.name}:${subscription.sub_plan}\r`);               
+                resolve();
+                return;
+            }
+            if (to_result.length > 1) {
+                //console.error(`user ${subscription.user.name} has ${to_result.length} rows in the database`);
+                fs.appendFileSync(fileManyDbEntry, `${subscription.user.name}:${subscription.sub_plan}:${to_result.length}\r`);
+            }
+            const update_result = await mysql.query(`UPDATE users SET subtier = '${subscription.sub_plan}' WHERE twitch_username LIKE '${subscription.user.name}'`);
+            resolve(update_result);
+        }));
+    }
+    //console.log(`SELECT/UPDATE * FROM users DONE promises ${select_subtier_promises.length}`);
+    const select_subtier_results = await Promise.all(select_subtier_promises);
+    //console.log("select_subtier_results", select_subtier_results);
+
+    timers.tval = timers.set_sub_tiers.stop();
+    console.log(`Updated sub tiers ${select_subtier_results.length} in the db - Process Time: ${timers.tval}`);
+
+    // ----------------------------
+
+    timers.get_chat_subs = new Timer();
+    timers.get_chat_subs.start();
+
+    const from_result = await mysql.query(`SELECT * FROM users WHERE subtier <> '0000'`);
+    //console.log("from_result subtier <> '0000'", from_result);
+    for (let i = 0; i < viewers.length; i++) {
+        
+        const lookupsub = subscriptions.filter(x => x.user.name === viewers[i]);
+        if (lookupsub.length === 0) continue;
+        
+        const subscription = lookupsub[0];
+        const to_result = from_result.filter(x => x.twitch_username === subscription.user.name);
+        if (to_result.length === 0) continue;
+        
+        const amount = +sub_plans_bitcorn[subscription.sub_plan];
+        walletSend.batch[to_result[0].cornaddy] = math.fixed8(amount);
+        walletSend.subscribers.push({subscription, amount, cornaddy: to_result[0].cornaddy});
+        walletSend.total += math.fixed8(amount);
+        walletSend.count++;
+    }
+
+    timers.tval = timers.get_chat_subs.stop();
+    console.log(`Wallet batch prepared ${walletSend.total} CORN for ${walletSend.count} subs - Process Time: ${timers.tval}`);
+    
+    // ----------------------------
+
+    timers.send_batch_payout = new Timer();
+    timers.send_batch_payout.start();
+
+    const sendmany = await wallet.makeRequest('sendmany', [
         "bitcornhub",
         walletSend.batch,
         0,
         `CTTV paid ${walletSend.total} CORN for ${walletSend.count} idling subscribers.`
     ]);
 
-    if (json.result) {
-        const txid = json.result;
-        const txtracking_result = await mysql.query(`INSERT INTO txtracking (id,account,amount,txid,address,confirmations,category,timereceived,comment) VALUES (NULL,'CTTV','${math.fixed8(walletSend.total)}','${txid}','','0','receive','${mysql.timestamp()}','Subscription Award')`);
-        if(txtracking_result.affectedRows === 0) {
-            console.error(`CTTV payout award failed to record tracking awards for: ${walletSend.total} CORN for ${walletSend.count} idling subscribers ${txid}`);
+    if (sendmany.json.result) {
+
+        for (let i = 0; i < walletSend.subscribers.length; i++) {
+            const {subscription, amount, cornaddy} = walletSend.subscribers[i];
+            
+            txMonitor.monitorInsert({
+                account: subscription.user.name,
+                amount: math.fixed8(amount),
+                txid: sendmany.json.result,
+                cornaddy: cornaddy,
+                confirmations: '0',
+                category: 'receive',
+                timereceived: mysql.timestamp(),
+                comment: `Subscription Award to ${subscription.user.name} for idle`
+            });
         }
+
+        const getaccountaddress = await wallet.makeRequest('getaccountaddress', ['bitcornhub']);
+
+        txMonitor.monitorInsert({
+            account: 'bitcornhub',
+            amount: math.fixed8(walletSend.total),
+            txid: sendmany.json.result,
+            cornaddy: getaccountaddress.json.result,
+            confirmations: '0',
+            category: 'send',
+            timereceived: mysql.timestamp(),
+            comment: `Subscription Award for ${walletSend.count} idle subscribers`
+        });
     }
-    
-    console.log(`${(new Date()).toLocaleTimeString()} Finished ${total} subtier maxIndex=${maxIndex} success=${updated_users_success.length} failed=${updated_users_failed.length} [start=${viewers_count} of end=${viewers.length} total=${viewers_count - viewers.length}]`);
+
+    timers.tval = timers.send_batch_payout.stop();
+
+    console.log(`Finished subtier ticker - Process Time: ${timers.tval}`);
+
+    // ----------------------------
+
+    timers.discord_sync_send = new Timer();
+    timers.discord_sync_send.start();
 
     const url = `https://bitcorn-role-sync.azurewebsites.net/discord`;
     const discord_endpoint = await fetch(url, {
         method: 'GET'
     });
 
-    console.log(`Sent Discord Sync ${await discord_endpoint.text()}`);
+    timers.tval = timers.discord_sync_send.stop();
+
+    console.log(`Sent Discord Sync ${await discord_endpoint.text()} - Process Time: ${timers.tval}`);
+
+    // ----------------------------
+    timers.tval = timers.total.stop();
+    console.log(`${(new Date()).toLocaleTimeString()} Sub ticker completed - Process ${Object.keys(timers).length - 2} Time: ${timers.tval}`);
 }
 
 async function init() {
@@ -150,7 +231,6 @@ async function init() {
 
         const limit = 100;
         await tickBitCornSub(limit);
-
     });
     tierticker.start();
 

@@ -6,12 +6,17 @@
 
 const tmi = require('../../config/tmi');
 const mysql = require('../../config/databases/mysql');
+const txMonitor = require('../../tx-monitor');
 const math = require('../../utils/math');
 const wallet = require('../../config/wallet');
 
 const max_rain_users_amount = 3;
 const activitytracking_query_limit = 1000;
 const wallet_max_transaction_amount = 1000.00;
+
+const Pending = require('../../utils/pending');
+
+const pending = new Pending('rain');
 
 module.exports = Object.create({
     configs: {
@@ -25,6 +30,8 @@ module.exports = Object.create({
     },
     async execute(event) {
 
+        if(pending.started(event, tmi)) return pending.reply(event, tmi);
+
         const fromusername = event.user.username;
         const rain_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);
         const rain_user_count = +(event.args[1] ? event.args[1] : 0);
@@ -32,13 +39,13 @@ module.exports = Object.create({
         if (rain_amount < 0) {
             const reply = `@${event.user.username}, Cannot Rain Negative Amount`;
             tmi.botSay(event.target, reply);
-            return { success: false, event, reply };
+            return pending.complete(event, reply);
         }
 
         if (rain_user_count <= 0 || rain_user_count > max_rain_users_amount) {
             const reply = `@${event.user.username}, Number of people you can rain to is 1 to ${max_rain_users_amount}`;
             tmi.botSay(event.target, reply);
-            return { success: false, event, reply };
+            return pending.complete(event, reply);
         }
 
         const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${fromusername}'`);
@@ -48,13 +55,15 @@ module.exports = Object.create({
 
             await mysql.logit('Rain.Execute', `${event.user.username} is not Registered, No Bal, Cannot Rain`);
 
-            return { success: false, event, reply };
+            return pending.complete(event, reply);
         }
 
+        const getbalance = await wallet.makeRequest('getbalance', [event.user.username]);
+        
         const from_record = from_result[0];
         const from_info = {
             cornaddy: from_record.cornaddy,
-            balance: math.fixed8(from_record.balance)
+            balance: math.fixed8(getbalance.json.result)
         }
 
         if (from_info.balance < rain_amount) {
@@ -63,7 +72,7 @@ module.exports = Object.create({
 
             await mysql.logit('Rain.Execute', `${event.user.username} Tried Raining but does not have enough funds! (${from_info.balance} CORN)`);
 
-            return { success: false, event, reply };
+            return pending.complete(event, reply);
         }
 
         const per_user = rain_amount / rain_user_count;
@@ -75,7 +84,7 @@ module.exports = Object.create({
             const reply = `@${event.user.username}, rain is limited to a maximum ${wallet_max_transaction_amount} CORN per user!`;
             tmi.botSay(event.target, reply);
 
-            return {success: false, event, reply };
+            return pending.complete(event, reply);
         }
 
         const ommit_usernames = [
@@ -112,10 +121,6 @@ module.exports = Object.create({
                 }
 
                 const to_record = to_result[0];
-                const to_info = {
-                    cornaddy: to_record.cornaddy,
-                    balance: math.fixed8(+to_record.balance)
-                }
 
                 walletSend.batch[to_record.cornaddy] = {
                     amount: math.fixed8(rain_amount_per_user),
@@ -123,14 +128,6 @@ module.exports = Object.create({
                 };
                 walletSend.total += math.fixed8(rain_amount_per_user);
                 walletSend.count++;
-
-                to_info.balance += math.fixed8(rain_amount_per_user);
-                const update_to_result = await mysql.query(`UPDATE users SET balance = '${to_info.balance}' WHERE cornaddy LIKE '${to_info.cornaddy}'`);
-
-                if (update_to_result.affectedRows === 0 && update_to_result.changedRows === 0) {
-                    resolve({ success: false, message: `@${event.user.username}, could not update $rain for @${tousername} balance` });
-                    return;
-                }
 
                 resolve({ success: true, username: tousername });
             }));
@@ -155,16 +152,6 @@ module.exports = Object.create({
 
         if (sent_to.length > 0) {
 
-            const rainedTotal = rain_amount_per_user * sent_to.length;
-            const from_final_balance = math.fixed8(from_info.balance - rainedTotal);
-
-            const update_from_result = await mysql.query(`UPDATE users SET balance = '${from_final_balance}' WHERE cornaddy LIKE '${from_info.cornaddy}'`);
-
-            if (update_from_result.affectedRows === 0 && update_from_result.changedRows === 0) {
-                console.log(`@${fromusername}, could not update $rain balance: ${from_final_balance}`);
-                return;
-            }
-
             for (const cornaddy in walletSend.batch) {
                 const item = walletSend.batch[cornaddy];
                 
@@ -185,12 +172,18 @@ module.exports = Object.create({
                         console.log(`Transaction from ${fromusername} to ${item.username} canceled msg=${event.msg}, can not send wallet error message: ${json.error.message}`);
                     
                         resolve({success: false, json: json});
-                    } else {                     
-                        const txid = json.result;
-                        const txtracking_result = await mysql.query(`INSERT INTO txtracking (id,account,amount,txid,address,confirmations,category,timereceived,comment) VALUES (NULL,'${item.username}','${math.fixed8(item.amount)}','${txid}','${cornaddy}','0','receive','${mysql.timestamp()}','Rain')`);
-                        if (txtracking_result.affectedRows === 0) {
-                            console.error(`@${fromusername}, failed to record tracking $rain for: ${from_final_balance}`);
-                        }
+                    } else {                   
+                        txMonitor.monitorInsert({
+                            account: item.username,
+                            amount: math.fixed8(item.amount),
+                            txid: json.result,
+                            cornaddy: cornaddy,
+                            confirmations: '0',
+                            category: 'receive',
+                            timereceived: mysql.timestamp(),
+                            comment: `${fromusername} rained on ${item.username}`
+                        });
+
                         resolve({success: true, json: json});
                     }
                 });
@@ -210,7 +203,6 @@ module.exports = Object.create({
             tmi.botWhisper(fromusername, `Something went wrong with the rain command`);
         }
 
-
-        return { success: true, event };
+        return pending.complete(event);
     }
 });

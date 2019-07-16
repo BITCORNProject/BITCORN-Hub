@@ -22,7 +22,7 @@ const tickers = {};
         this.endtime = new Date().getTime();
         this.time = (this.endtime - this.starttime) / 1000;
         if(label) {
-            console.log(label + this.time);
+            console.log(`${label} ${this.time}`);
         }
         return this.time;
     }
