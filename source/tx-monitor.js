@@ -52,7 +52,7 @@ async function init() {
                         continue;
                     }
 
-                    const tx_select_result = await mysql.query(`SELECT * FROM txtracking WHERE txid LIKE '${txid}' AND category LIKE 'receive'`);
+                    const tx_select_result = await mysql.query(`SELECT * FROM txtracking WHERE txid = '${txid}' AND category = 'receive'`);
                     if (tx_select_result.length > 0) {
                         continue;
                     }
@@ -68,7 +68,7 @@ async function init() {
                         comment: comment
                     });
 
-                    const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${account}'`);
+                    const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${account}'`);
                     if (to_result.length === 0) {
                         console.log({ success: false, message: `@${account} user is not registered (Register with: $reg)` });
                         continue;
@@ -81,7 +81,7 @@ async function init() {
                     }
 
                     to_info.balance += math.fixed8(amount);
-                    const update_to_result = await mysql.query(`UPDATE users SET balance = '${to_info.balance}' WHERE cornaddy LIKE '${to_info.cornaddy}'`);
+                    const update_to_result = await mysql.query(`UPDATE users SET balance = '${to_info.balance}' WHERE cornaddy = '${to_info.cornaddy}'`);
 
                     if (update_to_result.affectedRows === 0 && update_to_result.changedRows === 0) {
                         console.log({ success: false, message: `@${event.user.username}, could not update $tipcorn for @${tousername} balance` });

@@ -32,7 +32,7 @@ const { Ticker } = require('../public/js/server/ticker');
         
         //const from_result = await mysql.query(`SELECT * FROM users WHERE subtier <> '0000'`);
         //console.log(from_result);
-
+/*
         const from_result = await mysql.query(`select * from txtracking where amount > 500000 and category <> 'send' order by amount`);
 
         const totals = [];
@@ -49,12 +49,12 @@ const { Ticker } = require('../public/js/server/ticker');
         const avg = total / from_result.length;
 
         console.log(`total:${total} rows:${from_result.length} avg:${avg}`);
-
+*/
         
-        //const from_result = await mysql.query(`SELECT * FROM txtracking WHERE comment LIKE 'Subscription Award' ORDER BY id DESC LIMIT 100`);
-        //const update_from_result = await mysql.query(`UPDATE users SET balance = '140606.47562716' WHERE twitch_username LIKE 'alphapool415'`);
+        //const from_result = await mysql.query(`SELECT * FROM txtracking WHERE comment = 'Subscription Award' ORDER BY id DESC LIMIT 100`);
+        //const update_from_result = await mysql.query(`UPDATE users SET balance = '140606.47562716' WHERE twitch_username = 'alphapool415'`);
         
-        //const from_result = await mysql.query(`SELECT * FROM users WHERE balance LIKE 'NAN'`);
+        //const from_result = await mysql.query(`SELECT * FROM users WHERE balance = 'NAN'`);
 
         //const from_result = await mysql.query(`SELECT * FROM users`);
 /*
@@ -80,7 +80,7 @@ const { Ticker } = require('../public/js/server/ticker');
             ]);
 
             if(json.result) {
-                const update_from_result = await mysql.query(`UPDATE users SET balance = '${json.result}' WHERE twitch_username LIKE '${userrow.twitch_username}'`);
+                const update_from_result = await mysql.query(`UPDATE users SET balance = '${json.result}' WHERE twitch_username = '${userrow.twitch_username}'`);
                 console.log(update_from_result);
             }
         }*/

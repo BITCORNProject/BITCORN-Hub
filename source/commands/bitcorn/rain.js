@@ -48,7 +48,7 @@ module.exports = Object.create({
             return pending.complete(event, reply);
         }
 
-        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${fromusername}'`);
+        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${fromusername}'`);
         if (from_result.length === 0) {
             const reply = `@${event.user.username}, you need to register and deposit / earn BITCORN in order to make it rain!`;
             tmi.botSay(event.target, reply);
@@ -96,7 +96,7 @@ module.exports = Object.create({
         ];
 
         const channel = event.target.replace('#', '');
-        const activitytracking_result = await mysql.query(`SELECT * FROM activitytracking WHERE channel LIKE '${channel}' ORDER BY id DESC LIMIT ${activitytracking_query_limit}`);
+        const activitytracking_result = await mysql.query(`SELECT * FROM activitytracking WHERE channel = '${channel}' ORDER BY id DESC LIMIT ${activitytracking_query_limit}`);
         const active_user_promises = [];
         const active_user_names = [];
 
@@ -114,7 +114,7 @@ module.exports = Object.create({
             active_user_names.push(tousername);
             active_user_promises.push(new Promise(async resolve => {
 
-                const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${tousername}'`);
+                const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${tousername}'`);
                 if (to_result.length === 0) {
                     resolve({ success: false, message: `@${fromusername}, the user ${tousername} is not registered (Register with: $reg)` });
                     return;

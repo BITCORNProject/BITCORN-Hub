@@ -27,7 +27,7 @@ module.exports = Object.create({
 
         if(pending.started(event, tmi)) return pending.reply(event, tmi);
 
-        const result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${event.user.username}'`);
+        const result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${event.user.username}'`);
         
         const info = {
             cornaddy: result[0] ? result[0].cornaddy : '',

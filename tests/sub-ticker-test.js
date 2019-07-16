@@ -104,12 +104,12 @@ async function tickBitCornSub(limit = 100) {
                 viewers.splice(index, 1);
                 inChat = true;
             }
-            const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${subscription.user.name}'`);
+            const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${subscription.user.name}'`);
             if (to_result.length === 0) continue;
             const amount = +sub_plans_bitcorn[subscription.sub_plan];
             const tier = tiers[subscription.sub_plan];
             const to_final_balance = math.fixed8(+(to_result[0].balance)) + amount;
-            const update_from_result = await mysql.query(`UPDATE users SET balance = '${to_final_balance}' WHERE cornaddy LIKE '${to_result[0].cornaddy}'`);
+            const update_from_result = await mysql.query(`UPDATE users SET balance = '${to_final_balance}' WHERE cornaddy = '${to_result[0].cornaddy}'`);
 
             if (update_from_result.affectedRows === 1) {
                 updated_users_success.push({

@@ -26,11 +26,11 @@ async function onChatMessage(target, user, msg, self) {
             return { success: false, message: `Insert activitytracking failed`, event };
         }
 
-        const msg_leaderboards_result = await mysql.query(`SELECT * FROM msg_leaderboards WHERE twitch_username LIKE '${username}'`);
+        const msg_leaderboards_result = await mysql.query(`SELECT * FROM msg_leaderboards WHERE twitch_username = '${username}'`);
         if (msg_leaderboards_result.length > 0) {
             const message_count = +(msg_leaderboards_result[0].message_count) + 1;
             const sub_plan = 1000;
-            const msg_leaderboards_update_result = await mysql.query(`UPDATE msg_leaderboards SET message_count = '${message_count}',sub_plan='${sub_plan}',online='1' WHERE twitch_username LIKE '${username}'`);
+            const msg_leaderboards_update_result = await mysql.query(`UPDATE msg_leaderboards SET message_count = '${message_count}',sub_plan='${sub_plan}',online='1' WHERE twitch_username = '${username}'`);
             if (msg_leaderboards_update_result.affectedRows === 0) {
                 console.log(`Update msg_leaderboards failed`);
             }
@@ -57,7 +57,7 @@ async function onChatMessage(target, user, msg, self) {
             }
         }
 
-        const msg_tags_select_result = await mysql.query(`SELECT * FROM msg_tags WHERE twitch_username LIKE '${username}' AND message LIKE '${char_message}'`);
+        const msg_tags_select_result = await mysql.query(`SELECT * FROM msg_tags WHERE twitch_username = '${username}' AND message = '${char_message}'`);
         if (msg_tags_select_result.length === 0) {
             const msg_tags_insert_result = await mysql.query(`INSERT INTO msg_tags (id,twitch_username,message,date_time) VALUES (NULL,'${username}','${char_message}','${mysql.timestamp()}')`);
             if (msg_tags_insert_result.affectedRows === 0) {

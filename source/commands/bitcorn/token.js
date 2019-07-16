@@ -29,7 +29,7 @@ module.exports = Object.create({
         const buffer = crypto.randomBytes(16);
         const token = buffer.toString('hex');
 
-        const update_result = await mysql.query(`UPDATE users SET token = '${token}' WHERE twitch_username LIKE '${event.user.username}'`);
+        const update_result = await mysql.query(`UPDATE users SET token = '${token}' WHERE twitch_username = '${event.user.username}'`);
 
         if(update_result.affectedRows > 0) {
             tmi.botWhisper(event.user.username, `@${event.user.username} Your Token is '${token}' (no ' ' quotes) - Use this to login here: https://dashboard.bitcorntimes.com/ - If you use $token again you will receive a new token your old token will be deleted.`);

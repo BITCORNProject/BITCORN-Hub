@@ -48,14 +48,14 @@ const { Ticker } = require('../public/js/server/ticker');
                 counter.users[account].getaccountaddress = getaccountaddress;
 
                 try {
-                    const test_select_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${account}'`);
+                    const test_select_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${account}'`);
                     console.log('> test_select_result <', test_select_result);
                 } catch (error) {
                     console.error(error);
                     continue;
                 }
 
-                const select_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${account}'`);
+                const select_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${account}'`);
                 console.log('--> select_result', select_result);
 
                 counter.users[account].select_result = select_result;
@@ -71,7 +71,7 @@ const { Ticker } = require('../public/js/server/ticker');
                     counter.registered++;
 
                 } else {
-                    const update_to_result = await mysql.query(`UPDATE users SET cornaddy = '${getaccountaddress.json.result}' WHERE twitch_username LIKE '${account}'`);
+                    const update_to_result = await mysql.query(`UPDATE users SET cornaddy = '${getaccountaddress.json.result}' WHERE twitch_username = '${account}'`);
                     console.log('---> update_to_result', update_to_result);
 
                     counter.users[account].update_to_result = update_to_result;
@@ -88,7 +88,7 @@ const { Ticker } = require('../public/js/server/ticker');
 
                         counter.balanced.wallet++;
                     } else if(amount > select_result[0].balance) {
-                        const balance_update_result = await mysql.query(`UPDATE users SET balance = '${amount}' WHERE twitch_username LIKE '${account}'`);
+                        const balance_update_result = await mysql.query(`UPDATE users SET balance = '${amount}' WHERE twitch_username = '${account}'`);
                         console.log('----> balance_update_result', balance_update_result);
 
                         counter.users[account].balance_update_result = balance_update_result;
@@ -99,7 +99,7 @@ const { Ticker } = require('../public/js/server/ticker');
                     }
                 }
                 
-                const changes_select_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${account}'`);
+                const changes_select_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${account}'`);
                 console.log('----> changes_select_result', changes_select_result);
 
                 counter.users[account].changes_select_result = changes_select_result;

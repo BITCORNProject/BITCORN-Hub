@@ -38,7 +38,7 @@ module.exports = Object.create({
             return pending.complete(event, reply);
         }
 
-        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${fromusername}'`);
+        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${fromusername}'`);
         if(from_result.length === 0) {
             const reply = `@${event.user.username}, you must register to use the $tipcorn command (Register with: $reg)`;
             tmi.botSay(event.target, reply);
@@ -59,7 +59,7 @@ module.exports = Object.create({
             return pending.complete(event, reply);
         }
 
-        const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${tousername}'`);
+        const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${tousername}'`);
         if(to_result.length === 0) {
             const reply = `@${event.user.username}, the user ${tousername} is not registered (Register with: $reg)`;
             tmi.botSay(event.target, reply);

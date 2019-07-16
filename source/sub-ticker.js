@@ -93,7 +93,7 @@ async function tickBitCornSub(limit = 100) {
         const subscription = subscriptions[i];
         select_subtier_promises.push(new Promise(async (resolve) => {
 
-            const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username LIKE '${subscription.user.name}'`);
+            const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${subscription.user.name}'`);
             if (to_result.length === 0) {
                 fs.appendFileSync(fileNoDbEntry, `${subscription.user.name}:${subscription.sub_plan}\r`);               
                 resolve();
@@ -103,7 +103,7 @@ async function tickBitCornSub(limit = 100) {
                 //console.error(`user ${subscription.user.name} has ${to_result.length} rows in the database`);
                 fs.appendFileSync(fileManyDbEntry, `${subscription.user.name}:${subscription.sub_plan}:${to_result.length}\r`);
             }
-            const update_result = await mysql.query(`UPDATE users SET subtier = '${subscription.sub_plan}' WHERE twitch_username LIKE '${subscription.user.name}'`);
+            const update_result = await mysql.query(`UPDATE users SET subtier = '${subscription.sub_plan}' WHERE twitch_username = '${subscription.user.name}'`);
             resolve(update_result);
         }));
     }
