@@ -25,82 +25,63 @@ module.exports = Object.create({
         prefix: '$'
     },
     async execute(event) {
-        
+
         if(pending.started(event, tmi)) return pending.reply(event, tmi);
 
-        const fromusername = event.user.username;
         const tip_amount = +(event.args[0] ? event.args[0].replace('<','').replace('>','') : 0);
         const tousername = (event.args[1] ? event.args[1].replace('@', '').replace('<','').replace('>','') : '').toLowerCase();
-        
-        if(tip_amount < 0) {
-            const reply = `@${event.user.username}, Cannot Tip Negative Amount`;
+
+        if(tip_amount <= 0) {
+            const reply = `@${event.user.username}, can not tip a negative or zero amount`;
             tmi.botSay(event.target, reply);
             return pending.complete(event, reply);
         }
 
-        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${fromusername}'`);
-        if(from_result.length === 0) {
-            const reply = `@${event.user.username}, you must register to use the $tipcorn command (Register with: $reg)`;
-            tmi.botSay(event.target, reply);
-            return pending.complete(event, reply);
-        }
+        const select_results = await mysql.query(`SELECT * FROM users WHERE twitch_username='${event.user.username}' OR twitch_username='${tousername}'`);
         
-        const getbalance = await wallet.makeRequest('getbalance', [event.user.username]);
-        
-        const from_record = from_result[0];
-        const from_info = {
-            cornaddy: from_record.cornaddy,
-            balance: math.fixed8(getbalance.json.result)
-        };
-
-        if(from_info.balance < tip_amount) {
-            const reply = `@${event.user.username}, Insufficient Funds, Cannot Tip (Check Balance with: $bitcorn)`;
+        if(select_results.length < 2) {
+            const unames = select_results.map(x => `@${x.twitch_username}`).join();
+            const reply = `${unames}, must be register to use the $tipcorn command (Register with: $bitcorn)`;
             tmi.botSay(event.target, reply);
             return pending.complete(event, reply);
         }
 
-        const to_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${tousername}'`);
-        if(to_result.length === 0) {
-            const reply = `@${event.user.username}, the user ${tousername} is not registered (Register with: $reg)`;
-            tmi.botSay(event.target, reply);
-            return pending.complete(event, reply);
-        }        
-        
-        const to_record = to_result[0];
-        const to_info = {
-            cornaddy: to_record.cornaddy,
-            balance: math.fixed8(+to_record.balance)
+        const records = {
+            from: select_results.filter(x => x.twitch_username === event.user.username)[0],
+            to: select_results.filter(x => x.twitch_username === tousername)[0]
         }
 
         const { json } = await wallet.makeRequest('sendfrom', [
-            fromusername,
-            to_info.cornaddy,
+            records.from.twitch_username,
+            records.to.cornaddy,
             math.fixed8(tip_amount),
-            0,
-            `${fromusername} Tipped ${tousername}`,
-            `${fromusername} tipped user ${tousername}`
+            16,
+            `${records.from.twitch_username} Tipped ${records.to.twitch_username}`,
+            `${records.from.twitch_username} tipped user ${records.to.twitch_username}`
         ]);
 
         if(json.error) {
+            await mysql.logit('Wallet Error', JSON.stringify({method: 'sendfrom', module: `${event.configs.name}`, error: json.error}));
+
             const reply = `Transaction canceled, @${event.user.username}, can not send wallet message: ${json.error.message}`;
             tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
         }
 
         txMonitor.monitorInsert({
-            account: fromusername,
+            account: records.from.twitch_username,
             amount: math.fixed8(tip_amount),
             txid: json.result,
-            cornaddy: from_info.cornaddy,
+            cornaddy: records.from.cornaddy,
             confirmations: '0',
             category: 'send',
             timereceived: mysql.timestamp(),
-            comment: `${fromusername} tipped on ${tousername}`
+            comment: `${records.from.twitch_username} tipped on ${records.to.twitch_username}`
         });
 
-        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${from_info.cornaddy} :: ${tousername}'s Address: ${to_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${json.result} :: Explorer: https://explorer.bitcornproject.com/tx/${json.result}`);
+        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${records.from.cornaddy} :: ${records.to.twitch_username}'s Address: ${records.to.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${json.result} :: Explorer: https://explorer.bitcornproject.com/tx/${json.result}`);
         
-        tmi.botWhisper(tousername, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${to_info.cornaddy} :: ${tousername}'s Address: ${from_info.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${json.result} :: Explorer: https://explorer.bitcornproject.com/tx/${json.result}`);
+        tmi.botWhisper(records.to.twitch_username, `@${records.to.twitch_username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${records.to.cornaddy} :: ${records.to.twitch_username}'s Address: ${records.from.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${json.result} :: Explorer: https://explorer.bitcornproject.com/tx/${json.result}`);
         
         await mysql.logit('Tip Executed', `Executed by ${event.user.username}`);
 

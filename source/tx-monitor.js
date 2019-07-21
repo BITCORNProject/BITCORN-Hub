@@ -100,7 +100,9 @@ async function init() {
                 console.error(`TX-TRACKING-ERROR Error: ${e.message}`);
             }
         } else {
-            console.log('No wallet found or command does not exists');
+            await mysql.logit('Wallet Error', JSON.stringify({method: 'listtransactions', command: `tx-monitor`, error: json.error}));
+    
+            console.error('No wallet found or command does not exists');
         }
 
         setTimeout(() => transactionsCheck(count, startIndex), timeValues.SECOND * 60);

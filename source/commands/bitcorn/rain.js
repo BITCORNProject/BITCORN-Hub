@@ -60,6 +60,15 @@ module.exports = Object.create({
 
         const getbalance = await wallet.makeRequest('getbalance', [event.user.username]);
         
+        if(getbalance.json.error) {
+            
+            await mysql.logit('Wallet Error', JSON.stringify({method: 'getbalance', module: `${event.configs.name}`, error: getbalance.json.error}));
+            
+            const reply = `@${event.user.username} something went wrong with the $${event.configs.name} command, please report it`;  
+            tmi.botWhisper(event.user.username, reply);
+            return pending.complete(event, reply);
+        }
+
         const from_record = from_result[0];
         const from_info = {
             cornaddy: from_record.cornaddy,
@@ -161,13 +170,13 @@ module.exports = Object.create({
                         fromusername,
                         cornaddy,
                         math.fixed8(item.amount),
-                        0,
+                        16,
                         `${fromusername} Rained ${item.username}`,
                         `${fromusername} rained on ${item.username}`
                     ]);
 
                     if (json.error) {
-                        await mysql.logit('Rain.Execute', `${fromusername} Tried Raining but does not have enough funds! (${from_info.balance} CORN)`);
+                        await mysql.logit('Wallet Error', JSON.stringify({method: 'sendfrom', module: `${event.configs.name}`, error: json.error}));
         
                         console.log(`Transaction from ${fromusername} to ${item.username} canceled msg=${event.msg}, can not send wallet error message: ${json.error.message}`);
                     

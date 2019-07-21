@@ -36,16 +36,28 @@ module.exports = Object.create({
 
         if (result.length === 0) {
             const { json } = await wallet.makeRequest('getnewaddress', [event.user.username]);
-            info.cornaddy = json.result || '';
-            info.balance = math.fixed8(0.0);
-            const twitchid = event.user['user-id'];
-            await mysql.query(`INSERT INTO users (id,discordid,twitch_username,cornaddy,balance,token,level,avatar,subtier,twitchid,twitterid,instagramid) VALUES (NULL,'NA','${event.user.username}','${info.cornaddy}','${info.balance}','NA','1000','NA','','${twitchid}','','')`);
-            
-            await mysql.logit('Registered Address', `Request by ${event.user.username}`);
+
+            if(json.error) {
+                await mysql.logit('Wallet Error', JSON.stringify({method: 'getnewaddress', module: `${event.configs.name}`, error: json.error}));
+
+                const reply = `@${event.user.username} something went wrong with the $${event.configs.name} command, please report it`;  
+                tmi.botWhisper(event.user.username, reply);
+                return pending.complete(event, reply);
+            } else {
+
+                info.cornaddy = json.result || '';
+                info.balance = math.fixed8(0.0);
+                const twitchid = event.user['user-id'];
+                await mysql.query(`INSERT INTO users (id,discordid,twitch_username,cornaddy,balance,token,level,avatar,subtier,twitchid,twitterid,instagramid) VALUES (NULL,'NA','${event.user.username}','${info.cornaddy}','${info.balance}','NA','1000','NA','','${twitchid}','','')`);
+                
+                await mysql.logit('Registered Address', `Request by ${event.user.username}`);
+            }
         }
         
         const getbalance = await wallet.makeRequest('getbalance', [event.user.username]);
-        if (getbalance.json.error) {          
+        if (getbalance.json.error) {     
+            await mysql.logit('Wallet Error', JSON.stringify({method: 'getbalance', module: `${event.configs.name}`, error: getbalance.json.error}));
+
             const reply = `@${event.user.username} something went wrong with the $${event.configs.name} command, please report it`;  
             tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);

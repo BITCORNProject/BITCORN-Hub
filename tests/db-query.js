@@ -19,11 +19,15 @@ const { Ticker } = require('../public/js/server/ticker');
 
 (async () => {
     try {
+// UPDATE users set sub='tier1' where username='user1' or username='user2' or username='user3' or
+        var start = new Date().getTime();    
 
-        var start = new Date().getTime();
+        const subs = await kraken.getChannelSubscribers();
+
+        const users = subs.result.subscriptions.map(x => `twitch_username=${mysql.escape(x.user.name)}`).join(' OR ');
         
-        
-        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username = 'callowcreation'`);
+        console.log(subs);
+        const from_result = await mysql.query(`SELECT * FROM users WHERE ${users}`);
 
         console.log(from_result);
 
