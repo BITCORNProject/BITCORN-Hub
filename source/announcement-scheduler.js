@@ -9,7 +9,7 @@ const auth = require('../settings/auth');
 const tmi = require('./config/tmi');
 
 async function init() {
-
+/*
     const register_announcement_rule = new schedule.RecurrenceRule();
     register_announcement_rule.minute = 20;
     
@@ -21,7 +21,7 @@ async function init() {
     if(!tmi) {
         register_announcement_schedule.cancel();
     }
-
+*/
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
 

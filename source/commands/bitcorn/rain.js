@@ -30,7 +30,29 @@ module.exports = Object.create({
     },
     async execute(event) {
 
-        if(pending.started(event, tmi)) return pending.reply(event, tmi);
+        const data = {
+            recipients: [
+                {
+                    id: '',
+                    name: '',
+                    amount: 0
+                },
+                {
+                    id: '',
+                    name: '',
+                    amount: 0
+                },
+            ],
+            senderId: '',
+            senderName: '',
+            senderAmount: 0
+        }
+
+
+        tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
+        return { success: false, event };
+
+        if (pending.started(event, tmi)) return pending.reply(event, tmi);
 
         const fromusername = event.user.username;
         const rain_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);
@@ -59,12 +81,12 @@ module.exports = Object.create({
         }
 
         const getbalance = await wallet.makeRequest('getbalance', [event.user.username]);
-        
-        if(getbalance.json.error) {
-            
-            await mysql.logit('Wallet Error', JSON.stringify({method: 'getbalance', module: `${event.configs.name}`, error: getbalance.json.error}));
-            
-            const reply = `@${event.user.username} something went wrong with the $${event.configs.name} command, please report it`;  
+
+        if (getbalance.json.error) {
+
+            await mysql.logit('Wallet Error', JSON.stringify({ method: 'getbalance', module: `${event.configs.name}`, error: getbalance.json.error }));
+
+            const reply = `@${event.user.username} something went wrong with the $${event.configs.name} command, please report it`;
             tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
         }
@@ -89,7 +111,7 @@ module.exports = Object.create({
 
         const rain_amount_per_user = per_user % 1 > 0 ? math.fixed(per_user, 8) : per_user;
 
-        if(rain_amount_per_user > wallet_max_transaction_amount) {
+        if (rain_amount_per_user > wallet_max_transaction_amount) {
             const reply = `@${event.user.username}, rain is limited to a maximum ${wallet_max_transaction_amount} CORN per user!`;
             tmi.botSay(event.target, reply);
 
@@ -163,7 +185,7 @@ module.exports = Object.create({
 
             for (const cornaddy in walletSend.batch) {
                 const item = walletSend.batch[cornaddy];
-                
+
                 const promise = new Promise(async (resolve) => {
 
                     const { json } = await wallet.makeRequest('sendfrom', [
@@ -176,12 +198,12 @@ module.exports = Object.create({
                     ]);
 
                     if (json.error) {
-                        await mysql.logit('Wallet Error', JSON.stringify({method: 'sendfrom', module: `${event.configs.name}`, error: json.error}));
-        
+                        await mysql.logit('Wallet Error', JSON.stringify({ method: 'sendfrom', module: `${event.configs.name}`, error: json.error }));
+
                         console.log(`Transaction from ${fromusername} to ${item.username} canceled msg=${event.msg}, can not send wallet error message: ${json.error.message}`);
-                    
-                        resolve({success: false, json: json});
-                    } else {                   
+
+                        resolve({ success: false, json: json });
+                    } else {
                         txMonitor.monitorInsert({
                             account: item.username,
                             amount: math.fixed8(item.amount),
@@ -193,7 +215,7 @@ module.exports = Object.create({
                             comment: `${fromusername} rained on ${item.username}`
                         });
 
-                        resolve({success: true, json: json});
+                        resolve({ success: true, json: json });
                     }
                 });
                 wallet.enqueueItem(promise);

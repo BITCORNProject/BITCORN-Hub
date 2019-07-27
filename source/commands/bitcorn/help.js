@@ -23,6 +23,9 @@ module.exports = Object.create({
     },
     async execute(event) {
 
+        tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
+        return { success: false, event };
+
         if(pending.started(event)) return pending.reply(event, tmi);
 
         tmi.botSay(event.target, `@${event.user.username} - cttvCorn To see all available BITCORN commands, please visit https://bitcorntimes.com/help cttvCorn`);

@@ -19,10 +19,11 @@ const { Ticker } = require('../public/js/server/ticker');
         const timer = new Timer();
         timer.start();
 
-        const {json} = await wallet.makeRequest('getbalance', [0]);
+        const { json } = await wallet.makeRequest('getbalance', [
+            'bitcornhub']);
 
-        console.log(getbalance.error);
-        if (getbalance.json.result) {
+        console.log(json);
+        if (json) {
         }
 
         timer.stop('Action Complete: ');

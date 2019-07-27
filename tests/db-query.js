@@ -24,10 +24,12 @@ const { Ticker } = require('../public/js/server/ticker');
 
         const subs = await kraken.getChannelSubscribers();
 
+        //ALTER TABLE tablename MODIFY columnname DECIMAL(12,8)
+
         const users = subs.result.subscriptions.map(x => `twitch_username=${mysql.escape(x.user.name)}`).join(' OR ');
         
-        console.log(subs);
-        const from_result = await mysql.query(`SELECT * FROM users WHERE ${users}`);
+        //console.log(subs);
+        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username='naivebot'`);
 
         console.log(from_result);
 

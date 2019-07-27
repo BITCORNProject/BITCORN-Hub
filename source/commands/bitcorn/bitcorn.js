@@ -25,6 +25,14 @@ module.exports = Object.create({
     },
     async execute(event) {
 
+        const data = {
+            twitchId: '',
+            twitchUsername: ''
+        }
+
+        tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
+        return { success: false, event };
+        
         if(pending.started(event, tmi)) return pending.reply(event, tmi);
 
         const result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${event.user.username}'`);

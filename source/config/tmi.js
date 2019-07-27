@@ -104,13 +104,13 @@ async function onMessage(type, target, user, msg, self) {
             if (command.execute) {
 
                 //botSay(target, `@${user.username}, $${command.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
-                //return { success: false };
+                //return { success: false, {} };
                 const fs = require('fs');
                 const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
 
                 if(allowed_testers.indexOf(user.username) === -1) {
                     if(allowed_testers.length > 0) {
-                        const reply = `@${user.username}, system is currently under construction cttvDump System will return soon! cttvDump`;
+                        const reply = `@${user.username}, down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
                         botSay(target, reply);
                         return { success: false, message: reply };
                     }

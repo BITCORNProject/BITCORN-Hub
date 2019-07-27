@@ -28,7 +28,23 @@ const sub_plans_bitcorn = {
     '2000': math.fixed8(0.50 * MINUTE_AWARD_MULTIPLIER),
     '3000': math.fixed8(1.00 * MINUTE_AWARD_MULTIPLIER)
 };
+/*
 
+
+        const data = [
+            {
+                TwitchId: senderId,
+                TwitchUsername: senderName,
+                Amount: math.fixed8(0.25),
+            },
+            {
+                TwitchId: receiverId,
+                TwitchUsername: receiverName,
+                Amount: math.fixed8(1.25),
+            },
+        ];
+
+*/
 async function tickBitCornSub(limit = 100) {
 
     const timers = {
@@ -153,7 +169,7 @@ async function tickBitCornSub(limit = 100) {
     const sendmany = await wallet.makeRequest('sendmany', [
         "bitcornhub",
         walletSend.batch,
-        0,
+        16,
         `CTTV paid ${walletSend.total} CORN for ${walletSend.count} idling subscribers.`
     ]);
 

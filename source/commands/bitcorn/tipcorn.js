@@ -26,6 +26,17 @@ module.exports = Object.create({
     },
     async execute(event) {
 
+        const data = {
+            receiverId: '',
+            receiverName: '',
+            senderId: '',
+            senderName: '',
+            amount: 0
+        };
+
+        tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
+        return { success: false, event };
+
         if(pending.started(event, tmi)) return pending.reply(event, tmi);
 
         const tip_amount = +(event.args[0] ? event.args[0].replace('<','').replace('>','') : 0);
