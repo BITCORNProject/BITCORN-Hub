@@ -15,64 +15,69 @@ const math = require('../source/utils/math');
 const kraken = require('../source/config/authorize/kraken');
 const helix = require('../source/config/authorize/helix');
 
+const databaseAPI = require('../source/config/api-interface/database-api');
 
 const { Ticker } = require('../public/js/server/ticker');
 
 (async () => {
     try {
 
-        const JsonFile = require('../source/utils/json-file');
-        const sql_db_auth = new JsonFile('./settings/sql_db_auth.json', {
-            url: '',
-            client_credentials: {
-                url: '',
-                client_id: '',
-                client_secret: '',
-                audience: ''
+
+        //const insertuser_result = await databaseAPI.insertuserRequest('5699696963', 'user0neqwerty0987');
+
+        const amount = 100;//math.fixed8(1 / 1);
+
+        const [{ id: twitchId, login: twitchUsername },
+        { id: twitchId1, login: twitchUsername1 }] = await Promise.all([
+            helix.getUserLogin('im_brett_k'),
+            helix.getUserLogin('bitcornhub')
+        ]);
+
+        const { id: botId, login: botUsername } = await helix.getUserLogin('callowcreation');
+
+        const recipients = [];
+
+        const length = 5;
+        for (let index = 0; index < length; index++) {
+            if(index % 2) {
+                recipients.push({
+                    twitchId: twitchId,
+                    twitchUsername: twitchUsername,
+                    amount: amount
+                });
+            } else {
+                recipients.push({
+                    twitchId: twitchId1,
+                    twitchUsername: twitchUsername1,
+                    amount: amount
+                });
             }
-        });
-
-        const token_result = await fetch(sql_db_auth.data.client_credentials.url, {
-            method: 'POST',
-            header: {
-                'content-type': 'application/json'
-            },
-            body: new URLSearchParams({
-                client_id: sql_db_auth.data.client_credentials.client_id,
-                client_secret: sql_db_auth.data.client_credentials.client_secret,
-                audience: sql_db_auth.data.client_credentials.audience,
-                grant_type: 'client_credentials'
-            })
-        });
-
-        const { access_token } = await token_result.json();
-
-
-        const { id: receiverId, login: receiverName } = await helix.getUserLogin('callowcreation');
-        const { id: senderId, login: senderName } = await helix.getUserLogin('tony_serum');
-        
-        // bitcorn
-        const data = {
-            twitchId: receiverId,
-            twitchUsername: receiverName
         }
 
-        console.log(data);
+        var start = new Date().getTime();
+        const token = 'fklooocmmkliod8989783493999c899-hndmnjkckkm34-337888dxjsmnk4id89';
+        const [request_result1] = await Promise.all([
+            databaseAPI.bitcornRequest(twitchId, twitchUsername)
+        ]);
 
-        const url = `${sql_db_auth.data.url}`
-        const result = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${access_token}`
-            },
-            body: JSON.stringify(data)
-        });
+        //request_result1.codeName = databaseAPI.PaymentCode().filter(x => x.code === request_result1.code)[0].name;
 
-        console.log(result);
-        console.log(await result.json());
+        if(request_result1.error) {
+            console.error(request_result1.error);
+            // No user in database?
 
-        assert(JsonFile);
+        } else {
+            console.log(request_result1);
+            if(request_result1.twitchid) {
+
+            }
+        }
+
+        var end0 = new Date().getTime();
+        var time0 = (end0 - start) / 1000;
+        console.log('Execution time0: ' + time0);
+
+        assert(request_result1);
     } catch (error) {
         console.error(error);
     }

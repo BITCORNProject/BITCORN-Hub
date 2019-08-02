@@ -9,15 +9,9 @@ function Pending(command) {
     this.singleuse[command] = {};
 }
 
-Pending.prototype.started = function(event, tmi) {
+Pending.prototype.started = function(event) {
     if(this.singleuse[event.configs.name][event.user.username]) return true;
     this.singleuse[event.configs.name][event.user.username] = true;
-    
-    if(tmi) {
-        const message = `@${event.user.username} retrieving data from the blockchain, this may take some time to complete`;      
-        tmi.botWhisper(event.user.username, message);
-    }
-
     return false;
 }
 

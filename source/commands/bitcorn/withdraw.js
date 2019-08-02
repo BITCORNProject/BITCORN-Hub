@@ -9,6 +9,7 @@ const mysql = require('../../config/databases/mysql');
 const math = require('../../utils/math');
 const wallet = require('../../config/wallet');
 const txMonitor = require('../../tx-monitor');
+const databaseAPI = require('../../config/api-interface/database-api');
 
 const Pending = require('../../utils/pending');
 
@@ -26,60 +27,51 @@ module.exports = Object.create({
         whisper: true
     },
     async execute(event) {
-
+        /*
+        
+        code:1
+        content:{
+        
+        twitchId:"75987197"
+        twitchUsername: "username"
+        txid:"277434b972de256877389e2c09b6a63b94230a5552a68ab0ef08200f96d7f638"
+        userExists:true
+            }
+        
+        
+        */
         tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
         return { success: false, event };
 
-        if(pending.started(event, tmi)) return pending.reply(event, tmi);
+        if (pending.started(event)) return pending.reply(event, tmi);
 
-        const withdraw_amount = +(event.args[0] ? event.args[0].replace('<','').replace('>','') : 0);
+        const withdraw_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);
         // Do not .toLowerCase() the address is case sensitive
-        const to_cornaddy = (event.args[1] ? event.args[1].replace('@', '').replace('<','').replace('>','') : '');
-        
-        if(withdraw_amount <= 0) {
+        const to_cornaddy = (event.args[1] ? event.args[1].replace('@', '').replace('<', '').replace('>', '') : '');
+
+        if (withdraw_amount <= 0) {
             const reply = `@${event.user.username}, can not withdraw a negative or zero amount`;
             tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
         }
 
-        const from_result = await mysql.query(`SELECT * FROM users WHERE twitch_username='${event.user.username}'`);
-        if(from_result.length === 0) {
-            const reply = `@${event.user.username}, you must register to use the $withdraw command (Register with: $bitcorn)`;
-            tmi.botWhisper(event.user.username, reply);
-            return pending.complete(event, reply);
+
+        const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
+
+        switch (withdraw_result.senderResponse.code) {
+            case databaseAPI.paymentCode.QueryFailure:
+                tmi.botSay(event.target, `@${withdraw_result.senderResponse.twitchUsername} You need to register with the $bitcorn command to request a token`);
+                break;
+            case databaseAPI.paymentCode.InsufficientFunds:
+                tmi.botSay(event.target, `You failed to withdraw: InsufficientFunds ${withdraw_result.senderResponse.userBalance}`);
+                break;
+            case databaseAPI.paymentCode.Success:
+                tmi.botWhisper(withdraw_result.senderResponse.twitchUsername, `You have successfully withdrawn ${withdraw_result.senderResponse.twitchUsername} BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/${withdraw_result.senderResponse.txid}`);
+                break;
+            default:
+                tmi.botWhisper(event.user.username, `You failed to withdraw, please report this: code: ${withdraw_result.senderResponse.code}`);
+                break;
         }
-        
-        const { json } = await wallet.makeRequest('sendfrom', [
-            event.user.username,
-            to_cornaddy,
-            math.fixed8(+withdraw_amount),
-            16,
-            `${event.user.username} Withdrew To ${to_cornaddy}`,
-            `${event.user.username} Withdrew from ${from_result[0].cornaddy} To ${to_cornaddy}`
-        ]);
-
-        if(json.error) {
-            await mysql.logit('Wallet Error', JSON.stringify({method: 'sendfrom', module: `${event.configs.name}`, error: json.error}));
-            const reply = `Transaction canceled ${event.configs.prefix}${event.configs.name}, @${event.user.username}, can not send wallet message: ${json.error.message}`;
-            tmi.botWhisper(event.user.username, reply);
-            return pending.complete(event, reply);
-        }
-
-        txMonitor.monitorInsert({
-            account: event.user.username,
-            amount: math.fixed8(withdraw_amount),
-            txid: json.result,
-            cornaddy: from_result[0].cornaddy,
-            confirmations: '0',
-            category: 'send',
-            timereceived: mysql.timestamp(),
-            comment: `${event.user.username} Withdrew from ${from_result[0].cornaddy} To ${to_cornaddy}`
-        });
-
-        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your withdraw receipt: [BITCORN TRANSACTION] :: Your Address: ${from_result[0].cornaddy} :: ${event.user.username}'s Address: ${to_cornaddy} :: Amount Transacted: ${math.fixed8(withdraw_amount)} CORN :: Transaction ID: ${json.result} :: Explorer: https://explorer.bitcornproject.com/tx/${json.result}`);    
-
-        await mysql.logit('Withdraw Executed', `Executed by ${event.user.username}`);
-
         return pending.complete(event);
     }
 });

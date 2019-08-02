@@ -8,6 +8,7 @@ const tmi = require('../../config/tmi');
 const mysql = require('../../config/databases/mysql');
 const math = require('../../utils/math');
 const wallet = require('../../config/wallet');
+const databaseAPI = require('../../config/api-interface/database-api');
 
 const Pending = require('../../utils/pending');
 
@@ -24,57 +25,36 @@ module.exports = Object.create({
         prefix: '$'
     },
     async execute(event) {
-
-        const data = {
-            twitchId: '',
-            twitchUsername: ''
+        /*
+        code: 1
+        content: {
+        balance:940818221.7236394
+        cornaddy:"CQwpmd5aixLM5ycmfRPEV9CkYjd2q5z9zz"
+        isnewuser:false
+        twitchId:"403023969"
         }
-
-        tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
-        return { success: false, event };
         
-        if(pending.started(event, tmi)) return pending.reply(event, tmi);
+        */
+        //tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
+        //return { success: false, event };
 
-        const result = await mysql.query(`SELECT * FROM users WHERE twitch_username = '${event.user.username}'`);
-        
-        const info = {
-            cornaddy: result[0] ? result[0].cornaddy : '',
-            balance: math.fixed8(result[0] ? result[0].balance : 0.0),
-        };
+        const twitchId = event.user['user-id'];
+        const twitchUsername = event.user.username;
 
-        if (result.length === 0) {
-            const { json } = await wallet.makeRequest('getnewaddress', [event.user.username]);
+        const bitcorn_result = await databaseAPI.bitcornRequest(twitchId, twitchUsername);
 
-            if(json.error) {
-                await mysql.logit('Wallet Error', JSON.stringify({method: 'getnewaddress', module: `${event.configs.name}`, error: json.error}));
+        switch (bitcorn_result.content.code) {
+            case databaseAPI.paymentCode.Success:
+                if (bitcorn_result.content.isnewuser) {
 
-                const reply = `@${event.user.username} something went wrong with the $${event.configs.name} command, please report it`;  
-                tmi.botWhisper(event.user.username, reply);
+                } else {
+                    tmi.botWhisper(twitchUsername, `Howdy BITCORN Farmer!  You have amassed ${bitcorn_result.content.balance} $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: ${bitcorn_result.content.cornaddy}`);
+                }
+                break;
+            default:
+                const reply = `Something went wrong with the rain command, please report this: code ${token_result.senderResponse.code}`;
+                tmi.botWhisper(twitchUsername, reply);
                 return pending.complete(event, reply);
-            } else {
-
-                info.cornaddy = json.result || '';
-                info.balance = math.fixed8(0.0);
-                const twitchid = event.user['user-id'];
-                await mysql.query(`INSERT INTO users (id,discordid,twitch_username,cornaddy,balance,token,level,avatar,subtier,twitchid,twitterid,instagramid) VALUES (NULL,'NA','${event.user.username}','${info.cornaddy}','${info.balance}','NA','1000','NA','','${twitchid}','','')`);
-                
-                await mysql.logit('Registered Address', `Request by ${event.user.username}`);
-            }
         }
-        
-        const getbalance = await wallet.makeRequest('getbalance', [event.user.username]);
-        if (getbalance.json.error) {     
-            await mysql.logit('Wallet Error', JSON.stringify({method: 'getbalance', module: `${event.configs.name}`, error: getbalance.json.error}));
-
-            const reply = `@${event.user.username} something went wrong with the $${event.configs.name} command, please report it`;  
-            tmi.botWhisper(event.user.username, reply);
-            return pending.complete(event, reply);
-        }
-        
-        tmi.botWhisper(event.user.username, `Your BITCORN Balance is ${getbalance.json.result} CORN | Your BITCORN Address is ${info.cornaddy}`);
-        
-        await mysql.logit('Balance Request', `Request by ${event.user.username} (${getbalance.json.result} CORN)`);
-
-        return pending.complete(event);
     }
 });

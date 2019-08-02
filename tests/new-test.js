@@ -19,71 +19,59 @@ const { Ticker } = require('../public/js/server/ticker');
 
 (async () => {
     try {
-        /*const crypto = require('crypto');
-        const buffer = crypto.randomBytes(16);
-        const token = buffer.toString('hex');
-        console.log(token);*/
+        const max = 1000000;
+
+        const container = {};
+
+        for (let index = 0; index < max; index++) {
+            container[`user${index}`] = `user${index}`;
+        }
+
+        console.log(container);
+
         var start = new Date().getTime();
-        
-        //const from_result = await mysql.query(`UPDATE users SET twitterid = ''`);
-        //const from_result = await mysql.query(`UPDATE users SET instagramid = ''`);
-        //const from_result = await mysql.query(`ALTER table users add column (twitterid varchar(255))`);
-        //const from_result = await mysql.query(`ALTER table users add column (instagramid varchar(255))`);
-        
-        //const from_result = await mysql.query(`SELECT * FROM users WHERE subtier <> '0000'`);
-        //console.log(from_result);
-/*
-        const from_result = await mysql.query(`select * from txtracking where amount > 500000 and category <> 'send' order by amount`);
 
-        const totals = [];
-        let total = 0;
-        for (let i = 0; i < from_result.length; i++) {
-            const item = from_result[i];
-            const amount = +item.amount;
-            total += amount;
-            totals.push(amount);
-            console.log(item);
+        function twitchsync() {
+            sequalize.sequalizeRef.query("UPDATE users SET subtier = 'NONE'").then(rows => {
+                console.log(JSON.stringify(rows));
+            });
+        
+            let limit = 100;
+            let offset = 0;
+            var total;
+            fetch(`https://api.twitch.tv/kraken/channels/223836682/subscriptions?limit=${limit}&offset=${offset}`, {
+                method: "GET",
+                headers: {
+                    "Authorization": "OAuth h0hrblvd01iz3ji920hsadwpzho1s7",
+                    "Accept": "application/vnd.twitchtv.v5+json",
+                    "Client-ID": "5bs46vc6tiqaj77dhmc85qpsiqg4d2"
+                }
+            }).then(async(res) => {
+                json = await res.json();
+                total = json._total;
+                console.log(total);
+                for (count = 0; count < total; count += 100) {
+                    fetch(`https://api.twitch.tv/kraken/channels/223836682/subscriptions?limit=${limit}&offset=${offset}`, {
+                            method: "GET",
+                            headers: {
+                                "Authorization": "OAuth h0hrblvd01iz3ji920hsadwpzho1s7",
+                                "Accept": "application/vnd.twitchtv.v5+json",
+                                "Client-ID": "5bs46vc6tiqaj77dhmc85qpsiqg4d2"
+                            }
+                        })
+                        .then(async(res) => {
+                            json = await res.json();
+                            json.subscriptions.forEach(sub => {
+                                twitchId = sub.user._id;
+                                subTeir = sub.sub_plan;
+                                let updateValues = { subtier: subTeir };
+                                sequalize.User.update(updateValues, { where: { twitchid: twitchId } }).then((result) => {});
+                            });
+                            offset += 100;
+                        });
+                }
+            });
         }
-
-        console.log('totals', totals);
-        const avg = total / from_result.length;
-
-        console.log(`total:${total} rows:${from_result.length} avg:${avg}`);
-*/
-        
-        //const from_result = await mysql.query(`SELECT * FROM txtracking WHERE comment = 'Subscription Award' ORDER BY id DESC LIMIT 100`);
-        //const update_from_result = await mysql.query(`UPDATE users SET balance = '140606.47562716' WHERE twitch_username = 'alphapool415'`);
-        
-        //const from_result = await mysql.query(`SELECT * FROM users WHERE balance = 'NAN'`);
-
-        //const from_result = await mysql.query(`SELECT * FROM users`);
-/*
-        const file = 'notsomurican-activity.txt';
-
-        fs.writeFileSync(file, '');
-        for (let i = 0; i < from_result.length; i++) {
-            const element = from_result[i];
-
-            const msg = element.message.trim().split(' ').map(x => `${String.fromCharCode(x)}`).join('');
-            console.log(msg);
-            //id,twitch_username,message,td,channel
-            fs.appendFileSync(file, `${element.td}: ${msg}\r`);
-        }
-        console.log(from_result);
-*/
-        /*for (let i = 0; i < from_result.length; i++) {
-            const userrow = from_result[i];
-            
-            
-            const { json } = await wallet.makeRequest('getbalance', [
-                userrow.twitch_username
-            ]);
-
-            if(json.result) {
-                const update_from_result = await mysql.query(`UPDATE users SET balance = '${json.result}' WHERE twitch_username = '${userrow.twitch_username}'`);
-                console.log(update_from_result);
-            }
-        }*/
 
 
         var end0 = new Date().getTime();
@@ -95,13 +83,3 @@ const { Ticker } = require('../public/js/server/ticker');
         console.error(error);
     }
 })();
-
-function chunk(array, size) {
-    const chunked_arr = [];
-    let index = 0;
-    while (index < array.length) {
-        chunked_arr.push(array.slice(index, size + index));
-        index += size;
-    }
-    return chunked_arr;
-}

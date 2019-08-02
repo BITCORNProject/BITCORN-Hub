@@ -338,6 +338,10 @@ function addMessageCallback(callback) {
     clients[BOT_CHAT].on('chat', callback);
 }
 
+function removeMessageCallback(callback) {
+    clients[BOT_CHAT].off('chat', callback);
+}
+
 exports.init = init;
 exports.botSay = botSay;
 exports.botWhisper = botWhisper;
@@ -346,3 +350,4 @@ exports.getChatUsers = getChatUsers;
 exports.joinChannel = joinChannel;
 exports.partChannel = partChannel;
 exports.addMessageCallback = addMessageCallback;
+exports.removeMessageCallback = removeMessageCallback;

@@ -20,6 +20,7 @@ function JsonFile(file, data) {
         this.setValues(this.data);
         console.log(`JsonFile ${this.file} initial values`);
     }
+    return this;
 }
 
 JsonFile.prototype.getValues = function () {

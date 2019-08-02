@@ -5,10 +5,8 @@
 'use strict';
 
 const tmi = require('../../config/tmi');
-const mysql = require('../../config/databases/mysql');
 const math = require('../../utils/math');
-const wallet = require('../../config/wallet');
-const txMonitor = require('../../tx-monitor');
+const databaseAPI = require('../../config/api-interface/database-api');
 
 const Pending = require('../../utils/pending');
 
@@ -26,76 +24,105 @@ module.exports = Object.create({
     },
     async execute(event) {
 
-        const data = {
-            receiverId: '',
-            receiverName: '',
-            senderId: '',
-            senderName: '',
-            amount: 0
-        };
+        const tipcorn_response = {
+            senderResponse: {
+                balanceChange: 100,
+                amount: 0,
+                code: 1,
+                twitchId: "403023969",
+                twitchUsername: "bitcornhub",
+                userBalance: 10101
+            },
+            recipientResponses: [
+                {
+                    balanceChange: 1,
+                    code: 1,
+                    twitchId: "403023969",
+                    twitchUsername: "bitcornhub",
+                    userBalance: 10101
+                }
+            ]
+        }
 
         tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
         return { success: false, event };
 
-        if(pending.started(event, tmi)) return pending.reply(event, tmi);
+        if (pending.started(even)) return pending.reply(event, tmi);
 
-        const tip_amount = +(event.args[0] ? event.args[0].replace('<','').replace('>','') : 0);
-        const tousername = (event.args[1] ? event.args[1].replace('@', '').replace('<','').replace('>','') : '').toLowerCase();
+        const twitchId = event.user['user-id'];
+        const twitchUsername = event.user.username;
 
-        if(tip_amount <= 0) {
-            const reply = `@${event.user.username}, can not tip a negative or zero amount`;
+        const receiverName = (event.args[1] ? event.args[1].replace('@', '').replace('<', '').replace('>', '') : '').toLowerCase();
+        const tipcorn_amount = math.fixed8(+(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0));
+
+        if (tipcorn_amount <= 0) {
+            // ask timkim for conformation on this response
+            const reply = `@${event.user.username}, can not tipcorn zero negative amount`;
             tmi.botSay(event.target, reply);
             return pending.complete(event, reply);
         }
 
-        const select_results = await mysql.query(`SELECT * FROM users WHERE twitch_username='${event.user.username}' OR twitch_username='${tousername}'`);
-        
-        if(select_results.length < 2) {
-            const unames = select_results.map(x => `@${x.twitch_username}`).join();
-            const reply = `${unames}, must be register to use the $tipcorn command (Register with: $bitcorn)`;
+        if (receiverName === '') {
+            // ask timkim for conformation on this response
+            const reply = `@${event.user.username}, you must tipcorn someone`;
             tmi.botSay(event.target, reply);
             return pending.complete(event, reply);
         }
 
-        const records = {
-            from: select_results.filter(x => x.twitch_username === event.user.username)[0],
-            to: select_results.filter(x => x.twitch_username === tousername)[0]
-        }
-
-        const { json } = await wallet.makeRequest('sendfrom', [
-            records.from.twitch_username,
-            records.to.cornaddy,
-            math.fixed8(tip_amount),
-            16,
-            `${records.from.twitch_username} Tipped ${records.to.twitch_username}`,
-            `${records.from.twitch_username} tipped user ${records.to.twitch_username}`
-        ]);
-
-        if(json.error) {
-            await mysql.logit('Wallet Error', JSON.stringify({method: 'sendfrom', module: `${event.configs.name}`, error: json.error}));
-
-            const reply = `Transaction canceled, @${event.user.username}, can not send wallet message: ${json.error.message}`;
-            tmi.botWhisper(event.user.username, reply);
+        const { id: receiverId } = await helix.getUserLogin(receiverName);
+        if (!receiverId) {
+            const reply = `cttvMOONMAN Here's a tip for you: @${event.user.username}, ${receiverName} who? cttvMOONMAN`;
+            tmi.botSay(event.target, reply);
             return pending.complete(event, reply);
         }
-
-        txMonitor.monitorInsert({
-            account: records.from.twitch_username,
-            amount: math.fixed8(tip_amount),
-            txid: json.result,
-            cornaddy: records.from.cornaddy,
-            confirmations: '0',
-            category: 'send',
-            timereceived: mysql.timestamp(),
-            comment: `${records.from.twitch_username} tipped on ${records.to.twitch_username}`
-        });
-
-        tmi.botWhisper(event.user.username, `@${event.user.username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${records.from.cornaddy} :: ${records.to.twitch_username}'s Address: ${records.to.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${json.result} :: Explorer: https://explorer.bitcornproject.com/tx/${json.result}`);
         
-        tmi.botWhisper(records.to.twitch_username, `@${records.to.twitch_username} Here is your tip receipt: [BITCORN TRANSACTION] :: Your Address: ${records.to.cornaddy} :: ${records.to.twitch_username}'s Address: ${records.from.cornaddy} :: Amount Transacted: ${math.fixed8(tip_amount)} CORN :: Transaction ID: ${json.result} :: Explorer: https://explorer.bitcornproject.com/tx/${json.result}`);
-        
-        await mysql.logit('Tip Executed', `Executed by ${event.user.username}`);
+        const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
 
-        return pending.complete(event);
+        switch (tipcorn_result.senderResponse.code) {
+            case databaseAPI.paymentCode.InternalServerError: {
+                const reply = `Something went wrong with the $tipcorn command, please report it: code ${tipcorn_result.senderResponse.code}`;
+                tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
+                return pending.complete(event, reply);
+            } case databaseAPI.paymentCode.InvalidPaymentAmount: {
+                const reply = `Something went wrong with the $tipcorn command, please report it: code ${tipcorn_result.senderResponse.code}`;
+                tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
+                return pending.complete(event, reply);
+            } case databaseAPI.paymentCode.DatabaseSaveFailure: {
+                // ask timkim for conformation on this response
+                const reply = `Something went wrong with the $tipcorn command, please report it: code ${tipcorn_result.senderResponse.code}`;
+                tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
+                return pending.complete(event, reply);
+            } case databaseAPI.paymentCode.NoRecipients: {
+                let reply = `@${tipcorn_result.senderResponse.twitchUsername}, is not a registered user: code ${tipcorn_result.senderResponse.code}`;
+                reply = `cttvMOONMAN Here's a tip for you: ${reply}. cttvMOONMAN`;
+                tmi.botSay(event.target, reply);
+                return pending.complete(event, reply);
+            } case databaseAPI.paymentCode.InsufficientFunds: {
+                // ask timkim for conformation on this response
+                const reply = `You do not have enough in your balance! (${tipcorn_result.senderResponse.userBalance} CORN)`;
+                tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
+                return pending.complete(event, reply);
+            } case databaseAPI.paymentCode.QueryFailure: {
+                let reply = `@${tipcorn_result.senderResponse.twitchUsername}, you need to register and deposit / earn BITCORN in order to use tip!`;
+                reply = `cttvMOONMAN Here's a tip for you: ${reply}. cttvMOONMAN`; // LOL nice!
+                tmi.botSay(event.target, reply);
+                return pending.complete(event, reply);
+            } case databaseAPI.paymentCode.Success: {
+                const totalTippedAmount = +tipcorn_result.senderResponse.balanceChange;
+
+                const recipientResponse = tipcorn_result.senderResponse.recipientResponses[0];
+                const msg = `You received ${recipientResponse.amount} BITCORN from ${tipcorn_result.senderResponse.twitchUsername}!`;
+                tmi.botWhisper(recipientResponse.twitchUsername, msg);
+                
+                tmi.botSay(event.target, `cttvCorn ${tipcorn_result.senderResponse.twitchUsername} just slipped ${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN with a FIRM handshake. cttvCorn`);
+                tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, `You tipped ${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN! Your BITCORN balance remaining is: ${tipcorn_result.senderResponse.userBalance}`);
+                return pending.complete(event);
+            } default: {
+                // ask timkim for conformation on this response
+                const reply = `Something went wrong with the tipcorn command, please report this: code ${tipcorn_result.senderResponse.code}`;
+                tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
+                return pending.complete(event, reply);
+            }
+        }
     }
 });
