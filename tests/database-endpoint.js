@@ -7,6 +7,7 @@
 const fs = require('fs');
 const assert = require('assert');
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
 const walletSettings = require('../settings/wallet-settings');
 const wallet = require('../source/config/wallet');
@@ -29,7 +30,7 @@ const { Ticker } = require('../public/js/server/ticker');
 
         const [{ id: twitchId, login: twitchUsername },
         { id: twitchId1, login: twitchUsername1 }] = await Promise.all([
-            helix.getUserLogin('im_brett_k'),
+            helix.getUserLogin('morepizza308'),
             helix.getUserLogin('bitcornhub')
         ]);
 
@@ -55,12 +56,10 @@ const { Ticker } = require('../public/js/server/ticker');
         }
 
         var start = new Date().getTime();
-        const token = 'fklooocmmkliod8989783493999c899-hndmnjkckkm34-337888dxjsmnk4id89';
+        const buffer = crypto.randomBytes(16);
         const [request_result1] = await Promise.all([
             databaseAPI.bitcornRequest(twitchId, twitchUsername)
         ]);
-
-        //request_result1.codeName = databaseAPI.PaymentCode().filter(x => x.code === request_result1.code)[0].name;
 
         if(request_result1.error) {
             console.error(request_result1.error);

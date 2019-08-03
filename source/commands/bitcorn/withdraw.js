@@ -29,49 +29,64 @@ module.exports = Object.create({
     async execute(event) {
         /*
         
-        code:1
-        content:{
-        
-        twitchId:"75987197"
-        twitchUsername: "username"
-        txid:"277434b972de256877389e2c09b6a63b94230a5552a68ab0ef08200f96d7f638"
-        userExists:true
-            }
+code:1
+content:{
+    twitchId:"75987197"
+    twitchUsername: "username"
+    txid:"277434b972de256877389e2c09b6a63b94230a5552a68ab0ef08200f96d7f638"
+}
         
         
         */
-        tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
-        return { success: false, event };
+        //tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
+        //return { success: false, event };
 
         if (pending.started(event)) return pending.reply(event, tmi);
 
-        const withdraw_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);
-        // Do not .toLowerCase() the address is case sensitive
-        const to_cornaddy = (event.args[1] ? event.args[1].replace('@', '').replace('<', '').replace('>', '') : '');
+        try {
+            const withdraw_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);
+            //IMPORTANT: Do not .toLowerCase() the address is case sensitive
+            const to_cornaddy = (event.args[1] ? event.args[1].replace('@', '').replace('<', '').replace('>', '') : '');
 
-        if (withdraw_amount <= 0) {
-            const reply = `@${event.user.username}, can not withdraw a negative or zero amount`;
-            tmi.botWhisper(event.user.username, reply);
+            if (withdraw_amount <= 0) {
+                const reply = `@${event.user.username}, can not withdraw a negative or zero amount - $withdraw <amount> <address>`;
+                tmi.botWhisper(event.user.username, reply);
+                return pending.complete(event, reply);
+            }
+
+            if(!to_cornaddy) {
+                const reply = `Can not withdraw without a cornaddy - $withdraw <amount> <address>`;
+                tmi.botWhisper(event.user.username, reply);
+                return pending.complete(event, reply);
+            }
+
+            const twitchId = event.user['user-id'];
+            const twitchUsername = event.user.username;
+
+            const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
+
+            switch (withdraw_result.code) {
+                case databaseAPI.walletCode.QueryFailure: {
+                    const reply = `You failed to withdraw: @${withdraw_result.content.twitchUsername} you need to register with the $bitcorn command to use withdraw`;
+                    tmi.botSay(event.target, reply);
+                    return pending.complete(event, reply);
+                } case databaseAPI.walletCode.InsufficientFunds: {
+                    const reply = `You failed to withdraw: insufficient funds`;
+                    tmi.botWhisper(withdraw_result.content.twitchUsername, reply);
+                    return pending.complete(event, reply);
+                } case databaseAPI.walletCode.Success: {
+                    const reply = `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/${withdraw_result.content.txid}`;
+                    tmi.botWhisper(withdraw_result.content.twitchUsername, reply);
+                    return pending.complete(event, reply);
+                } default: {
+                    const reply = `You failed to withdraw, please report this code: ${withdraw_result.code}`;
+                    tmi.botWhisper(withdraw_result.content.twitchUsername, reply);
+                    return pending.complete(event, reply);
+                }
+            }
+        } catch (error) {
+            const reply = `Something went wrong please report this: ${error}`;
             return pending.complete(event, reply);
         }
-
-
-        const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
-
-        switch (withdraw_result.senderResponse.code) {
-            case databaseAPI.paymentCode.QueryFailure:
-                tmi.botSay(event.target, `@${withdraw_result.senderResponse.twitchUsername} You need to register with the $bitcorn command to request a token`);
-                break;
-            case databaseAPI.paymentCode.InsufficientFunds:
-                tmi.botSay(event.target, `You failed to withdraw: InsufficientFunds ${withdraw_result.senderResponse.userBalance}`);
-                break;
-            case databaseAPI.paymentCode.Success:
-                tmi.botWhisper(withdraw_result.senderResponse.twitchUsername, `You have successfully withdrawn ${withdraw_result.senderResponse.twitchUsername} BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/${withdraw_result.senderResponse.txid}`);
-                break;
-            default:
-                tmi.botWhisper(event.user.username, `You failed to withdraw, please report this: code: ${withdraw_result.senderResponse.code}`);
-                break;
-        }
-        return pending.complete(event);
     }
 });

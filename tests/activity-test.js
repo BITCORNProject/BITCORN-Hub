@@ -27,7 +27,7 @@ const { Ticker } = require('../public/js/server/ticker');
 
         const start = new Date().getTime();
 
-        const chatternamesArr = activityTracker.getChatterActivity();
+        const chatternamesArr = activityTracker.getChatterActivity('callowcreation');
         console.log(chatternamesArr);
 
         const rain_user_count = 10;
