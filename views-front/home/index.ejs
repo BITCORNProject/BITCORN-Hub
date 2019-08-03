@@ -206,6 +206,12 @@
                                             <input class="item-input" type="number" value="30000" name="cooldown" />
                                         </div>
 
+                                        <div id="control-commands-global_cooldown" class="item-container">
+                                            <label class="item-label">GLOBAL_COOLDOWN</label>
+                                            <input type="checkbox" value="true"
+                                                name="global_cooldown" />
+                                        </div>
+
                                         <div id="control-commands-description" class="item-container">
                                             <label class="item-label">DESCRIPTION</label>
                                             <input class="item-input" type="text" value="no description here"
@@ -513,8 +519,9 @@
                     jname: $('#control-commands-name input'),
                     jaccessLevel: $('#control-commands-accessLevel select'),
                     jcooldown: $('#control-commands-cooldown input'),
+                    jexample: $('#control-commands-example input'),
                     jdescription: $('#control-commands-description input'),
-                    jexample: $('#control-commands-example input')
+                    jglobal_cooldown: $('#control-commands-global_cooldown input')
                 }
             },
             subscription: {
@@ -692,9 +699,11 @@
 
                                     let val = items[item][inputname];
                                     if (typeof val === "boolean") {
-                                        val = getBoolean.fromValue(val) ? 'true' : 'false';
+                                        val = getBoolean.fromValue(val) ? true : false;
+                                        jcontrol.prop('checked', val);
+                                    } else {
+                                        jcontrol.val(val);
                                     }
-                                    jcontrol.val(val);
                                 } else {
                                     parent.hide();
                                 }
@@ -716,6 +725,12 @@
                     }
                 }
 
+                if(result['global_cooldown']) {
+                    data.result.commands[result.prefix][result.name]['global_cooldown'] = true;
+                } else {
+                    data.result.commands[result.prefix][result.name]['global_cooldown'] = false;
+                }
+                
                 socket.emit('control-commands-changed', data.result.commands[result.prefix][result.name]);
             });
         }
