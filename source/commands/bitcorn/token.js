@@ -26,15 +26,15 @@ module.exports = Object.create({
     },
     async execute(event) {
 
+        if (pending.started(event)) return pending.reply(event, tmi);
+
+        if(!event.configs.enabled) {
+            const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+            tmi.botRespond(event.type, event.target, reply);
+            return pending.complete(event, reply);
+        }
+
         try {
-
-            if (pending.started(event)) return pending.reply(event, tmi);
-
-            if(!event.configs.enabled) {
-                const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
 
             const buffer = crypto.randomBytes(16);
             const token = buffer.toString('hex');
@@ -53,12 +53,12 @@ module.exports = Object.create({
                 tmi.botSay(event.target, reply);
                 return pending.complete(event, reply);
             } else {
-                const reply = `Something went wrong with the rain command, please report this: code ${token_result.senderResponse.code}`;
+                const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report this: code ${token_result.senderResponse.code}`;
                 tmi.botWhisper(token_result.senderResponse.twitchUsername, reply);
                 return pending.complete(event, reply);
             }
         } catch (error) {
-            const reply = `Something went wrong please report this: ${error}`;
+            const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
             return pending.complete(event, reply);
         }
     }

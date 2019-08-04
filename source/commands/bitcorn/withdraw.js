@@ -33,11 +33,12 @@ module.exports = Object.create({
 
         if(!event.configs.enabled) {
             const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
-            tmi.botSay(event.target, reply);
+            tmi.botRespond(event.type, event.target, reply);
             return pending.complete(event, reply);
         }
 
         try {
+            
             const withdraw_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);
             //IMPORTANT: Do not .toLowerCase() the address is case sensitive
             const to_cornaddy = (event.args[1] ? event.args[1].replace('@', '').replace('<', '').replace('>', '') : '');
@@ -79,7 +80,7 @@ module.exports = Object.create({
                 }
             }
         } catch (error) {
-            const reply = `Something went wrong please report this: ${error}`;
+            const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
             return pending.complete(event, reply);
         }
     }

@@ -28,15 +28,16 @@ module.exports = Object.create({
         enabled: true
     },
     async execute(event) {
+
+        if (pending.started(event)) return pending.reply(event, tmi);
+
+        if(!event.configs.enabled) {
+            const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+            tmi.botRespond(event.type, event.target, reply);
+            return pending.complete(event, reply);
+        }
+
         try {
-
-            if (pending.started(event)) return pending.reply(event, tmi);
-
-            if(!event.configs.enabled) {
-                const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
 
             const twitchId = event.user['user-id'];
             const twitchUsername = event.user.username;
@@ -74,16 +75,16 @@ module.exports = Object.create({
 
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.InternalServerError: {
-                    const reply = `Something went wrong with the $rain command, please report it: code ${rain_result.senderResponse.code}`;
+                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report it: code ${rain_result.senderResponse.code}`;
                     tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.InvalidPaymentAmount: {
-                    const reply = `Something went wrong with the $rain command, please report it: code ${rain_result.senderResponse.code}`;
+                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report it: code ${rain_result.senderResponse.code}`;
                     tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.DatabaseSaveFailure: {
                     // ask timkim for conformation on this response
-                    const reply = `Something went wrong with the $rain command, please report it: code ${rain_result.senderResponse.code}`;
+                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report it: code ${rain_result.senderResponse.code}`;
                     tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.NoRecipients: {
@@ -124,13 +125,13 @@ module.exports = Object.create({
                     return pending.complete(event, reply);
                 } default: {
                     // ask timkim for conformation on this response
-                    const reply = `Something went wrong with the rain command, please report this: code ${rain_result.senderResponse.code}`;
+                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report this: code ${rain_result.senderResponse.code}`;
                     tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
                     return pending.complete(event, reply);
                 }
             }
         } catch (error) {
-            const reply = `Something went wrong please report this: ${error}`;
+            const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
             return pending.complete(event, reply);
         }
     }

@@ -121,6 +121,7 @@ async function onMessage(type, target, user, msg, self) {
                     const timer = new Timer();
                     timer.start();
                     const result = await command.execute(Object.create({
+                        type,
                         target,
                         msg,
                         args,
@@ -197,6 +198,20 @@ function botSay(target, message) {
 
 function botWhisper(target, message) {
     enqueueMessageByType(BOT_WHISPER, target, message);
+}
+
+function botRespond(type, target, message) {
+    switch (type) {
+        case 'chat':
+            botSay(target, message);
+            break;
+        case 'whisper':
+            botWhisper(target, message);
+            break;
+        default:
+            console.error(`botRespond type ${type} is not a valid type`);
+            break;
+    }
 }
 
 function enqueueMessageByType(client, target, message) {
@@ -343,6 +358,7 @@ function removeMessageCallback(callback) {
 exports.init = init;
 exports.botSay = botSay;
 exports.botWhisper = botWhisper;
+exports.botRespond = botRespond;
 exports.getChannels = getChannels;
 exports.getChatUsers = getChatUsers;
 exports.joinChannel = joinChannel;
