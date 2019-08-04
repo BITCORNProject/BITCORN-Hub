@@ -24,24 +24,18 @@ module.exports = Object.create({
         description: 'Withraw your funds off the bot :: Commands do not work in Direct Messages',
         example: '$withdraw <amount> <address>',
         prefix: '$',
-        whisper: true
+        whisper: true,
+        enabled: true
     },
     async execute(event) {
-        /*
-        
-code:1
-content:{
-    twitchId:"75987197"
-    twitchUsername: "username"
-    txid:"277434b972de256877389e2c09b6a63b94230a5552a68ab0ef08200f96d7f638"
-}
-        
-        
-        */
-        //tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
-        //return { success: false, event };
 
         if (pending.started(event)) return pending.reply(event, tmi);
+
+        if(!event.configs.enabled) {
+            const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+            tmi.botSay(event.target, reply);
+            return pending.complete(event, reply);
+        }
 
         try {
             const withdraw_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);

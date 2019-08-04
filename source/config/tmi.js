@@ -110,9 +110,7 @@ async function onMessage(type, target, user, msg, self) {
 
                 if(allowed_testers.indexOf(user.username) === -1) {
                     if(allowed_testers.length > 0) {
-                        const reply = `@${user.username}, down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
-                        botSay(target, reply);
-                        return { success: false, message: reply };
+                        return { success: false };
                     }
                 } 
 

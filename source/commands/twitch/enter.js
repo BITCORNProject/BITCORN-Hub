@@ -17,7 +17,7 @@ module.exports = Object.create({
         prefix: '$'
     },
     async execute(event) {
-        tmi.botSay(event.target, `As we enter [${event.args.join(' ')}]`);
+        tmi.botSay(event.target, `$BITCORN [${event.args.join(' ')}]`);
         return { success: true, event };
     }
 });

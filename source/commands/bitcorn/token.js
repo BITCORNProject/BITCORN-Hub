@@ -20,15 +20,21 @@ module.exports = Object.create({
         global_cooldown: false,
         description: 'Receive a Token to log in to our Bot\'s API',
         example: '$token',
-        prefix: '$'
+        prefix: '$',
+        whisper: false,
+        enabled: true
     },
     async execute(event) {
 
         try {
-            //tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
-            //return { success: false, event };
 
             if (pending.started(event)) return pending.reply(event, tmi);
+
+            if(!event.configs.enabled) {
+                const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+                tmi.botSay(event.target, reply);
+                return pending.complete(event, reply);
+            }
 
             const buffer = crypto.randomBytes(16);
             const token = buffer.toString('hex');

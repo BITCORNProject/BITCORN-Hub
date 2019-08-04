@@ -23,14 +23,20 @@ module.exports = Object.create({
         global_cooldown: false,
         description: 'Rain a certain Amount to the last 1-3 of People who were active',
         example: '$rain <amount> <1-3>',
-        prefix: '$'
+        prefix: '$',
+        whisper: false,
+        enabled: true
     },
     async execute(event) {
         try {
-            //tmi.botSay(event.target, `@${event.user.username}, ${event.configs.prefix}${event.configs.name} system is currently under construction cttvDump System will return soon! cttvDump`);
-            //return { success: false, event };
 
             if (pending.started(event)) return pending.reply(event, tmi);
+
+            if(!event.configs.enabled) {
+                const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+                tmi.botSay(event.target, reply);
+                return pending.complete(event, reply);
+            }
 
             const twitchId = event.user['user-id'];
             const twitchUsername = event.user.username;

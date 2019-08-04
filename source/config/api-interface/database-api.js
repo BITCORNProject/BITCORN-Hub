@@ -11,14 +11,14 @@ const JsonFile = require('../../utils/json-file');
 
 function DatabaseEndpoint() {
 
-    const sql_db_auth = new JsonFile(`./settings/sql_db_auth.json`, {
+    this.sql_db_auth = new JsonFile(`./settings/sql_db_auth.json`, {
         url: '',
         client_id: '',
         client_secret: '',
         audience: ''
     });
 
-    const db_endpoints = new JsonFile('./settings/db_endpoints.json', {
+    this.db_endpoints = new JsonFile('./settings/db_endpoints.json', {
         bitcorn: '/insertuser',
         getuser: '/getuser',
         rain: '/rain',
@@ -27,9 +27,6 @@ function DatabaseEndpoint() {
         withdraw: '/withdraw',
         token: '/token'
     });
-
-    this.auth = sql_db_auth.data;
-    this.paths = db_endpoints.data;
 
     this.paymentCode = {
         InternalServerError: -6,
@@ -51,26 +48,26 @@ function DatabaseEndpoint() {
 }
 
 DatabaseEndpoint.prototype.makeRequest = async function (endpoint, data) {
-    const { access_token } = await apiRequest.fetchToken(this.auth);
+    const { access_token } = await apiRequest.fetchToken(this.sql_db_auth.getValues());
     const baseUrl = rooturl.getValues().database;
     return apiRequest.makeRequest(`${baseUrl}${endpoint}`, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequest = async function (endpoint, twitchId, data) {
-    const { access_token } = await apiRequest.fetchToken(this.auth);
+    const { access_token } = await apiRequest.fetchToken(this.sql_db_auth.getValues());
     const baseUrl = rooturl.getValues().database;
     return apiRequest.criticalRequest(`${baseUrl}${endpoint}`, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.getuserRequest = async function (twitchId, twitchUsername) {
-    return this.makeRequest(`${this.paths.getuser}`, {
+    return this.makeRequest(`${this.db_endpoints.getValues().getuser}`, {
         twitchId,
         twitchUsername
     });
 }
 
 DatabaseEndpoint.prototype.tokenRequest = async function (token, twitchId, twitchUsername) {
-    return this.makeRequest(`${this.paths.token}`, {
+    return this.makeRequest(`${this.db_endpoints.getValues().token}`, {
         twitchId,
         twitchUsername,
         token
@@ -98,7 +95,7 @@ DatabaseEndpoint.prototype._criticalRecipientsRequest = async function (path, re
 
 // With arbitrary body data
 DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId, twitchUsername) {
-    return this._criticalArbitraryRequest(`${this.paths.bitcorn}`, twitchId, {
+    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().bitcorn}`, twitchId, {
         twitchId,
         twitchUsername
     });
@@ -108,7 +105,7 @@ DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId, twitchUser
 Expect code: this.walletCode
 */
 DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, twitchUsername, amount, cornaddy) {
-    return this._criticalArbitraryRequest(`${this.paths.withdraw}`, twitchId, {
+    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().withdraw}`, twitchId, {
         twitchId,
         twitchUsername,
         amount,
@@ -121,14 +118,14 @@ DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, twitchUse
 Expect code: this.paymentCode
 */
 DatabaseEndpoint.prototype.rainRequest = async function (recipients, twitchId, twitchUsername) {
-    return this._criticalRecipientsRequest(`${this.paths.rain}`, recipients, twitchId, twitchUsername);
+    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().rain}`, recipients, twitchId, twitchUsername);
 }
 
 /*
 Expect code: this.paymentCode
 */
 DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, senderName, receiverId, receiverName, amount) {
-    return this._criticalArbitraryRequest(`${this.paths.tipcorn}`, senderId, {
+    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().tipcorn}`, senderId, {
         senderId,
         senderName,
         receiverId,
@@ -141,7 +138,7 @@ DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, senderName
 Expect code: this.paymentCode
 */
 DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitchId, twitchUsername) {
-    return this._criticalRecipientsRequest(`${this.paths.subticker}`, recipients, twitchId, twitchUsername);
+    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().subticker}`, recipients, twitchId, twitchUsername);
 }
 
 module.exports = new DatabaseEndpoint();

@@ -208,8 +208,7 @@
 
                                         <div id="control-commands-global_cooldown" class="item-container">
                                             <label class="item-label">GLOBAL_COOLDOWN</label>
-                                            <input type="checkbox" value="true"
-                                                name="global_cooldown" />
+                                            <input type="checkbox" value="true" name="global_cooldown" />
                                         </div>
 
                                         <div id="control-commands-description" class="item-container">
@@ -221,6 +220,15 @@
                                             <label class="item-label">EXAMPLE</label>
                                             <input class="item-input" type="text" value="!commands-example"
                                                 name="example" />
+                                        </div>
+                                        
+                                        <div id="control-commands-whisper" class="item-container">
+                                            <label class="item-label">WHISPER</label>
+                                            <input type="checkbox" value="true" name="whisper" />
+                                        </div>
+                                        <div id="control-commands-enabled" class="item-container">
+                                            <label class="item-label">ENABLED</label>
+                                            <input type="checkbox" value="true" name="enabled" />
                                         </div>
                                     </div>
                                     <div><input id="control-commands-save-button" type="submit" value="Save" /></div>
@@ -521,7 +529,9 @@
                     jcooldown: $('#control-commands-cooldown input'),
                     jexample: $('#control-commands-example input'),
                     jdescription: $('#control-commands-description input'),
-                    jglobal_cooldown: $('#control-commands-global_cooldown input')
+                    jglobal_cooldown: $('#control-commands-global_cooldown input'),
+                    jwhisper: $('#control-commands-whisper input'),
+                    jenabled: $('#control-commands-enabled input')
                 }
             },
             subscription: {
@@ -725,11 +735,17 @@
                     }
                 }
 
-                if(result['global_cooldown']) {
-                    data.result.commands[result.prefix][result.name]['global_cooldown'] = true;
-                } else {
-                    data.result.commands[result.prefix][result.name]['global_cooldown'] = false;
-                }
+                const setBool = (k) => {
+                    if(result[k]) {
+                        data.result.commands[result.prefix][result.name][k] = true;
+                    } else {
+                        data.result.commands[result.prefix][result.name][k] = false;
+                    }
+                };
+
+                setBool('global_cooldown');
+                setBool('whisper');
+                setBool('enabled');
                 
                 socket.emit('control-commands-changed', data.result.commands[result.prefix][result.name]);
             });
