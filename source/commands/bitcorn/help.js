@@ -4,9 +4,9 @@
 
 "use strict";
 
+const fs = require('fs');
 const tmi = require('../../config/tmi');
-const tmiCommands = require('../../tmi-commands');
-
+const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
 const pending = new Pending('help');
@@ -28,10 +28,19 @@ module.exports = Object.create({
         if (pending.started(event)) return pending.reply(event, tmi);
 
         if(!event.configs.enabled) {
-            const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+            const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
             tmi.botRespond(event.type, event.target, reply);
             return pending.complete(event, reply);
         }
+
+        const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
+        if(allowed_testers.indexOf(event.user.username) === -1) {
+            if(allowed_testers.length > 0) { 
+                const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
+                tmi.botRespond(event.type, event.target, reply);
+                return pending.complete(event, reply);
+            }
+        } 
 
         try {
             

@@ -4,11 +4,12 @@
 
 'use strict';
 
+const fs = require('fs');
 const tmi = require('../../config/tmi');
 const helix = require('../../config/authorize/helix');
-const math = require('../../utils/math');
 const databaseAPI = require('../../config/api-interface/database-api');
-
+const math = require('../../utils/math');
+const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
 const pending = new Pending('tipcorn');
@@ -30,29 +31,44 @@ module.exports = Object.create({
         if (pending.started(event)) return pending.reply(event, tmi);
 
         if(!event.configs.enabled) {
-            const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+            const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
             tmi.botRespond(event.type, event.target, reply);
             return pending.complete(event, reply);
         }
 
+        const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
+        if(allowed_testers.indexOf(event.user.username) === -1) {
+            if(allowed_testers.length > 0) { 
+                const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
+                tmi.botRespond(event.type, event.target, reply);
+                return pending.complete(event, reply);
+            }
+        } 
+
         try {
 
-            const twitchId = event.user['user-id'];
-            const twitchUsername = event.user.username;
+            if(!cmdHelper.isNumber(event.args[0])) {
+                const reply = `@${event.user.username} here is an example of the command - ${event.configs.example}`;
+                tmi.botRespond(event.type, event.target, reply);
+                return pending.complete(event, reply);
+            }
 
-            const receiverName = (event.args[1] ? event.args[1].replace('@', '').replace('<', '').replace('>', '') : '').toLowerCase();
-            const tipcorn_amount = math.fixed8(+(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0));
+            const twitchId = cmdHelper.twitch.id(event.user);
+            const twitchUsername = cmdHelper.twitch.username(event.user);
+
+            const receiverName = cmdHelper.clean.atLower(event.args[1]);
+            const tipcorn_amount = cmdHelper.clean.amount(event.args[0]);
 
             if (tipcorn_amount <= 0) {
                 // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, can not tipcorn zero negative amount - $tipcorn <amount> <username>`;
+                const reply = `@${event.user.username}, can not ${event.configs.name} zero negative amount - ${event.configs.example}`;
                 tmi.botSay(event.target, reply);
                 return pending.complete(event, reply);
             }
 
             if (receiverName === '') {
                 // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, you must tipcorn someone - $tipcorn <amount> <username>`;
+                const reply = `@${event.user.username}, you must ${event.configs.name} someone - ${event.configs.example}`;
                 tmi.botSay(event.target, reply);
                 return pending.complete(event, reply);
             }
@@ -65,6 +81,11 @@ module.exports = Object.create({
             }
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
+            if (tipcorn_result.status && tipcorn_result.status !== 200) {
+                const reply = `Can not connect to server ${event.configs.prefix}${event.configs.name} failed, please report this: status ${tipcorn_result.status}`;
+                tmi.botWhisper(event.user.username, reply);
+                return pending.complete(event, reply);
+            }
 
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.InternalServerError: {

@@ -4,10 +4,11 @@
 
 "use strict";
 
+const fs = require('fs');
+const crypto = require('crypto');
 const tmi = require('../../config/tmi');
 const databaseAPI = require('../../config/api-interface/database-api');
-const crypto = require('crypto');
-
+const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
 const pending = new Pending('token');
@@ -29,20 +30,34 @@ module.exports = Object.create({
         if (pending.started(event)) return pending.reply(event, tmi);
 
         if(!event.configs.enabled) {
-            const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+            const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
             tmi.botRespond(event.type, event.target, reply);
             return pending.complete(event, reply);
         }
+
+        const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
+        if(allowed_testers.indexOf(event.user.username) === -1) {
+            if(allowed_testers.length > 0) { 
+                const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
+                tmi.botRespond(event.type, event.target, reply);
+                return pending.complete(event, reply);
+            }
+        } 
 
         try {
 
             const buffer = crypto.randomBytes(16);
             const token = buffer.toString('hex');
 
-            const twitchId = event.user['user-id'];
-            const twitchUsername = event.user.username;
+            const twitchId = cmdHelper.twitch.id(event.user);
+            const twitchUsername = cmdHelper.twitch.username(event.user);
 
             const token_result = await databaseAPI.tokenRequest(token, twitchId, twitchUsername);
+            if (token_result.status && token_result.status !== 200) {
+                const reply = `Can not connect to server ${event.configs.prefix}${event.configs.name} failed, please report this: status ${token_result.status}`;
+                tmi.botWhisper(event.user.username, reply);
+                return pending.complete(event, reply);
+            }
 
             if (token_result.isSuccess === true) {
                 const reply = `Your Token is '${token}' (no ' ' quotes) - Use this to login here: https://dashboard.bitcornproject.com/ - If you use $token again you will receive a new token your old token will be deleted.`;

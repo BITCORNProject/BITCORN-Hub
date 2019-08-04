@@ -12,7 +12,9 @@ module.exports = Object.create({
         global_cooldown: false,
         description: 'template command description',
         example: '!template',
-        prefix: '!'
+        prefix: '!',
+        whisper: false,
+        enabled: true
     },
     async execute(event) {
         const message = `hey ${event.user.username} template: ${this.configs.prefix}${this.configs.name} ${this.configs.description}`;

@@ -4,13 +4,10 @@
 
 'use strict';
 
+const fs = require('fs');
 const tmi = require('../../config/tmi');
-const mysql = require('../../config/databases/mysql');
-const math = require('../../utils/math');
-const wallet = require('../../config/wallet');
-const txMonitor = require('../../tx-monitor');
 const databaseAPI = require('../../config/api-interface/database-api');
-
+const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
 const pending = new Pending('withdraw');
@@ -32,16 +29,31 @@ module.exports = Object.create({
         if (pending.started(event)) return pending.reply(event, tmi);
 
         if(!event.configs.enabled) {
-            const reply = `@${event.user.username}, ${event.configs.prefix}${event.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`;
+            const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
             tmi.botRespond(event.type, event.target, reply);
             return pending.complete(event, reply);
         }
 
+        const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
+        if(allowed_testers.indexOf(event.user.username) === -1) {
+            if(allowed_testers.length > 0) { 
+                const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
+                tmi.botRespond(event.type, event.target, reply);
+                return pending.complete(event, reply);
+            }
+        } 
+
         try {
             
-            const withdraw_amount = +(event.args[0] ? event.args[0].replace('<', '').replace('>', '') : 0);
+            if(!cmdHelper.isNumber(event.args[0])) {
+                const reply = `@${event.user.username} here is an example of the command - ${event.configs.example}`;
+                tmi.botRespond(event.type, event.target, reply);
+                return pending.complete(event, reply);
+            }
+
+            const withdraw_amount = cmdHelper.clean.amount(event.args[0]);
             //IMPORTANT: Do not .toLowerCase() the address is case sensitive
-            const to_cornaddy = (event.args[1] ? event.args[1].replace('@', '').replace('<', '').replace('>', '') : '');
+            const to_cornaddy = cmdHelper.clean.at(event.args[1]);
 
             if (withdraw_amount <= 0) {
                 const reply = `@${event.user.username}, can not withdraw a negative or zero amount - $withdraw <amount> <address>`;
@@ -55,10 +67,15 @@ module.exports = Object.create({
                 return pending.complete(event, reply);
             }
 
-            const twitchId = event.user['user-id'];
-            const twitchUsername = event.user.username;
+            const twitchId = cmdHelper.twitch.id(event.user);
+            const twitchUsername = cmdHelper.twitch.username(event.user);
 
             const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
+            if (withdraw_result.status && withdraw_result.status !== 200) {
+                const reply = `Can not connect to server ${event.configs.prefix}${event.configs.name} failed, please report this: status ${withdraw_result.status}`;
+                tmi.botWhisper(event.user.username, reply);
+                return pending.complete(event, reply);
+            }
 
             switch (withdraw_result.code) {
                 case databaseAPI.walletCode.QueryFailure: {
