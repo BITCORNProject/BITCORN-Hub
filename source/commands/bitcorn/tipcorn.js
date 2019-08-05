@@ -106,10 +106,10 @@ module.exports = Object.create({
                     const totalTippedAmount = Math.abs(tipcorn_result.senderResponse.balanceChange);
 
                     const recipientResponse = tipcorn_result.recipientResponses[0];
-                    const msg = `You received ${recipientResponse.amount} BITCORN from ${tipcorn_result.senderResponse.twitchUsername}!`;
+                    const msg = `You received ${recipientResponse.balanceChange} BITCORN from ${tipcorn_result.senderResponse.twitchUsername}!`;
                     tmi.botWhisper(recipientResponse.twitchUsername, msg);
 
-                    tmi.botSay(event.target, `cttvCorn ${tipcorn_result.senderResponse.twitchUsername} just slipped ${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN with a FIRM handshake. cttvCorn`);
+                    tmi.botSay(event.target, `cttvCorn @${tipcorn_result.senderResponse.twitchUsername} just slipped @${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN with a FIRM handshake. cttvCorn`);
                     tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, `You tipped ${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN! Your BITCORN balance remaining is: ${tipcorn_result.senderResponse.userBalance}`);
                     const reply = `User: ${tipcorn_result.senderResponse.twitchUsername} tipped ${totalTippedAmount} CORN to ${recipientResponse.twitchUsername} user`;
                     return pending.complete(event, reply);
