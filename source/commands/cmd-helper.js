@@ -37,6 +37,7 @@ module.exports = {
         username: (user) => user['username'],
     },
     message: {
-        enabled: (configs) => `${configs.prefix}${configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`
+        enabled: (configs) => `${configs.prefix}${configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`,
+        example: (configs) => `Here is an example of the command - ${configs.example}`
     }
 };

@@ -31,25 +31,14 @@ module.exports = Object.create({
 
         if (pending.started(event)) return pending.reply(event, tmi);
 
-        if(!event.configs.enabled) {
-            const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
-            tmi.botRespond(event.type, event.target, reply);
-            return pending.complete(event, reply);
-        }
+        if (pending.notEnabled(event)) return pending.respond(event, tmi, cmdHelper);
 
-        const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
-        if(allowed_testers.indexOf(event.user.username) === -1) {
-            if(allowed_testers.length > 0) { 
-                const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
-                tmi.botRespond(event.type, event.target, reply);
-                return pending.complete(event, reply);
-            }
-        } 
+        if (pending.notAllowed(event)) return pending.respond(event, tmi, cmdHelper);
 
         try {
 
             if(!cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1])) {
-                const reply = `@${event.user.username} here is an example of the command - ${event.configs.example}`;
+                const reply = `@${event.user.username}, ${cmdHelper.message.example(event.configs)}`;
                 tmi.botRespond(event.type, event.target, reply);
                 return pending.complete(event, reply);
             }
@@ -62,14 +51,14 @@ module.exports = Object.create({
 
             if (rain_amount <= 0) {
                 // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, can not ${event.configs.name} zero negative amount - ${event.configs.example}`;
+                const reply = `@${event.user.username}, can not ${event.configs.name} zero negative amount`;
                 tmi.botSay(event.target, reply);
                 return pending.complete(event, reply);
             }
 
             if (rain_user_count <= 0 || rain_user_count > max_rain_users_amount) {
                 // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, number of people you can rain to is 1 to ${max_rain_users_amount} - ${event.configs.example}`;
+                const reply = `@${event.user.username}, number of people you can rain to is 1 to ${max_rain_users_amount}`;
                 tmi.botSay(event.target, reply);
                 return pending.complete(event, reply);
             }
@@ -87,11 +76,8 @@ module.exports = Object.create({
             const recipients = items.map(x => ({ twitchId: x.id, twitchUsername: x.username, amount: amount }));
 
             const rain_result = await databaseAPI.rainRequest(recipients, twitchId, twitchUsername);
-            if (rain_result.status && rain_result.status !== 200) {
-                const reply = `Can not connect to server ${event.configs.prefix}${event.configs.name} failed, please report this: status ${rain_result.status}`;
-                tmi.botWhisper(event.user.username, reply);
-                return pending.complete(event, reply);
-            }
+            
+            pending.throwNotConnected(event, tmi, rain_result);
 
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.InternalServerError: {

@@ -30,25 +30,14 @@ module.exports = Object.create({
 
         if (pending.started(event)) return pending.reply(event, tmi);
 
-        if(!event.configs.enabled) {
-            const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
-            tmi.botRespond(event.type, event.target, reply);
-            return pending.complete(event, reply);
-        }
+        if (pending.notEnabled(event)) return pending.respond(event, tmi, cmdHelper);
 
-        const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
-        if(allowed_testers.indexOf(event.user.username) === -1) {
-            if(allowed_testers.length > 0) { 
-                const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
-                tmi.botRespond(event.type, event.target, reply);
-                return pending.complete(event, reply);
-            }
-        } 
+        if (pending.notAllowed(event)) return pending.respond(event, tmi, cmdHelper);
 
         try {
 
             if(!cmdHelper.isNumber(event.args[0])) {
-                const reply = `@${event.user.username} here is an example of the command - ${event.configs.example}`;
+                const reply = `@${event.user.username}, ${cmdHelper.message.example(event.configs)}`;
                 tmi.botRespond(event.type, event.target, reply);
                 return pending.complete(event, reply);
             }
@@ -81,11 +70,8 @@ module.exports = Object.create({
             }
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
-            if (tipcorn_result.status && tipcorn_result.status !== 200) {
-                const reply = `Can not connect to server ${event.configs.prefix}${event.configs.name} failed, please report this: status ${tipcorn_result.status}`;
-                tmi.botWhisper(event.user.username, reply);
-                return pending.complete(event, reply);
-            }
+            
+            pending.throwNotConnected(event, tmi, tipcorn_result);
 
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.InternalServerError: {

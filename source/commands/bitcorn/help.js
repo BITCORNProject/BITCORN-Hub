@@ -27,20 +27,9 @@ module.exports = Object.create({
 
         if (pending.started(event)) return pending.reply(event, tmi);
 
-        if(!event.configs.enabled) {
-            const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
-            tmi.botRespond(event.type, event.target, reply);
-            return pending.complete(event, reply);
-        }
+        if (pending.notEnabled(event)) return pending.respond(event, tmi, cmdHelper);
 
-        const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
-        if(allowed_testers.indexOf(event.user.username) === -1) {
-            if(allowed_testers.length > 0) { 
-                const reply = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
-                tmi.botRespond(event.type, event.target, reply);
-                return pending.complete(event, reply);
-            }
-        } 
+        if (pending.notAllowed(event)) return pending.respond(event, tmi, cmdHelper);
 
         try {
             
