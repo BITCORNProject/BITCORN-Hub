@@ -63,10 +63,10 @@ module.exports = Object.create({
                 return pending.complete(event, reply);
             }
 
-            const chatternamesArr = activityTracker.getChatterActivity(event.target);
+            const chatternamesArr = activityTracker.getChatterActivity(event.target).filter(x => x.username !== twitchUsername);
 
             if(chatternamesArr.length === 0) {
-                const reply = `There are no active chatters, let's make some noise`;                
+                const reply = `There are no active chatters, let's make some noise cttvCarlos cttvGo cttv3`;                
                 tmi.botSay(event.target, reply);
                 return pending.complete(event, reply);
             }
@@ -80,20 +80,7 @@ module.exports = Object.create({
             pending.throwNotConnected(event, tmi, rain_result);
 
             switch (rain_result.senderResponse.code) {
-                case databaseAPI.paymentCode.InternalServerError: {
-                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report it: code ${rain_result.senderResponse.code}`;
-                    tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
-                    return pending.complete(event, reply);
-                } case databaseAPI.paymentCode.InvalidPaymentAmount: {
-                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report it: code ${rain_result.senderResponse.code}`;
-                    tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
-                    return pending.complete(event, reply);
-                } case databaseAPI.paymentCode.DatabaseSaveFailure: {
-                    // ask timkim for conformation on this response
-                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report it: code ${rain_result.senderResponse.code}`;
-                    tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
-                    return pending.complete(event, reply);
-                } case databaseAPI.paymentCode.NoRecipients: {
+                case databaseAPI.paymentCode.NoRecipients: {
                     let reply = `@${rain_result.senderResponse.twitchUsername}, no registered users in chat to make it rain!`;
                     reply = `DogePls SourPls You failed to summon rain, with your weak ass rain dance. ${reply} DogePls SourPls`;
                     tmi.botSay(event.target, reply);
@@ -121,14 +108,22 @@ module.exports = Object.create({
                             singleRainedAmount = recipientResponse.balanceChange;
                         }
                     }
-                    const recipieNames = rain_result.recipientResponses.filter(x => x.code === 1).map(x => x.twitchUsername).join();
-                    const allMsg = `FeelsRainMan FeelsRainMan FeelsRainMan EUREKAAA ${recipieNames}, you all just received a glorious golden shower of ${singleRainedAmount} $BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan FeelsRainMan FeelsRainMan`
-                    tmi.botSay(event.target, allMsg);
-
-                    tmi.botSay(event.target, `GetMoney cttvGold Holy smokes! ${rain_result.senderResponse.twitchUsername} just made it RAIN ${totalRainedAmount} BITCORN on the last ${totalRainedUsers} active chatters! GetMoney cttvMadGainz`);
-                    tmi.botWhisper(rain_result.senderResponse.twitchUsername, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${recipieNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
-                    const reply = `User: ${rain_result.senderResponse.twitchUsername} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
-                    return pending.complete(event, reply);
+                    if(totalRainedUsers > 0 && totalRainedAmount > 0) {
+                        const recipieNames = rain_result.recipientResponses.filter(x => x.code === 1).map(x => x.twitchUsername).join();
+                        const allMsg = `FeelsRainMan FeelsRainMan FeelsRainMan EUREKAAA ${recipieNames}, you all just received a glorious golden shower of ${singleRainedAmount} $BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan FeelsRainMan FeelsRainMan`
+                        tmi.botSay(event.target, allMsg);
+    
+                        tmi.botSay(event.target, `GetMoney cttvGold Holy smokes! ${rain_result.senderResponse.twitchUsername} just made it RAIN ${totalRainedAmount} BITCORN on the last ${totalRainedUsers} active chatters! GetMoney cttvMadGainz`);
+                        tmi.botWhisper(rain_result.senderResponse.twitchUsername, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${recipieNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
+                        const reply = `User: ${rain_result.senderResponse.twitchUsername} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
+                        return pending.complete(event, reply);
+                    } else {
+                        // ask timkim for conformation on this response
+                        const failedNameAndCodes = rain_result.recipientResponses.filter(x => x.code !== 1).map(x => `${x.twitchUsername}:code:${x.code}`).join();
+                        const reply = `No rain ${event.configs.prefix}${event.configs.name} command, please report this: totalRainedAmount=${totalRainedAmount} codes:${failedNameAndCodes}`;
+                        tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
+                        return pending.complete(event, reply);
+                    }
                 } default: {
                     // ask timkim for conformation on this response
                     const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report this: code ${rain_result.senderResponse.code}`;
