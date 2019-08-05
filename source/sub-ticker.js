@@ -28,42 +28,7 @@ const sub_plans_bitcorn = {
     '2000': math.fixed8(0.50 * MINUTE_AWARD_MULTIPLIER),
     '3000': math.fixed8(1.00 * MINUTE_AWARD_MULTIPLIER)
 };
-/*
 
-
-        const subticker_response =
-        {
-            balance: 100,
-            amount: 0,
-            code: 1,
-            twitchId: "403023969",
-            twitchUsername: "bitcornhub",
-            recipientResponses: [
-                {
-                    amount: 1,
-                    code: 1,
-                    twitchId: "403023969",
-                    twitchUsername: "bitcornhub"
-                }
-            ]
-        }
-
-        const data = [
-            {
-                twitchId: senderId,
-                twitchUsername: senderName,
-                amount: math.fixed8(0.25),
-                subtier: '1000'
-            },
-            {
-                twitchId: receiverId,
-                twitchUsername: receiverName,
-                amount: math.fixed8(1.25),
-                subtier: '2000'
-            },
-        ];
-
-*/
 async function tickBitCornSub(limit = 100) {
 
     const timers = {

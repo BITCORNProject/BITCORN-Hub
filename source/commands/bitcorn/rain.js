@@ -4,7 +4,6 @@
 
 'use strict';
 
-const fs = require('fs');
 const tmi = require('../../config/tmi');
 const databaseAPI = require('../../config/api-interface/database-api');
 const math = require('../../utils/math');
@@ -12,7 +11,7 @@ const activityTracker = require('../../activity-tracker');
 const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
-const max_rain_users_amount = 3;
+const max_rain_users_amount = 10;
 const pending = new Pending('rain');
 
 module.exports = Object.create({
@@ -52,6 +51,13 @@ module.exports = Object.create({
             if (rain_amount <= 0) {
                 // ask timkim for conformation on this response
                 const reply = `@${event.user.username}, can not ${event.configs.name} zero negative amount`;
+                tmi.botSay(event.target, reply);
+                return pending.complete(event, reply);
+            }
+
+            if (rain_amount > databaseAPI.MAX_AMOUNT) {
+                // ask timkim for conformation on this response
+                const reply = `@${event.user.username}, can not ${event.configs.name} an amount that large - ${event.configs.example}`;
                 tmi.botSay(event.target, reply);
                 return pending.complete(event, reply);
             }
@@ -133,6 +139,7 @@ module.exports = Object.create({
             }
         } catch (error) {
             const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
+            tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
         }
     }

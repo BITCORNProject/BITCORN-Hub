@@ -4,11 +4,9 @@
 
 'use strict';
 
-const fs = require('fs');
 const tmi = require('../../config/tmi');
 const helix = require('../../config/authorize/helix');
 const databaseAPI = require('../../config/api-interface/database-api');
-const math = require('../../utils/math');
 const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
@@ -55,6 +53,13 @@ module.exports = Object.create({
                 return pending.complete(event, reply);
             }
 
+            if (tipcorn_amount > databaseAPI.MAX_AMOUNT) {
+                // ask timkim for conformation on this response
+                const reply = `@${event.user.username}, can not ${event.configs.name} an amount that large - ${event.configs.example}`;
+                tmi.botSay(event.target, reply);
+                return pending.complete(event, reply);
+            }
+
             if (receiverName === '') {
                 // ask timkim for conformation on this response
                 const reply = `@${event.user.username}, you must ${event.configs.name} someone - ${event.configs.example}`;
@@ -75,10 +80,10 @@ module.exports = Object.create({
 
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    let reply = `@${tipcorn_result.senderResponse.twitchUsername}, is not a registered user: code ${tipcorn_result.senderResponse.code}`;
+                    let reply = `@${tipcorn_result.senderResponse.twitchUsername}, is not a registered user`;
                     reply = `cttvMOONMAN Here's a tip for you: ${reply}. cttvMOONMAN`;
                     tmi.botSay(event.target, reply);
-                    return pending.complete(event, reply);
+                    return pending.complete(event, `${reply} - code ${tipcorn_result.senderResponse.code}`);
                 } case databaseAPI.paymentCode.InsufficientFunds: {
                     // ask timkim for conformation on this response
                     const reply = `You do not have enough in your balance! (${tipcorn_result.senderResponse.userBalance} CORN)`;
@@ -123,6 +128,7 @@ module.exports = Object.create({
             }
         } catch (error) {
             const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
+            tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
         }
 

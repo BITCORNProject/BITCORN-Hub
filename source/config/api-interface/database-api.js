@@ -11,6 +11,8 @@ const JsonFile = require('../../utils/json-file');
 
 function DatabaseEndpoint() {
 
+    this.MAX_AMOUNT = 100000000000;
+
     this.sql_db_auth = new JsonFile(`./settings/sql_db_auth.json`, {
         url: '',
         client_id: '',

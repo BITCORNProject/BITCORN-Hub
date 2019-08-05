@@ -50,6 +50,13 @@ module.exports = Object.create({
                 return pending.complete(event, reply);
             }
 
+            if (withdraw_amount > databaseAPI.MAX_AMOUNT) {
+                // ask timkim for conformation on this response
+                const reply = `@${event.user.username}, can not ${event.configs.name} an amount that large - ${event.configs.example}`;
+                tmi.botWhisper(event.user.username, reply);
+                return pending.complete(event, reply);
+            }
+
             if(!to_cornaddy) {
                 const reply = `Can not withdraw without a cornaddy - $withdraw <amount> <address>`;
                 tmi.botWhisper(event.user.username, reply);
@@ -84,6 +91,7 @@ module.exports = Object.create({
             }
         } catch (error) {
             const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
+            tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
         }
     }

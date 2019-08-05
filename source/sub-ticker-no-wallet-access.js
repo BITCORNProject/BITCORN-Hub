@@ -25,46 +25,7 @@ const sub_plans_bitcorn = {
     '2000': math.fixed8(0.50 * MINUTE_AWARD_MULTIPLIER),
     '3000': math.fixed8(1.00 * MINUTE_AWARD_MULTIPLIER)
 };
-/*
 
-
-        const subticker_response =
-        {
-            senderResponse: {
-                balanceChange: 100,
-                amount: 0,
-                code: 1,
-                twitchId: "403023969",
-                twitchUsername: "bitcornhub",
-                userBalance: 10101
-            },
-            recipientResponses: [
-                {
-                    balanceChange: 1,
-                    code: 1,
-                    twitchId: "403023969",
-                    twitchUsername: "bitcornhub",
-                    userBalance: 10101
-                }
-            ]
-        }
-
-        const data = [
-            {
-                twitchId: senderId,
-                twitchUsername: senderName,
-                amount: math.fixed8(0.25),
-                subtier: '1000'
-            },
-            {
-                twitchId: receiverId,
-                twitchUsername: receiverName,
-                amount: math.fixed8(1.25),
-                subtier: '2000'
-            },
-        ];
-
-*/
 async function tickBitCornSub(limit = 100) {
 
     const timers = {
@@ -119,14 +80,13 @@ async function tickBitCornSub(limit = 100) {
         });
     }
 
-    //const recip = recipients.sort()
-
     const { id: twitchId, login: twitchUsername } = await helix.getUserLogin('bitcornhub');
     const subticker_result = await databaseAPI.subtickerRequest(recipients, twitchId, twitchUsername);
 
     switch (subticker_result.senderResponse.code) {
         case databaseAPI.paymentCode.Success:
-            console.log(`Sub ticker payout ${subticker_result.recipientResponses.length} subscribers`);
+            const balanceChange = Math.abs(subticker_result.senderResponse.balanceChange);
+            console.log(`Sub ticker payout ${balanceChange} to ${subticker_result.recipientResponses.length} subscribers`);
             break;
         default:
             console.error(`Something went wrong with the subticker, please report this: code ${subticker_result.senderResponse.code}`);

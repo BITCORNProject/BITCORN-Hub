@@ -60,6 +60,7 @@ module.exports = Object.create({
             }
         } catch (error) {
             const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
+            tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
         }
     }
