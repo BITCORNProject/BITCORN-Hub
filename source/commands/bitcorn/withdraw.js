@@ -34,46 +34,49 @@ module.exports = Object.create({
 
         try {
             
-            if(!cmdHelper.isNumber(event.args[0])) {
-                const reply = `@${event.user.username}, ${cmdHelper.message.example(event.configs)}`;
-                tmi.botRespond(event.type, event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]), {
+                method: cmdHelper.message.notnumber, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.respond
+            });
 
             const withdraw_amount = cmdHelper.clean.amount(event.args[0]);
             //IMPORTANT: Do not .toLowerCase() the address is case sensitive
             const to_cornaddy = cmdHelper.clean.at(event.args[1]);
 
-            if (withdraw_amount <= 0) {
-                const reply = `@${event.user.username}, can not withdraw a negative or zero amount - $withdraw <amount> <address>`;
-                tmi.botWhisper(event.user.username, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, withdraw_amount <= 0, {
+                method: cmdHelper.message.nonegitive, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.whisper
+            });
 
-            if (withdraw_amount > databaseAPI.MAX_AMOUNT) {
-                // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, can not ${event.configs.name} an amount that large - ${event.configs.example}`;
-                tmi.botWhisper(event.user.username, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, withdraw_amount > databaseAPI.MAX_AMOUNT, {
+                method: cmdHelper.message.maxamount, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.whisper
+            });
 
-            if(!to_cornaddy) {
-                const reply = `Can not withdraw without a cornaddy - $withdraw <amount> <address>`;
-                tmi.botWhisper(event.user.username, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, !to_cornaddy, {
+                method: cmdHelper.message.cornaddyneeded, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.whisper
+            });
 
             const twitchId = cmdHelper.twitch.id(event.user);
             const twitchUsername = cmdHelper.twitch.username(event.user);
 
             const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
             
-            pending.throwNotConnected(event, tmi, withdraw_result);
+            cmdHelper.throwIfCondition(event, withdraw_result.status && withdraw_result.status !== 200, {
+                method: cmdHelper.message.apifailed,
+                params: {configs: event.configs, status: withdraw_result.status},
+                reply: cmdHelper.reply.whisper
+            });
 
             switch (withdraw_result.code) {
                 case databaseAPI.walletCode.QueryFailure: {
                     const reply = `You failed to withdraw: @${withdraw_result.content.twitchUsername} you need to register with the $bitcorn command to use withdraw`;
-                    tmi.botSay(event.target, reply);
+                    tmi.botWhisper(event.target, reply);
                     return pending.complete(event, reply);
                 } case databaseAPI.walletCode.InsufficientFunds: {
                     const reply = `You failed to withdraw: insufficient funds`;
@@ -90,6 +93,8 @@ module.exports = Object.create({
                 }
             }
         } catch (error) {
+            if (error.hasMessage) return pending.complete(event, error.message);
+    
             const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
             tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);

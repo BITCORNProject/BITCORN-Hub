@@ -38,7 +38,11 @@ module.exports = Object.create({
 
             const bitcorn_result = await databaseAPI.bitcornRequest(twitchId, twitchUsername);
             
-            pending.throwNotConnected(event, tmi, bitcorn_result);
+            cmdHelper.throwIfCondition(event, bitcorn_result.status && bitcorn_result.status !== 200, {
+                method: cmdHelper.message.apifailed,
+                params: {configs: event.configs, status: bitcorn_result.status},
+                reply: cmdHelper.reply.whisper
+            });
 
             switch (bitcorn_result.code) {
                 case databaseAPI.paymentCode.Success: {

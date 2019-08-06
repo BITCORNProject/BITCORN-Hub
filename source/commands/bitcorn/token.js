@@ -42,8 +42,12 @@ module.exports = Object.create({
             const twitchUsername = cmdHelper.twitch.username(event.user);
 
             const token_result = await databaseAPI.tokenRequest(token, twitchId, twitchUsername);
-            
-            pending.throwNotConnected(event, tmi, token_result);
+
+            cmdHelper.throwIfCondition(event, token_result.status && token_result.status !== 200, {
+                method: cmdHelper.message.apifailed,
+                params: {configs: event.configs, status: token_result.status},
+                reply: cmdHelper.reply.whisper
+            });
 
             if (token_result.isSuccess === true) {
                 const reply = `Your Token is '${token}' (no ' ' quotes) - Use this to login here: https://dashboard.bitcornproject.com/ - If you use $token again you will receive a new token your old token will be deleted.`;

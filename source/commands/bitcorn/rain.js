@@ -11,7 +11,6 @@ const activityTracker = require('../../activity-tracker');
 const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
-const max_rain_users_amount = 10;
 const pending = new Pending('rain');
 
 module.exports = Object.create({
@@ -36,11 +35,11 @@ module.exports = Object.create({
 
         try {
 
-            if(!cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1])) {
-                const reply = `@${event.user.username}, ${cmdHelper.message.example(event.configs)}`;
-                tmi.botRespond(event.type, event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
+                method: cmdHelper.message.notnumber, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.respond
+            });
 
             const twitchId = cmdHelper.twitch.id(event.user);
             const twitchUsername = cmdHelper.twitch.username(event.user);
@@ -48,42 +47,43 @@ module.exports = Object.create({
             const rain_user_count = cmdHelper.clean.amount(event.args[1]);
             const rain_amount = cmdHelper.clean.amount(event.args[0]);
 
-            if (rain_amount <= 0) {
-                // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, can not ${event.configs.name} zero negative amount`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, rain_amount <= 0, {
+                method: cmdHelper.message.nonegitive, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.chat
+            });
 
-            if (rain_amount > databaseAPI.MAX_AMOUNT) {
-                // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, can not ${event.configs.name} an amount that large - ${event.configs.example}`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, rain_amount > databaseAPI.MAX_AMOUNT, {
+                method: cmdHelper.message.maxamount, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.chat
+            });
 
-            if (rain_user_count <= 0 || rain_user_count > max_rain_users_amount) {
-                // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, number of people you can rain to is 1 to ${max_rain_users_amount}`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
+                method: cmdHelper.message.numpeople, 
+                params: {configs: event.configs, max: databaseAPI.MAX_RAIN_USERS},
+                reply: cmdHelper.reply.chat
+            });
 
             const chatternamesArr = activityTracker.getChatterActivity(event.target).filter(x => x.username !== twitchUsername);
 
-            if(chatternamesArr.length === 0) {
-                const reply = `There are no active chatters, let's make some noise cttvCarlos cttvGo cttv3`;                
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, chatternamesArr.length === 0, {
+                method: cmdHelper.message.nochatters,
+                params: {},
+                reply: cmdHelper.reply.chat
+            });
 
             const items = chatternamesArr.slice(0, rain_user_count);
             const amount = math.fixed8(rain_amount / items.length);
             const recipients = items.map(x => ({ twitchId: x.id, twitchUsername: x.username, amount: amount }));
 
             const rain_result = await databaseAPI.rainRequest(recipients, twitchId, twitchUsername);
-            
-            pending.throwNotConnected(event, tmi, rain_result);
+
+            cmdHelper.throwIfCondition(event, rain_result.status && rain_result.status !== 200, {
+                method: cmdHelper.message.apifailed,
+                params: {configs: event.configs, status: rain_result.status},
+                reply: cmdHelper.reply.whisper
+            });
 
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
@@ -114,11 +114,11 @@ module.exports = Object.create({
                             singleRainedAmount = recipientResponse.balanceChange;
                         }
                     }
-                    if(totalRainedUsers > 0 && totalRainedAmount > 0) {
+                    if (totalRainedUsers > 0 && totalRainedAmount > 0) {
                         const recipieNames = rain_result.recipientResponses.filter(x => x.code === 1).map(x => x.twitchUsername).join();
                         const allMsg = `FeelsRainMan FeelsRainMan FeelsRainMan EUREKAAA ${recipieNames}, you all just received a glorious golden shower of ${singleRainedAmount} $BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan FeelsRainMan FeelsRainMan`
                         tmi.botSay(event.target, allMsg);
-    
+
                         tmi.botSay(event.target, `GetMoney cttvGold Holy smokes! ${rain_result.senderResponse.twitchUsername} just made it RAIN ${totalRainedAmount} BITCORN on the last ${totalRainedUsers} active chatters! GetMoney cttvMadGainz`);
                         tmi.botWhisper(rain_result.senderResponse.twitchUsername, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${recipieNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
                         const reply = `User: ${rain_result.senderResponse.twitchUsername} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
@@ -138,6 +138,8 @@ module.exports = Object.create({
                 }
             }
         } catch (error) {
+            if (error.hasMessage) return pending.complete(event, error.message);
+    
             const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
             tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);

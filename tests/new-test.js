@@ -22,8 +22,17 @@ const { Ticker } = require('../public/js/server/ticker');
     try {
 
         var start = new Date().getTime();
-        const result = await databaseApi.makeRequest('/token', {});
-        console.log(`Ping Result: `, result);
+        
+        let c = (v) => `-${v}-`;
+        if(argsFunc('a var', c)) {
+
+        }
+
+        function argsFunc(a, b) {
+            console.log(a, b('me be b'));
+            return a;
+        }
+        console.log(`c=${c('c i am c')}`);
 
         var end0 = new Date().getTime();
         var time0 = (end0 - start) / 1000;

@@ -34,11 +34,11 @@ module.exports = Object.create({
 
         try {
 
-            if(!cmdHelper.isNumber(event.args[0])) {
-                const reply = `@${event.user.username}, ${cmdHelper.message.example(event.configs)}`;
-                tmi.botRespond(event.type, event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]), {
+                method: cmdHelper.message.notnumber, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.respond
+            });
 
             const twitchId = cmdHelper.twitch.id(event.user);
             const twitchUsername = cmdHelper.twitch.username(event.user);
@@ -46,37 +46,39 @@ module.exports = Object.create({
             const receiverName = cmdHelper.clean.atLower(event.args[1]);
             const tipcorn_amount = cmdHelper.clean.amount(event.args[0]);
 
-            if (tipcorn_amount <= 0) {
-                // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, can not ${event.configs.name} zero negative amount - ${event.configs.example}`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
+            cmdHelper.throwIfCondition(event, tipcorn_amount <= 0, {
+                method: cmdHelper.message.nonegitive, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.chat
+            });
 
-            if (tipcorn_amount > databaseAPI.MAX_AMOUNT) {
-                // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, can not ${event.configs.name} an amount that large - ${event.configs.example}`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
-
-            if (receiverName === '') {
-                // ask timkim for conformation on this response
-                const reply = `@${event.user.username}, you must ${event.configs.name} someone - ${event.configs.example}`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
-
-            const { id: receiverId } = await helix.getUserLogin(receiverName);
-            if (!receiverId) {
-                const reply = `cttvMOONMAN Here's a tip for you: @${event.user.username}, ${receiverName} who? cttvMOONMAN`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            }
-
-            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
+            cmdHelper.throwIfCondition(event, tipcorn_amount > databaseAPI.MAX_AMOUNT, {
+                method: cmdHelper.message.maxamount, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.chat
+            });
             
-            pending.throwNotConnected(event, tmi, tipcorn_result);
+            cmdHelper.throwIfCondition(event, receiverName === '', {
+                method: cmdHelper.message.noname, 
+                params: {configs: event.configs},
+                reply: cmdHelper.reply.chat
+            });
+            
+            const { id: receiverId } = await helix.getUserLogin(receiverName);
+
+            cmdHelper.throwIfCondition(event, !receiverId, {
+                method: cmdHelper.message.badname, 
+                params: {receiverName},
+                reply: cmdHelper.reply.chat
+            });
+            
+            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
+
+            cmdHelper.throwIfCondition(event, tipcorn_result.status && tipcorn_result.status !== 200, {
+                method: cmdHelper.message.apifailed,
+                params: {configs: event.configs, status: tipcorn_result.status},
+                reply: cmdHelper.reply.whisper
+            });
 
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
@@ -127,6 +129,8 @@ module.exports = Object.create({
                 }
             }
         } catch (error) {
+            if (error.hasMessage) return pending.complete(event, error.message);
+    
             const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
             tmi.botWhisper(event.user.username, reply);
             return pending.complete(event, reply);
