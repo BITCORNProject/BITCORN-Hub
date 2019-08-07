@@ -36,8 +36,8 @@ module.exports = Object.create({
         try {
 
             cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
-                method: cmdHelper.message.notnumber, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.notnumber,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
             });
 
@@ -48,20 +48,20 @@ module.exports = Object.create({
             const rain_amount = cmdHelper.clean.amount(event.args[0]);
 
             cmdHelper.throwIfCondition(event, rain_amount <= 0, {
-                method: cmdHelper.message.nonegitive, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.nonegitive,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
             cmdHelper.throwIfCondition(event, rain_amount > databaseAPI.MAX_AMOUNT, {
-                method: cmdHelper.message.maxamount, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.maxamount,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
             cmdHelper.throwIfCondition(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
-                method: cmdHelper.message.numpeople, 
-                params: {configs: event.configs, max: databaseAPI.MAX_RAIN_USERS},
+                method: cmdHelper.message.numpeople,
+                params: { configs: event.configs, max: databaseAPI.MAX_RAIN_USERS },
                 reply: cmdHelper.reply.chat
             });
 
@@ -81,25 +81,37 @@ module.exports = Object.create({
 
             cmdHelper.throwIfCondition(event, rain_result.status && rain_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
-                params: {configs: event.configs, status: rain_result.status},
+                params: { configs: event.configs, status: rain_result.status },
                 reply: cmdHelper.reply.whisper
             });
 
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    let reply = `@${rain_result.senderResponse.twitchUsername}, no registered users in chat to make it rain!`;
-                    reply = `DogePls SourPls You failed to summon rain, with your weak ass rain dance. ${reply} DogePls SourPls`;
-                    tmi.botSay(event.target, reply);
+                    const reply = cmdHelper.selectSwitchCase(event, {
+                        methods: {
+                            message: cmdHelper.message.norecipients.rain,
+                            reply: cmdHelper.reply.chat
+                        },
+                        params: {}
+                    });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.InsufficientFunds: {
-                    // ask timkim for conformation on this response
-                    const reply = `You do not have enough in your balance! (${rain_result.senderResponse.userBalance} CORN)`;
-                    tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
+                    const reply = cmdHelper.selectSwitchCase(event, {
+                        methods: {
+                            message: cmdHelper.message.insufficientfunds.rain,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: { balance: rain_result.senderResponse.userBalance }
+                    });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.QueryFailure: {
-                    let reply = `@${rain_result.senderResponse.twitchUsername}, you need to register and deposit / earn BITCORN in order to make it rain!`;
-                    reply = `DogePls SourPls You failed to summon rain, with your weak ass rain dance. ${reply} DogePls SourPls`;
-                    tmi.botSay(event.target, reply);
+                    const reply = cmdHelper.selectSwitchCase(event, {
+                        methods: {
+                            message: cmdHelper.message.queryfailure.rain,
+                            reply: cmdHelper.reply.chat
+                        },
+                        params: {}
+                    });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.Success: {
                     const totalRainedAmount = Math.abs(rain_result.senderResponse.balanceChange);
@@ -107,7 +119,7 @@ module.exports = Object.create({
                     let totalRainedUsers = 0;
                     for (let i = 0; i < rain_result.recipientResponses.length; i++) {
                         const recipientResponse = rain_result.recipientResponses[i];
-                        if (recipientResponse.code === 1) { // Success 
+                        if (recipientResponse.code === databaseAPI.paymentCode.Success) {
                             const msg = `Hey ${recipientResponse.twitchUsername}, ${rain_result.senderResponse.twitchUsername} just rained ${recipientResponse.balanceChange} $BITCORN on you in CryptoTradersTV's chat!`;
                             tmi.botWhisper(recipientResponse.twitchUsername, msg);
                             totalRainedUsers += 1;
@@ -115,34 +127,43 @@ module.exports = Object.create({
                         }
                     }
                     if (totalRainedUsers > 0 && totalRainedAmount > 0) {
-                        const recipieNames = rain_result.recipientResponses.filter(x => x.code === 1).map(x => x.twitchUsername).join();
-                        const allMsg = `FeelsRainMan FeelsRainMan FeelsRainMan EUREKAAA ${recipieNames}, you all just received a glorious golden shower of ${singleRainedAmount} $BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan FeelsRainMan FeelsRainMan`
-                        tmi.botSay(event.target, allMsg);
+                        // missed out on rain
+                        const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => x.twitchUsername);
+                        const failureNames = failureNamesArray.join();
 
-                        tmi.botSay(event.target, `GetMoney cttvGold Holy smokes! ${rain_result.senderResponse.twitchUsername} just made it RAIN ${totalRainedAmount} BITCORN on the last ${totalRainedUsers} active chatters! GetMoney cttvMadGainz`);
-                        tmi.botWhisper(rain_result.senderResponse.twitchUsername, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${recipieNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
+                        // success recipients
+                        const successNames = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => x.twitchUsername).join();
+
+                        const successMessage = `FeelsRainMan EUREKAAA ${successNames}, you all just received a glorious golden shower of ${singleRainedAmount} BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan`;
+                        const failedMessage = ` // PepeWhy ${failureNames} type $bitcorn to register an account PepeWhy`;
+
+                        const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
+
+                        tmi.botSay(event.target, allMsg);
+                        tmi.botWhisper(rain_result.senderResponse.twitchUsername, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
                         const reply = `User: ${rain_result.senderResponse.twitchUsername} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
                         return pending.complete(event, reply);
                     } else {
-                        // ask timkim for conformation on this response
                         const failedNameAndCodes = rain_result.recipientResponses.filter(x => x.code !== 1).map(x => `${x.twitchUsername}:code:${x.code}`).join();
                         const reply = `No rain ${event.configs.prefix}${event.configs.name} command, please report this: totalRainedAmount=${totalRainedAmount} codes:${failedNameAndCodes}`;
                         tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
                         return pending.complete(event, reply);
                     }
                 } default: {
-                    // ask timkim for conformation on this response
-                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report this: code ${rain_result.senderResponse.code}`;
-                    tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
-                    return pending.complete(event, reply);
+                    cmdHelper.throwIfCondition(event, true, {
+                        method: cmdHelper.message.somethingwrong,
+                        params: { configs: event.configs, code: rain_result.senderResponse.code },
+                        reply: cmdHelper.reply.whisper
+                    });
                 }
             }
         } catch (error) {
             if (error.hasMessage) return pending.complete(event, error.message);
-    
-            const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
-            tmi.botWhisper(event.user.username, reply);
-            return pending.complete(event, reply);
+
+            return pending.complete(event, cmdHelper.commandError(event, {
+                method: cmdHelper.message.commanderror,
+                params: { configs: event.configs, error: error }
+            }));
         }
     }
 });

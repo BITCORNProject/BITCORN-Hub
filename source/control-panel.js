@@ -10,9 +10,6 @@ const helix = require('./config/authorize/helix');
 const tmiCommands = require('./tmi-commands');
 const accessLevels = require('../settings/access-levels');
 
-//const ConfigsModel = require('./models/configs-model');
-const CommandModel = require('./models/command-model');
-
 //ConfigsModel.deleteMany({}).exec();
 const controlNames = [
     'control-dashboard',

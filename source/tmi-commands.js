@@ -8,9 +8,6 @@ const moduleloader = require('./commands/moduleloader');
 
 const JsonFile = require('../source/utils/json-file');
 
-//const ConfigsModel = require('./models/configs-model');
-const CommandModel = require('./models/command-model');
-
 const commandPrefixes = ['!', '$'];
 const commandsPaths = [
     './system',
@@ -168,18 +165,6 @@ function prefixname(command) {
             }*/
         }
     }
-
-    // load instant commands
-    const commands = await CommandModel.find().exec();
-    for (let i = 0; i < commands.length; i++) {
-        const command = commands[i];
-        addCommand({
-            name: command.name,
-            description: command.description,
-            prefix: command.prefix
-        });
-    }
-
 })();
 
 exports.getPrefixes = getPrefixes;

@@ -35,8 +35,8 @@ module.exports = Object.create({
         try {
 
             cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]), {
-                method: cmdHelper.message.notnumber, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.notnumber,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
             });
 
@@ -47,93 +47,113 @@ module.exports = Object.create({
             const tipcorn_amount = cmdHelper.clean.amount(event.args[0]);
 
             cmdHelper.throwIfCondition(event, tipcorn_amount <= 0, {
-                method: cmdHelper.message.nonegitive, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.nonegitive,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
             cmdHelper.throwIfCondition(event, tipcorn_amount > databaseAPI.MAX_AMOUNT, {
-                method: cmdHelper.message.maxamount, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.maxamount,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
-            
+
             cmdHelper.throwIfCondition(event, receiverName === '', {
-                method: cmdHelper.message.noname, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.noname,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
-            
+
             const { id: receiverId } = await helix.getUserLogin(receiverName);
 
             cmdHelper.throwIfCondition(event, !receiverId, {
-                method: cmdHelper.message.badname, 
-                params: {receiverName},
+                method: cmdHelper.message.badname,
+                params: { receiverName },
                 reply: cmdHelper.reply.chat
             });
-            
+
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
 
             cmdHelper.throwIfCondition(event, tipcorn_result.status && tipcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
-                params: {configs: event.configs, status: tipcorn_result.status},
+                params: { configs: event.configs, status: tipcorn_result.status },
                 reply: cmdHelper.reply.whisper
             });
 
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    let reply = `@${tipcorn_result.senderResponse.twitchUsername}, is not a registered user`;
-                    reply = `cttvMOONMAN Here's a tip for you: ${reply}. cttvMOONMAN`;
-                    tmi.botSay(event.target, reply);
-                    return pending.complete(event, `${reply} - code ${tipcorn_result.senderResponse.code}`);
+                    const reply = cmdHelper.selectSwitchCase(event, {
+                        methods: {
+                            message: cmdHelper.message.norecipients.tipcorn,
+                            reply: cmdHelper.reply.chat
+                        },
+                        params: {}
+                    });
+                    return pending.complete(event, `${reply} - ${tipcorn_result.senderResponse.code}`);
                 } case databaseAPI.paymentCode.InsufficientFunds: {
-                    // ask timkim for conformation on this response
-                    const reply = `You do not have enough in your balance! (${tipcorn_result.senderResponse.userBalance} CORN)`;
-                    tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
+                    const reply = cmdHelper.selectSwitchCase(event, {
+                        methods: {
+                            message: cmdHelper.message.insufficientfunds.tipcorn,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: { balance: tipcorn_result.senderResponse.userBalance }
+                    });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.QueryFailure: {
-                    let reply = `@${tipcorn_result.senderResponse.twitchUsername}, you need to register and deposit / earn BITCORN in order to use tip!`;
-                    reply = `cttvMOONMAN Here's a tip for you: ${reply}. cttvMOONMAN`; // LOL nice!
-                    tmi.botSay(event.target, reply);
+                    const reply = cmdHelper.selectSwitchCase(event, {
+                        methods: {
+                            message: cmdHelper.message.queryfailure.tipcorn.sender,
+                            reply: cmdHelper.reply.chat
+                        },
+                        params: {}
+                    });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.Success: {
-                    
+
                     const recipientResponse = tipcorn_result.recipientResponses[0];
-                    
+
                     switch (recipientResponse.code) {
                         case databaseAPI.paymentCode.Success: {
                             const totalTippedAmount = Math.abs(tipcorn_result.senderResponse.balanceChange);
                             const msg = `You received ${recipientResponse.balanceChange} BITCORN from ${tipcorn_result.senderResponse.twitchUsername}!`;
                             tmi.botWhisper(recipientResponse.twitchUsername, msg);
-        
+
                             tmi.botSay(event.target, `cttvCorn @${tipcorn_result.senderResponse.twitchUsername} just slipped @${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN with a FIRM handshake. cttvCorn`);
                             tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, `You tipped ${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN! Your BITCORN balance remaining is: ${tipcorn_result.senderResponse.userBalance}`);
                             const reply = `User: ${tipcorn_result.senderResponse.twitchUsername} tipped ${totalTippedAmount} CORN to ${recipientResponse.twitchUsername} user`;
                             return pending.complete(event, reply);
                         } case databaseAPI.paymentCode.QueryFailure: {
-                            const reply = `@${tipcorn_result.senderResponse.twitchUsername}, ${recipientResponse.twitchUsername} needs to register before they can be tipped!`;
-                            tmi.botSay(event.target, reply);
-                            return pending.complete(event, reply);           
-                        } default: {
-                            // ask timkim for conformation on this response
-                            const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report this: code ${tipcorn_result.senderResponse.code}`;
-                            tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
+                            const reply = cmdHelper.selectSwitchCase(event, {
+                                methods: {
+                                    message: cmdHelper.message.queryfailure.tipcorn.recipient,
+                                    reply: cmdHelper.reply.chat
+                                },
+                                params: {twitchUsername: recipientResponse.twitchUsername}
+                            });
                             return pending.complete(event, reply);
+                        } default: {
+                            cmdHelper.throwIfCondition(event, true, {
+                                method: cmdHelper.message.somethingwrong,
+                                params: {configs: event.configs, code: tipcorn_result.senderResponse.code},
+                                reply: cmdHelper.reply.whisper
+                            });
                         }
                     }
                 } default: {
-                    // ask timkim for conformation on this response
-                    const reply = `Something went wrong with the ${event.configs.prefix}${event.configs.name} command, please report this: code ${tipcorn_result.senderResponse.code}`;
-                    tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, reply);
-                    return pending.complete(event, reply);
+                    cmdHelper.throwIfCondition(event, true, {
+                        method: cmdHelper.message.somethingwrong,
+                        params: {configs: event.configs, code: tipcorn_result.senderResponse.code},
+                        reply: cmdHelper.reply.whisper
+                    });
                 }
             }
         } catch (error) {
             if (error.hasMessage) return pending.complete(event, error.message);
-    
-            const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
-            tmi.botWhisper(event.user.username, reply);
-            return pending.complete(event, reply);
+
+            return pending.complete(event, cmdHelper.commandError(event, {
+                method: cmdHelper.message.commanderror,
+                params: { configs: event.configs, error: error }
+            }));
         }
 
     }

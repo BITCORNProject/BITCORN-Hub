@@ -4,6 +4,7 @@
 
 "use strict";
 
+const util = require('util');
 const tmi = require('../config/tmi');
 
 function brackets(value) {
@@ -47,8 +48,31 @@ function throwIfCondition(event, condition, obj) {
         throw e;
     }
 }
+
 const messages = {
-    example: (obj) => `Here is an example of the command - ${obj.configs.example}`
+    example: (obj) => util.format(`Here is an example of the command - %s`, obj.configs.example),
+    insufficientfunds: {
+        notenough: (obj) => util.format(`You do not have enough in your balance! (%d CORN)`, obj.balance),
+        failed: () => `You failed to withdraw: insufficient funds`
+    }
+}
+
+function selectSwitchCase(event, obj) {
+    const reply = obj.methods.message(obj.params);
+    obj.methods.reply(event, true, reply);
+    return reply;
+}
+
+function commandError(event, obj) {
+    const reply = obj.method(obj.params);
+    funcs['whisper'](event, true, reply);
+    return reply;
+}
+
+function commandHelp(event, obj) {
+    const reply = obj.method(obj.params);
+    funcs[event.type](event, true, reply);
+    return reply;
 }
 
 module.exports = {
@@ -74,12 +98,34 @@ module.exports = {
         nochatters: () => `There are no active chatters, let's make some noise cttvCarlos cttvGo cttv3`,
         cornaddyneeded: () => `Can not withdraw without a cornaddy - $withdraw <amount> <address>`,
         apifailed: (obj) => `Can not connect to server ${obj.configs.prefix}${obj.configs.name} failed, please report this: status ${obj.status}`,
-        notnumber: messages.example
+        somethingwrong: (obj) => `Something went wrong with the ${obj.configs.prefix}${obj.configs.name} command, please report this: code ${obj.code}`,
+        commanderror: (obj) => `Command error in ${obj.configs.prefix}${obj.configs.name}, please report this: ${obj.error}`,
+        help: () => `cttvCorn To see all available BITCORN commands, please visit https://bitcorntimes.com/help cttvCorn`,
+        notnumber: messages.example,
+        insufficientfunds: {
+            rain: messages.insufficientfunds.notenough,
+            tipcorn: messages.insufficientfunds.notenough,
+            withdraw: messages.insufficientfunds.failed
+        },
+        queryfailure: {
+            rain: () => `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`,
+            tipcorn: {
+                sender: () => `cttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! cttvMOONMAN`,
+                recipient: (obj) => `${obj.twitchUsername} needs to register before they can be tipped!`
+            }
+        },
+        norecipients: {
+            rain: () => `DogePls SourPls You failed to summon rain, with your weak ass rain dance. No registered users in chat to make it rain! DogePls SourPls`,
+            tipcorn: () => `cttvMOONMAN Here's a tip for you: Not a registered user. cttvMOONMAN`
+        }
     },
     reply: {
         chat: (event, condition, reply) => funcs['chat'](event, condition, reply),
         whisper: (event, condition, reply) => funcs['whisper'](event, condition, reply),
         respond: (event, condition, reply) => funcs[event.type](event, condition, reply)
     },
-    throwIfCondition: throwIfCondition
+    throwIfCondition: throwIfCondition,
+    selectSwitchCase: selectSwitchCase,
+    commandError: commandError,
+    commandHelp: commandHelp
 };

@@ -79,25 +79,33 @@ module.exports = Object.create({
                     tmi.botWhisper(event.target, reply);
                     return pending.complete(event, reply);
                 } case databaseAPI.walletCode.InsufficientFunds: {
-                    const reply = `You failed to withdraw: insufficient funds`;
-                    tmi.botWhisper(withdraw_result.content.twitchUsername, reply);
+                    const reply = cmdHelper.selectSwitchCase(event, {
+                        methods: {
+                            message: cmdHelper.message.insufficientfunds.withdraw,
+                            reply: cmdHelper.reply.whisper
+                        }, 
+                        params: {}
+                    });
                     return pending.complete(event, reply);
                 } case databaseAPI.walletCode.Success: {
                     const reply = `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/${withdraw_result.content.txid}`;
                     tmi.botWhisper(withdraw_result.content.twitchUsername, reply);
                     return pending.complete(event, reply);
                 } default: {
-                    const reply = `You failed to withdraw, please report this code: ${withdraw_result.code}`;
-                    tmi.botWhisper(withdraw_result.content.twitchUsername, reply);
-                    return pending.complete(event, reply);
+                    cmdHelper.throwIfCondition(event, true, {
+                        method: cmdHelper.message.somethingwrong,
+                        params: {configs: event.configs, code: withdraw_result.code},
+                        reply: cmdHelper.reply.whisper
+                    });
                 }
             }
         } catch (error) {
             if (error.hasMessage) return pending.complete(event, error.message);
-    
-            const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
-            tmi.botWhisper(event.user.username, reply);
-            return pending.complete(event, reply);
+
+            return pending.complete(event, cmdHelper.commandError(event, {
+                method: cmdHelper.message.commanderror,
+                params: { configs: event.configs, error: error }
+            }));
         }
     }
 });

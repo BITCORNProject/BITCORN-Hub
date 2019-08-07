@@ -32,14 +32,17 @@ module.exports = Object.create({
         if (pending.notAllowed(event)) return pending.respond(event, tmi, cmdHelper);
 
         try {
-            
-            const reply = `@${event.user.username} - cttvCorn To see all available BITCORN commands, please visit https://bitcorntimes.com/help cttvCorn`;
-            tmi.botRespond(event.type, event.target, reply);
-
-            return pending.complete(event, reply);
+            return pending.complete(event, cmdHelper.commandHelp(event, {
+                method: cmdHelper.message.help,
+                params: {}
+            }));
         } catch (error) {
-            const reply = `Command error in ${event.configs.prefix}${event.configs.name}, please report this: ${error}`;
-            return pending.complete(event, reply);
+            if (error.hasMessage) return pending.complete(event, error.message);
+
+            return pending.complete(event, cmdHelper.commandError(event, {
+                method: cmdHelper.message.commanderror,
+                params: { configs: event.configs, error: error }
+            }));
         }
     }
 });

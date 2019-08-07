@@ -31,7 +31,7 @@ Pending.prototype.reply = function(event, tmi) {
 }
 
 Pending.prototype.respond = function(event, tmi, cmdHelper) {
-    const message = `@${event.user.username}, ${cmdHelper.message.enabled(event.configs)}`;
+    const message = `@${event.user.username}, ${cmdHelper.message.enabled({configs: event.configs})}`;
     tmi.botRespond(event.type, event.target, message);
     return this.complete(event, message);
 }
