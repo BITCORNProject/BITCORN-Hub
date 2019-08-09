@@ -99,9 +99,9 @@ async function tickBitCornSub(limit = 100) {
     timers.discord_sync_send = new Timer();
     timers.discord_sync_send.start();
 
-    const url = `https://bitcorn-role-sync.azurewebsites.net/subsync`;
+    const url = `https://bitcornsync.com/subsync`;
     const discord_endpoint = await fetch(url, {
-        method: 'GET'
+        method: 'POST'
     });
 
     timers.tval = timers.discord_sync_send.stop();
