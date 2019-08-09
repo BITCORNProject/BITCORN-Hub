@@ -41,10 +41,10 @@ async function sendChatMessages() {
     try {
         switch (chatItem.client) {
             case BOT_CHAT:
-                clients[BOT_CHAT].say(chatItem.target, chatItem.message);
+                await clients[BOT_CHAT].say(chatItem.target, chatItem.message);
                 break;
             case BOT_WHISPER:
-                clients[BOT_WHISPER].whisper(chatItem.target, chatItem.message);
+                await clients[BOT_WHISPER].whisper(chatItem.target, chatItem.message);
                 break;
             default:
                 break;
@@ -162,8 +162,12 @@ async function onMessageHandler(target, user, msg, self) {
     onMessage('chat', target, user, msg, self);
 }
 
-function onConnectedHandler(addr, port) {
-    console.log({ success: true, message: `TMI connected to ${addr}:${port}` });
+function onConnectedChatHandler(addr, port) {
+    console.log({ success: true, message: `TMI connected to chat ${addr}:${port}` });
+}
+
+function onConnectedWhisperHandler(addr, port) {
+    console.log({ success: true, message: `TMI connected to whisper channel ${addr}:${port}` });
 }
 
 function onNamesHandler(channel, usernames) {
@@ -287,14 +291,14 @@ async function init() {
         ]
     });
 
-    clients[BOT_CHAT].on('connected', onConnectedHandler);
+    clients[BOT_CHAT].on('connected', onConnectedChatHandler);
     clients[BOT_CHAT].on('chat', onMessageHandler);
 
     clients[BOT_CHAT].on('names', onNamesHandler);
     clients[BOT_CHAT].on('join', onJoinHandler);
     clients[BOT_CHAT].on('part', onPartHandler);
 
-    clients[BOT_WHISPER].on('connected', onConnectedHandler);
+    clients[BOT_WHISPER].on('connected', onConnectedWhisperHandler);
     clients[BOT_WHISPER].on('whisper', onWhisperHandler);
 
     try {
