@@ -380,6 +380,10 @@
                                                 type="text" value="50" name="IRC_DELAY_MS" />
                                         </div>
 
+                                        <div id="control-settings-server-max-rain-user-cache" class="item-container"><label
+                                                class="item-label">MAX_RAIN_USER_CACHE</label><input class="item-input"
+                                                type="text" value="25" name="MAX_RAIN_USER_CACHE" />
+                                        </div>
                                     </div>
 
                                     <div>
@@ -560,7 +564,8 @@
                 },
                 server: {
                     controls: {
-                        jircdelay: $('#control-settings-server-irc-delay-ms input')
+                        jircdelayms: $('#control-settings-server-irc-delay-ms input'),
+                        jmaxrainusercache: $('#control-settings-server-max-rain-user-cache input')
                     }
                 },
                 mysql: {

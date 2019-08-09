@@ -99,7 +99,7 @@ async function tickBitCornSub(limit = 100) {
     timers.discord_sync_send = new Timer();
     timers.discord_sync_send.start();
 
-    const url = `https://bitcorn-role-sync.azurewebsites.net/discord`;
+    const url = `https://bitcorn-role-sync.azurewebsites.net/subsync`;
     const discord_endpoint = await fetch(url, {
         method: 'GET'
     });
@@ -140,7 +140,7 @@ async function init() {
         const limit = 100;
         await tickBitCornSub(limit);
     });
-    //tierticker.start();
+    tierticker.start();
 
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }

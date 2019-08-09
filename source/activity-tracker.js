@@ -7,7 +7,7 @@
 const tmi = require('./config/tmi');
 
 
-const MAX_RAIN_USER_CACHE = 100 * 1.4;
+const MAX_RAIN_USER_CACHE = 25 * 1.4;
 const activeChatters = {};
 const cursorIndex = {};
 

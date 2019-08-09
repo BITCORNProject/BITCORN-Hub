@@ -129,12 +129,12 @@ module.exports = Object.create({
                     if (totalRainedUsers > 0 && totalRainedAmount > 0) {
                         // missed out on rain
                         const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => x.twitchUsername);
-                        const failureNames = failureNamesArray.join();
+                        const failureNames = failureNamesArray.join(' ');
 
                         // success recipients
-                        const successNames = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => x.twitchUsername).join();
+                        const successNames = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => x.twitchUsername).join(' ');
 
-                        const successMessage = `FeelsRainMan EUREKAAA ${successNames}, you all just received a glorious golden shower of ${singleRainedAmount} BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan`;
+                        const successMessage = `FeelsRainMan ${successNames}, you all just received a glorious CORN shower of ${singleRainedAmount} BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan`;
                         const failedMessage = ` // PepeWhy ${failureNames} type $bitcorn to register an account PepeWhy`;
 
                         const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
@@ -144,7 +144,7 @@ module.exports = Object.create({
                         const reply = `User: ${rain_result.senderResponse.twitchUsername} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
                         return pending.complete(event, reply);
                     } else {
-                        const failedNameAndCodes = rain_result.recipientResponses.filter(x => x.code !== 1).map(x => `${x.twitchUsername}:code:${x.code}`).join();
+                        const failedNameAndCodes = rain_result.recipientResponses.filter(x => x.code !== 1).map(x => `${x.twitchUsername}:code:${x.code}`).join(' ');
                         const reply = `No rain ${event.configs.prefix}${event.configs.name} command, please report this: totalRainedAmount=${totalRainedAmount} codes:${failedNameAndCodes}`;
                         tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
                         return pending.complete(event, reply);

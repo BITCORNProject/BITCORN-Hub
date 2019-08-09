@@ -6,6 +6,7 @@
 
 const util = require('util');
 const tmi = require('../config/tmi');
+const JsonFile = require('../../source/utils/json-file');
 
 function brackets(value) {
     return value ? value.replace('<', '').replace('>', '') : ''
@@ -49,14 +50,6 @@ function throwIfCondition(event, condition, obj) {
     }
 }
 
-const messages = {
-    example: (obj) => util.format(`Here is an example of the command - %s`, obj.configs.example),
-    insufficientfunds: {
-        notenough: (obj) => util.format(`You do not have enough in your balance! (%d CORN)`, obj.balance),
-        failed: () => `You failed to withdraw: insufficient funds`
-    }
-}
-
 function selectSwitchCase(event, obj) {
     const reply = obj.methods.message(obj.params);
     obj.methods.reply(event, true, reply);
@@ -75,6 +68,48 @@ function commandHelp(event, obj) {
     return reply;
 }
 
+const messageStrings = new JsonFile('./settings/strings.json', {
+    enabled: `%s%s down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`,
+    example: `Here is an example of the command - %s`,
+    nonegitive: `Can not %s zero or negative amount`,
+    maxamount: `Can not %s an amount that large - %s`,
+    numpeople: `Number of people you can %s to is 1 to %d`,
+    noname: `You must %s someone - %s`,
+    badname: `cttvMOONMAN Here's a tip for you: %s who? cttvMOONMAN`,
+    nochatters: `There are no active chatters, let's make some noise cttvCarlos cttvGo cttv3`,
+    cornaddyneeded: `Can not withdraw without a cornaddy - $withdraw <amount> <address>`,
+    apifailed: `Can not connect to server %s%s failed, please report this: status %d`,
+    somethingwrong: `Something went wrong with the %s%s command, please report this: code %d`,
+    commanderror: `Command error in %s%s, please report this: %s`,
+    help: `cttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ cttvCorn`,
+    usebitcorn: `Use $bitcorn to register and see your balance`,
+    notnumber: `Here is an example of the command - %s`,
+    insufficientfunds: {
+        rain: `You do not have enough in your balance! (%d CORN)`,
+        tipcorn: `You do not have enough in your balance! (%d CORN)`,
+        withdraw: `You failed to withdraw: insufficient funds`
+    },
+    queryfailure: {
+        rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`,
+        tipcorn: {
+            sender: `cttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! cttvMOONMAN`,
+            recipient: `%s needs to register before they can be tipped!`
+        }
+    },
+    norecipients: {
+        rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. No registered users in chat to make it rain! DogePls SourPls`,
+        tipcorn: `cttvMOONMAN Here's a tip for you: Not a registered user. cttvMOONMAN`
+    }
+});
+
+function strings() {
+    return messageStrings.getValues();
+}
+
+const messages = {
+    example: (obj) => util.format(strings().example, obj.configs.example)
+}
+
 module.exports = {
     isNumber: isNumber,
     clean: {
@@ -88,35 +123,36 @@ module.exports = {
         username: (user) => user['username'],
     },
     message: {
-        enabled: (obj) => `${obj.configs.prefix}${obj.configs.name} down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`,
-        example: messages.example,
-        nonegitive: (obj) => `Can not ${obj.configs.name} zero or negative amount`,
-        maxamount: (obj) => `Can not ${obj.configs.name} an amount that large - ${messages.example(obj)}`,
-        numpeople: (obj) => `Number of people you can ${obj.configs.name} to is 1 to ${obj.max}`,
-        noname: (obj) => `You must ${obj.configs.name} someone - ${messages.example(obj)}`,
-        badname: (obj) => `cttvMOONMAN Here's a tip for you: ${obj.receiverName} who? cttvMOONMAN`,
-        nochatters: () => `There are no active chatters, let's make some noise cttvCarlos cttvGo cttv3`,
-        cornaddyneeded: () => `Can not withdraw without a cornaddy - $withdraw <amount> <address>`,
-        apifailed: (obj) => `Can not connect to server ${obj.configs.prefix}${obj.configs.name} failed, please report this: status ${obj.status}`,
-        somethingwrong: (obj) => `Something went wrong with the ${obj.configs.prefix}${obj.configs.name} command, please report this: code ${obj.code}`,
-        commanderror: (obj) => `Command error in ${obj.configs.prefix}${obj.configs.name}, please report this: ${obj.error}`,
-        help: () => `cttvCorn To see all available BITCORN commands, please visit https://bitcorntimes.com/help cttvCorn`,
-        notnumber: messages.example,
+        enabled: (obj) => util.format(strings().enabled, obj.configs.prefix, obj.configs.name),
+        example: (obj) => util.format(strings().example, obj.configs.example),
+        nonegitive: (obj) => util.format(strings().nonegitive, obj.configs.name),
+        maxamount: (obj) => util.format(strings().maxamount, obj.configs.name, messages.example(obj)),
+        numpeople: (obj) => util.format(strings().numpeople, obj.configs.name, obj.max),
+        noname: (obj) => util.format(strings().noname, obj.configs.name, messages.example(obj)),
+        badname: (obj) => util.format(strings().badname, obj.receiverName),
+        nochatters: () => util.format(strings().nochatters),
+        cornaddyneeded: () => util.format(strings().cornaddyneeded),
+        apifailed: (obj) => util.format(strings().apifailed, obj.configs.prefix, obj.configs.name, obj.status),
+        somethingwrong: (obj) => util.format(strings().somethingwrong, obj.configs.prefix, obj.configs.name, obj.code),
+        commanderror: (obj) => util.format(strings().commanderror, obj.configs.prefix, obj.configs.name, obj.error),
+        help: () => util.format(strings().help),
+        usebitcorn: () => util.format(strings().usebitcorn),
+        notnumber: (obj) => util.format(strings().notnumber, obj.configs.example),
         insufficientfunds: {
-            rain: messages.insufficientfunds.notenough,
-            tipcorn: messages.insufficientfunds.notenough,
-            withdraw: messages.insufficientfunds.failed
+            rain: (obj) => util.format(strings().insufficientfunds.rain, obj.balance),
+            tipcorn: (obj) => util.format(strings().insufficientfunds.tipcorn, obj.balance),
+            withdraw: () => util.format(strings().insufficientfunds.whisper)
         },
         queryfailure: {
-            rain: () => `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`,
+            rain: () => util.format(strings().queryfailure.rain),
             tipcorn: {
-                sender: () => `cttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! cttvMOONMAN`,
-                recipient: (obj) => `${obj.twitchUsername} needs to register before they can be tipped!`
+                sender: () => util.format(strings().queryfailure.tipcorn.sender),
+                recipient: (obj) => util.format(strings().queryfailure.tipcorn.recipient, obj.twitchUsername)
             }
         },
         norecipients: {
-            rain: () => `DogePls SourPls You failed to summon rain, with your weak ass rain dance. No registered users in chat to make it rain! DogePls SourPls`,
-            tipcorn: () => `cttvMOONMAN Here's a tip for you: Not a registered user. cttvMOONMAN`
+            rain: () => util.format(strings().norecipients.rain),
+            tipcorn: () => util.format(strings().norecipients.tipcorn)
         }
     },
     reply: {
