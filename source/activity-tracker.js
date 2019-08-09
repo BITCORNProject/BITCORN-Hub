@@ -6,9 +6,10 @@
 
 const tmi = require('./config/tmi');
 
+const JsonFile = require('../source/utils/json-file');
 
 const MAX_RAIN_USER_CACHE = 25 * 1.4;
-const activeChatters = {};
+let activeChatters = {};
 const cursorIndex = {};
 
 async function onChatMessage(target, user, msg, self) {
@@ -24,6 +25,8 @@ const ommit_usernames = [
     "stay_hydrated_bot"
 ];
 
+const activityTracker = new JsonFile('./settings/activity-tracker.json', {});
+
 function addToActiveChatters(target, id, username) {
     if (ommit_usernames.indexOf(username) !== -1) return;
 
@@ -36,6 +39,8 @@ function addToActiveChatters(target, id, username) {
 
     cursorIndex[target] = (cursorIndex[target] + 1) % MAX_RAIN_USER_CACHE;
     activeChatters[target][cursorIndex[target]] = { id, username };
+
+    activityTracker.setValues(activeChatters);
 }
 
 function getChatterActivity(target) {
@@ -63,6 +68,8 @@ function getChatterActivity(target) {
 async function init() {
 
     tmi.addMessageCallback(onChatMessage);
+
+    activeChatters = activityTracker.getValues();
 
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
