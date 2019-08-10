@@ -41,10 +41,12 @@ async function sendChatMessages() {
     try {
         switch (chatItem.client) {
             case BOT_CHAT:
-                await clients[BOT_CHAT].say(chatItem.target, chatItem.message);
+                await clients[BOT_CHAT].say(chatItem.target, chatItem.message)
+                    .catch(error => { throw new Error(`Chat Channel [queue-size: ${chatQueue.items.size()}]: ${error}`) });
                 break;
             case BOT_WHISPER:
-                await clients[BOT_WHISPER].whisper(chatItem.target, chatItem.message);
+                await clients[BOT_WHISPER].whisper(chatItem.target, chatItem.message)
+                    .catch(error => { throw new Error(`Whisper Channel [queue-size: ${chatQueue.items.size()}]: ${error}`) });
                 break;
             default:
                 break;
@@ -55,10 +57,12 @@ async function sendChatMessages() {
         console.error(e);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS));
+    (new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS)))
+        .then(() => {
+            chatQueue.isBusy = false;
+            sendChatMessages();
+        })
 
-    chatQueue.isBusy = false;
-    sendChatMessages();
 }
 
 async function onMessage(type, target, user, msg, self) {
@@ -85,9 +89,9 @@ async function onMessage(type, target, user, msg, self) {
                     } else {
                         cooldowns[user.username] = {};
                     }
-                    cooldowns[user.username][command.configs.name] = (new Date()).getTime() + (+command.configs.cooldown);
+                    cooldowns[user.username][cname] = (new Date()).getTime() + (+command.configs.cooldown);
                 } else {
-                    if(cname in global_cooldowns) {
+                    if (cname in global_cooldowns) {
                         const cooldownTime = +(global_cooldowns[cname]);
                         const time = (new Date()).getTime();
                         if (time < cooldownTime) {
@@ -103,8 +107,8 @@ async function onMessage(type, target, user, msg, self) {
             }
             if (command.execute) {
 
-                if(command.configs.whisper && type !== 'whisper')  return { success: false, message: `type=${type}` };
-                if(!command.configs.whisper && type === 'whisper')  return { success: false, message: `type=${type}` };
+                if (command.configs.whisper && type !== 'whisper') return { success: false, message: `type=${type}` };
+                if (!command.configs.whisper && type === 'whisper') return { success: false, message: `type=${type}` };
 
                 if (accessLevels.userHasAccess(user, command.configs.accessLevel) === true) {
                     const timer = new Timer();
@@ -149,10 +153,10 @@ async function onMessage(type, target, user, msg, self) {
 
 async function onWhisperHandler(target, user, msg, self) {
 
-    if(user.username.toLowerCase() === auth.data.BOT_USERNAME.toLowerCase()) return {success: false, message: `self`};
+    if (user.username.toLowerCase() === auth.data.BOT_USERNAME.toLowerCase()) return { success: false, message: `self` };
 
     onMessage('whisper', target, user, msg, self);
-    
+
 }
 
 async function onMessageHandler(target, user, msg, self) {
@@ -210,11 +214,9 @@ function botRespond(type, target, message) {
 function enqueueMessageByType(client, target, message) {
     if (clients[client].readyState() != 'OPEN') {
         console.log({ success: false, message: `IRC client ${client} not OPEN`, 'irc-client': client, position: chatQueue.items.size() });
-    } else {
-        chatQueue.items.enqueue({ target, message, client });
-        sendChatMessages();
-        //console.log({ success: true, 'irc-client': client, position: chatQueue.items.size() });
     }
+    chatQueue.items.enqueue({ target, message, client });
+    sendChatMessages();
 }
 
 function cleanChannel(channel) {

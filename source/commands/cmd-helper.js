@@ -50,9 +50,26 @@ function throwIfCondition(event, condition, obj) {
     }
 }
 
-function selectSwitchCase(event, obj) {
+function commandReply(event, obj) {
     const reply = obj.methods.message(obj.params);
     obj.methods.reply(event, true, reply);
+    return reply;
+}
+
+function commandReplyByCondition(event, condition, obj) {
+    const index = condition ? 1 : 0;
+    const reply = obj.messages[index](obj.params[index]);
+    obj.reply(event, true, reply);
+    return reply;
+}
+
+function commandReplies(event, objs) {
+    let reply = ``;
+    for (let index = 0; index < objs.length; index++) {
+        const obj = objs[index];
+        reply = obj.message(obj.params);
+        obj.reply(event, true, reply);
+    }
     return reply;
 }
 
@@ -67,7 +84,7 @@ function commandHelp(event, obj) {
     funcs[event.type](event, true, reply);
     return reply;
 }
-
+//an error occured please contact bitcorn support staff on discord
 const messageStrings = new JsonFile('./settings/strings.json', {
     enabled: `%s%s down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`,
     example: `Here is an example of the command - %s`,
@@ -84,6 +101,9 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     help: `cttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ cttvCorn`,
     usebitcorn: `Use $bitcorn to register and see your balance`,
     notnumber: `Here is an example of the command - %s`,
+    success: {
+        withdraw: `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`
+    },
     insufficientfunds: {
         rain: `You do not have enough in your balance! (%d CORN)`,
         tipcorn: `You do not have enough in your balance! (%d CORN)`,
@@ -94,11 +114,28 @@ const messageStrings = new JsonFile('./settings/strings.json', {
         tipcorn: {
             sender: `cttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! cttvMOONMAN`,
             recipient: `%s needs to register before they can be tipped!`
-        }
+        },
+        withdraw: `You failed to withdraw: you need to register with the $bitcorn command to use withdraw`
     },
     norecipients: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. No registered users in chat to make it rain! DogePls SourPls`,
         tipcorn: `cttvMOONMAN Here's a tip for you: Not a registered user. cttvMOONMAN`
+    },
+    transactiontoolarge: {
+        withdraw: `Withdraw transaction too large`
+    },
+    token: {
+        success: `Your Token is '%s' (no ' ' quotes) - Use this to login here: https://dashboard.bitcornproject.com/ - If you use $token again you will receive a new token your old token will be deleted.`,
+        failed: `You need to register with the $bitcorn command to request a token`
+    },
+    bitcorn: {
+        isnewuser: `Hey! You just registered a new BITCORN wallet address %s to your twitchID! Your current balance of $BITCORN is %s`,
+        notnewuser: `Howdy BITCORN Farmer!  You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`
+    },
+    tipcorn: {
+        recipient: `You received %d BITCORN from %s!`,
+        tochat: `cttvCorn @%s just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn`,
+        sender: `You tipped %s %d BITCORN! Your BITCORN balance remaining is: %d`
     }
 });
 
@@ -138,21 +175,41 @@ module.exports = {
         help: () => util.format(strings().help),
         usebitcorn: () => util.format(strings().usebitcorn),
         notnumber: (obj) => util.format(strings().notnumber, obj.configs.example),
+        success: {
+            withdraw:  (obj) => util.format(strings().success.withdraw, obj.txid),
+        },
         insufficientfunds: {
             rain: (obj) => util.format(strings().insufficientfunds.rain, obj.balance),
             tipcorn: (obj) => util.format(strings().insufficientfunds.tipcorn, obj.balance),
-            withdraw: () => util.format(strings().insufficientfunds.whisper)
+            withdraw: () => util.format(strings().insufficientfunds.withdraw)
         },
         queryfailure: {
             rain: () => util.format(strings().queryfailure.rain),
             tipcorn: {
                 sender: () => util.format(strings().queryfailure.tipcorn.sender),
                 recipient: (obj) => util.format(strings().queryfailure.tipcorn.recipient, obj.twitchUsername)
-            }
+            },
+            withdraw: () => util.format(strings().queryfailure.withdraw),
         },
         norecipients: {
             rain: () => util.format(strings().norecipients.rain),
             tipcorn: () => util.format(strings().norecipients.tipcorn)
+        },
+        transactiontoolarge: {
+            withdraw: () => util.format(strings().transactiontoolarge.withdraw)
+        },
+        token: {
+            success: (obj) => util.format(strings().token.success, obj.token),
+            failed: () => util.format(strings().token.failed),
+        },
+        bitcorn: {
+            isnewuser: (obj) => util.format(strings().bitcorn.isnewuser, obj.cornaddy, obj.balance),
+            notnewuser: (obj) => util.format(strings().bitcorn.notnewuser, obj.balance, obj.cornaddy)
+        },
+        tipcorn: {
+            recipient: (obj) => util.format(strings().tipcorn.recipient, obj.balanceChange, obj.twitchUsername),
+            tochat: (obj) => util.format(strings().tipcorn.tochat, obj.totalTippedAmount, obj.recipientName, obj.balance, obj.senderName),
+            sender: (obj) => util.format(strings().tipcorn.sender, obj.twitchUsername, obj.totalTippedAmount, obj.userBalance)
         }
     },
     reply: {
@@ -161,7 +218,9 @@ module.exports = {
         respond: (event, condition, reply) => funcs[event.type](event, condition, reply)
     },
     throwIfCondition: throwIfCondition,
-    selectSwitchCase: selectSwitchCase,
+    commandReply: commandReply,
+    commandReplyByCondition: commandReplyByCondition,
+    commandReplies: commandReplies,
     commandError: commandError,
     commandHelp: commandHelp
 };

@@ -50,20 +50,29 @@ module.exports = Object.create({
             });
 
             if (token_result.isSuccess === true) {
-                const reply = `Your Token is '${token}' (no ' ' quotes) - Use this to login here: https://dashboard.bitcornproject.com/ - If you use $token again you will receive a new token your old token will be deleted.`;
-                tmi.botWhisper(token_result.twitchUsername, reply);
+                const reply = cmdHelper.commandReply(event, {
+                    methods: {
+                        message: cmdHelper.message.token.success,
+                        reply: cmdHelper.reply.whisper
+                    },
+                    params: {token}
+                });
                 return pending.complete(event, reply);
             } else if (token_result.userExists === false) {
-                const reply = `@${token_result.twitchUsername} You need to register with the $bitcorn command to request a token`;
-                tmi.botSay(event.target, reply);
-                return pending.complete(event, reply);
-            } else {
-                cmdHelper.throwIfCondition(event, true, {
-                    method: cmdHelper.message.somethingwrong,
-                    params: {configs: event.configs, code: token_result.senderResponse.code},
-                    reply: cmdHelper.reply.whisper
+                const reply = cmdHelper.commandReply(event, {
+                    methods: {
+                        message: cmdHelper.message.token.failed,
+                        reply: cmdHelper.reply.chat
+                    },
+                    params: {}
                 });
+                return pending.complete(event, reply);
             }
+            cmdHelper.throwIfCondition(event, true, {
+                method: cmdHelper.message.somethingwrong,
+                params: {configs: event.configs, code: token_result.senderResponse.code},
+                reply: cmdHelper.reply.whisper
+            });
         } catch (error) {
             if (error.hasMessage) return pending.complete(event, error.message);
 

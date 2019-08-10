@@ -46,10 +46,15 @@ module.exports = Object.create({
 
             switch (bitcorn_result.code) {
                 case databaseAPI.paymentCode.Success: {
-                    const reply = bitcorn_result.content.isnewuser ?
-                        `Hey! You just registered a new BITCORN wallet address ${bitcorn_result.content.cornaddy} to your twitchID! Your current balance of $BITCORN is ${bitcorn_result.content.balance}` :
-                        `Howdy BITCORN Farmer!  You have amassed ${bitcorn_result.content.balance} $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: ${bitcorn_result.content.cornaddy}`
-                    tmi.botWhisper(bitcorn_result.content.twitchUsername, reply);
+                    
+                    const reply = cmdHelper.commandReplyByCondition(event, bitcorn_result.content.isnewuser, {
+                        reply: cmdHelper.reply.whisper,
+                        messages: [cmdHelper.message.bitcorn.notnewuser, cmdHelper.message.bitcorn.isnewuser],
+                        params: [
+                            { balance: bitcorn_result.content.balance, cornaddy: bitcorn_result.content.cornaddy },
+                            { balance: bitcorn_result.content.balance, cornaddy: bitcorn_result.content.cornaddy },
+                        ]
+                    });
                     return pending.complete(event, reply);
                 } default: {
                     cmdHelper.throwIfCondition(event, true, {

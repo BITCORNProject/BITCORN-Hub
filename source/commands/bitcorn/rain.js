@@ -53,7 +53,7 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.chat
             });
 
-            cmdHelper.throwIfCondition(event, rain_amount > databaseAPI.MAX_AMOUNT, {
+            cmdHelper.throwIfCondition(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
@@ -87,7 +87,7 @@ module.exports = Object.create({
 
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    const reply = cmdHelper.selectSwitchCase(event, {
+                    const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.norecipients.rain,
                             reply: cmdHelper.reply.chat
@@ -96,7 +96,7 @@ module.exports = Object.create({
                     });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.InsufficientFunds: {
-                    const reply = cmdHelper.selectSwitchCase(event, {
+                    const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.insufficientfunds.rain,
                             reply: cmdHelper.reply.whisper
@@ -105,7 +105,7 @@ module.exports = Object.create({
                     });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.QueryFailure: {
-                    const reply = cmdHelper.selectSwitchCase(event, {
+                    const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.queryfailure.rain,
                             reply: cmdHelper.reply.chat
@@ -121,7 +121,7 @@ module.exports = Object.create({
                         const recipientResponse = rain_result.recipientResponses[i];
                         if (recipientResponse.code === databaseAPI.paymentCode.Success) {
                             const msg = `Hey ${recipientResponse.twitchUsername}, ${rain_result.senderResponse.twitchUsername} just rained ${recipientResponse.balanceChange} $BITCORN on you in CryptoTradersTV's chat!`;
-                            tmi.botWhisper(recipientResponse.twitchUsername, msg);
+                            //tmi.botWhisper(recipientResponse.twitchUsername, msg);
                             totalRainedUsers += 1;
                             singleRainedAmount = recipientResponse.balanceChange;
                         }

@@ -11,7 +11,8 @@ const JsonFile = require('../../utils/json-file');
 
 function DatabaseEndpoint() {
 
-    this.MAX_AMOUNT = 100000000000;
+    this.MAX_WALLET_AMOUNT = 100000000000;
+    this.MAX_WITHDRAW_AMOUNT = 100000;
     this.MAX_RAIN_USERS = 10;
 
     this.sql_db_auth = new JsonFile(`./settings/sql_db_auth.json`, {
@@ -42,6 +43,7 @@ function DatabaseEndpoint() {
     }
 
     this.walletCode = {
+        TransactionTooLarge: -5,
         InsufficientFunds: -4,
         QueryFailure: -3,
         InternalServerError: -2,

@@ -52,7 +52,7 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.chat
             });
 
-            cmdHelper.throwIfCondition(event, tipcorn_amount > databaseAPI.MAX_AMOUNT, {
+            cmdHelper.throwIfCondition(event, tipcorn_amount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
@@ -82,7 +82,7 @@ module.exports = Object.create({
 
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    const reply = cmdHelper.selectSwitchCase(event, {
+                    const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.norecipients.tipcorn,
                             reply: cmdHelper.reply.chat
@@ -91,7 +91,7 @@ module.exports = Object.create({
                     });
                     return pending.complete(event, `${reply} - ${tipcorn_result.senderResponse.code}`);
                 } case databaseAPI.paymentCode.InsufficientFunds: {
-                    const reply = cmdHelper.selectSwitchCase(event, {
+                    const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.insufficientfunds.tipcorn,
                             reply: cmdHelper.reply.whisper
@@ -100,7 +100,7 @@ module.exports = Object.create({
                     });
                     return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.QueryFailure: {
-                    const reply = cmdHelper.selectSwitchCase(event, {
+                    const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.queryfailure.tipcorn.sender,
                             reply: cmdHelper.reply.chat
@@ -114,27 +114,37 @@ module.exports = Object.create({
 
                     switch (recipientResponse.code) {
                         case databaseAPI.paymentCode.Success: {
+
                             const totalTippedAmount = Math.abs(tipcorn_result.senderResponse.balanceChange);
+                            /*
+                            const reply = cmdHelper.commandReplies(event, [
+                                {reply: cmdHelper.reply.whisper, message: cmdHelper.message.tipcorn.recipient, params:{balanceChange: recipientResponse.balanceChange, twitchUsername: tipcorn_result.senderResponse.twitchUsername}},
+                                {reply: cmdHelper.reply.chat, message: cmdHelper.message.tipcorn.tochat, params:{totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername}},
+                                {reply: cmdHelper.reply.whisper, message: cmdHelper.message.tipcorn.sender, params:{totalTippedAmount, twitchUsername: recipientResponse.twitchUsername, userBalance: tipcorn_result.senderResponse.userBalance}}
+                            ]);
+                            */
+                            
                             const msg = `You received ${recipientResponse.balanceChange} BITCORN from ${tipcorn_result.senderResponse.twitchUsername}!`;
                             tmi.botWhisper(recipientResponse.twitchUsername, msg);
 
                             tmi.botSay(event.target, `cttvCorn @${tipcorn_result.senderResponse.twitchUsername} just slipped @${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN with a FIRM handshake. cttvCorn`);
                             tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, `You tipped ${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN! Your BITCORN balance remaining is: ${tipcorn_result.senderResponse.userBalance}`);
                             const reply = `User: ${tipcorn_result.senderResponse.twitchUsername} tipped ${totalTippedAmount} CORN to ${recipientResponse.twitchUsername} user`;
+                            
                             return pending.complete(event, reply);
                         } case databaseAPI.paymentCode.QueryFailure: {
-                            const reply = cmdHelper.selectSwitchCase(event, {
+                            const reply = cmdHelper.commandReply(event, {
                                 methods: {
                                     message: cmdHelper.message.queryfailure.tipcorn.recipient,
                                     reply: cmdHelper.reply.chat
                                 },
-                                params: {twitchUsername: recipientResponse.twitchUsername}
+                                params: { twitchUsername: recipientResponse.twitchUsername }
                             });
                             return pending.complete(event, reply);
                         } default: {
                             cmdHelper.throwIfCondition(event, true, {
                                 method: cmdHelper.message.somethingwrong,
-                                params: {configs: event.configs, code: tipcorn_result.senderResponse.code},
+                                params: { configs: event.configs, code: tipcorn_result.senderResponse.code },
                                 reply: cmdHelper.reply.whisper
                             });
                         }
@@ -142,7 +152,7 @@ module.exports = Object.create({
                 } default: {
                     cmdHelper.throwIfCondition(event, true, {
                         method: cmdHelper.message.somethingwrong,
-                        params: {configs: event.configs, code: tipcorn_result.senderResponse.code},
+                        params: { configs: event.configs, code: tipcorn_result.senderResponse.code },
                         reply: cmdHelper.reply.whisper
                     });
                 }

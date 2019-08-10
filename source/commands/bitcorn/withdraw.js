@@ -33,10 +33,10 @@ module.exports = Object.create({
         if (pending.notAllowed(event)) return pending.respond(event, tmi, cmdHelper);
 
         try {
-            
+
             cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]), {
-                method: cmdHelper.message.notnumber, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.notnumber,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
             });
 
@@ -45,20 +45,26 @@ module.exports = Object.create({
             const to_cornaddy = cmdHelper.clean.at(event.args[1]);
 
             cmdHelper.throwIfCondition(event, withdraw_amount <= 0, {
-                method: cmdHelper.message.nonegitive, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.nonegitive,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
-            cmdHelper.throwIfCondition(event, withdraw_amount > databaseAPI.MAX_AMOUNT, {
-                method: cmdHelper.message.maxamount, 
-                params: {configs: event.configs},
+            cmdHelper.throwIfCondition(event, withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT, {
+                method: cmdHelper.message.maxamount,
+                params: { configs: event.configs },
+                reply: cmdHelper.reply.whisper
+            });
+
+            cmdHelper.throwIfCondition(event, withdraw_amount >= databaseAPI.MAX_WALLET_AMOUNT, {
+                method: cmdHelper.message.maxamount,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
             cmdHelper.throwIfCondition(event, !to_cornaddy, {
-                method: cmdHelper.message.cornaddyneeded, 
-                params: {configs: event.configs},
+                method: cmdHelper.message.cornaddyneeded,
+                params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
@@ -66,35 +72,54 @@ module.exports = Object.create({
             const twitchUsername = cmdHelper.twitch.username(event.user);
 
             const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
-            
+
             cmdHelper.throwIfCondition(event, withdraw_result.status && withdraw_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
-                params: {configs: event.configs, status: withdraw_result.status},
+                params: { configs: event.configs, status: withdraw_result.status },
                 reply: cmdHelper.reply.whisper
             });
 
             switch (withdraw_result.code) {
-                case databaseAPI.walletCode.QueryFailure: {
-                    const reply = `You failed to withdraw: @${withdraw_result.content.twitchUsername} you need to register with the $bitcorn command to use withdraw`;
-                    tmi.botWhisper(event.target, reply);
+                case databaseAPI.walletCode.TransactionTooLarge: {
+                    const reply = cmdHelper.commandReply(event, {
+                        methods: {
+                            message: cmdHelper.message.transactiontoolarge.withdraw,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: {}
+                    });
+                    return pending.complete(event, reply);
+                } case databaseAPI.walletCode.QueryFailure: {
+                    const reply = cmdHelper.commandReply(event, {
+                        methods: {
+                            message: cmdHelper.message.queryfailure.withdraw,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: {}
+                    });
                     return pending.complete(event, reply);
                 } case databaseAPI.walletCode.InsufficientFunds: {
-                    const reply = cmdHelper.selectSwitchCase(event, {
+                    const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.insufficientfunds.withdraw,
                             reply: cmdHelper.reply.whisper
-                        }, 
+                        },
                         params: {}
                     });
                     return pending.complete(event, reply);
                 } case databaseAPI.walletCode.Success: {
-                    const reply = `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/${withdraw_result.content.txid}`;
-                    tmi.botWhisper(withdraw_result.content.twitchUsername, reply);
+                    const reply = cmdHelper.commandReply(event, {
+                        methods: {
+                            message: cmdHelper.message.success.withdraw,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: {txid: withdraw_result.content.txid}
+                    });
                     return pending.complete(event, reply);
                 } default: {
                     cmdHelper.throwIfCondition(event, true, {
                         method: cmdHelper.message.somethingwrong,
-                        params: {configs: event.configs, code: withdraw_result.code},
+                        params: { configs: event.configs, code: withdraw_result.code },
                         reply: cmdHelper.reply.whisper
                     });
                 }
