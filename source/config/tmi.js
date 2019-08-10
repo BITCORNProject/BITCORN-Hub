@@ -39,19 +39,20 @@ async function sendChatMessages() {
     const chatItem = chatQueue.items.peek();
 
     try {
+        let value = null;
         switch (chatItem.client) {
             case BOT_CHAT:
-                await clients[BOT_CHAT].say(chatItem.target, chatItem.message)
+                value = await clients[BOT_CHAT].say(chatItem.target, chatItem.message)
                     .catch(error => { throw new Error(`Chat Channel [queue-size: ${chatQueue.items.size()}]: ${error}`) });
                 break;
             case BOT_WHISPER:
-                await clients[BOT_WHISPER].whisper(chatItem.target, chatItem.message)
+                value = await clients[BOT_WHISPER].whisper(chatItem.target, chatItem.message)
                     .catch(error => { throw new Error(`Whisper Channel [queue-size: ${chatQueue.items.size()}]: ${error}`) });
                 break;
             default:
                 break;
         }
-
+        console.log({value: value, sent: chatItem.client, to: chatItem.target, size: chatQueue.items.size(), message: chatItem.message});
         chatQueue.items.dequeue();
     } catch (e) {
         console.error(e);
@@ -70,10 +71,10 @@ async function onMessage(type, target, user, msg, self) {
 
         const { success, command, args, message } = tmiCommands.verifyCommand(msg.trim());
 
+        
         if (success === true) {
+            const cname = command.configs.prefix + command.configs.name
             if ('cooldown' in command.configs) {
-
-                const cname = command.configs.prefix + command.configs.name
 
                 if (command.configs.global_cooldown === false) {
                     if (user.username in cooldowns) {
@@ -107,8 +108,9 @@ async function onMessage(type, target, user, msg, self) {
             }
             if (command.execute) {
 
-                if (command.configs.whisper && type !== 'whisper') return { success: false, message: `type=${type}` };
-                if (!command.configs.whisper && type === 'whisper') return { success: false, message: `type=${type}` };
+                //if (command.configs.whisper && type !== 'whisper') return { success: false, message: `type=${type}` };
+                //if (!command.configs.whisper && type === 'whisper') return { success: false, message: `type=${type}` };
+                if (!command.configs.whisper && type === 'whisper') return { success: false, message: `Command ${cname} whisper not enabled type=${type}` };
 
                 if (accessLevels.userHasAccess(user, command.configs.accessLevel) === true) {
                     const timer = new Timer();

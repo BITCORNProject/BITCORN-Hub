@@ -62,7 +62,7 @@ module.exports = Object.create({
                 const reply = cmdHelper.commandReply(event, {
                     methods: {
                         message: cmdHelper.message.token.failed,
-                        reply: cmdHelper.reply.chat
+                        reply: cmdHelper.reply.respond
                     },
                     params: {}
                 });
