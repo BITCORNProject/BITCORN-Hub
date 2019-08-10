@@ -30,7 +30,7 @@ module.exports = Object.create({
         if (pending.notEnabled(event)) return pending.respond(event, tmi, cmdHelper);
 
         if (pending.notAllowed(event)) return pending.respond(event, tmi, cmdHelper);
-
+ 
         try {
             return pending.complete(event, cmdHelper.commandHelp(event, {
                 method: cmdHelper.message.help,

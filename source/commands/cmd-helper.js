@@ -37,7 +37,7 @@ function _respond(func, target, condition, reply) {
 }
 
 const funcs = {
-    'chat': (event, condition, reply) => _respond(tmi.botSay, event.target, condition, `@${event.user.username}, ${reply}`),
+    'chat': (event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${event.user.username}, ${reply}` : reply),
     'whisper': (event, condition, reply) => _respond(tmi.botWhisper, event.user.username, condition, reply)
 };
 
@@ -208,12 +208,13 @@ module.exports = {
         },
         tipcorn: {
             recipient: (obj) => util.format(strings().tipcorn.recipient, obj.balanceChange, obj.twitchUsername),
-            tochat: (obj) => util.format(strings().tipcorn.tochat, obj.totalTippedAmount, obj.recipientName, obj.balance, obj.senderName),
+            tochat: (obj) => util.format(strings().tipcorn.tochat, obj.senderName, obj.recipientName, obj.totalTippedAmount),
             sender: (obj) => util.format(strings().tipcorn.sender, obj.twitchUsername, obj.totalTippedAmount, obj.userBalance)
         }
     },
     reply: {
         chat: (event, condition, reply) => funcs['chat'](event, condition, reply),
+        chatnomention: (event, condition, reply) => funcs['chat'](event, condition, reply, false),
         whisper: (event, condition, reply) => funcs['whisper'](event, condition, reply),
         respond: (event, condition, reply) => funcs[event.type](event, condition, reply)
     },

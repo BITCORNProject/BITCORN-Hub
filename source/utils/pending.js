@@ -42,7 +42,7 @@ Pending.prototype.notEnabled = function(event) {
 
 Pending.prototype.notAllowed = function(event) {
     const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
-    return allowed_testers.indexOf(event.user.username) === -1 && allowed_testers.length > 0;
+    return allowed_testers.length > 0 && allowed_testers.indexOf(event.user.username) === -1;
 }
 
 Pending.prototype.throwNotConnected = function(event, tmi, result) {

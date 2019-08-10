@@ -116,21 +116,12 @@ module.exports = Object.create({
                         case databaseAPI.paymentCode.Success: {
 
                             const totalTippedAmount = Math.abs(tipcorn_result.senderResponse.balanceChange);
-                            /*
+                            
                             const reply = cmdHelper.commandReplies(event, [
                                 {reply: cmdHelper.reply.whisper, message: cmdHelper.message.tipcorn.recipient, params:{balanceChange: recipientResponse.balanceChange, twitchUsername: tipcorn_result.senderResponse.twitchUsername}},
-                                {reply: cmdHelper.reply.chat, message: cmdHelper.message.tipcorn.tochat, params:{totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername}},
+                                {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.tipcorn.tochat, params:{totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername}},
                                 {reply: cmdHelper.reply.whisper, message: cmdHelper.message.tipcorn.sender, params:{totalTippedAmount, twitchUsername: recipientResponse.twitchUsername, userBalance: tipcorn_result.senderResponse.userBalance}}
                             ]);
-                            */
-                            
-                            const msg = `You received ${recipientResponse.balanceChange} BITCORN from ${tipcorn_result.senderResponse.twitchUsername}!`;
-                            tmi.botWhisper(recipientResponse.twitchUsername, msg);
-
-                            tmi.botSay(event.target, `cttvCorn @${tipcorn_result.senderResponse.twitchUsername} just slipped @${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN with a FIRM handshake. cttvCorn`);
-                            tmi.botWhisper(tipcorn_result.senderResponse.twitchUsername, `You tipped ${recipientResponse.twitchUsername} ${totalTippedAmount} BITCORN! Your BITCORN balance remaining is: ${tipcorn_result.senderResponse.userBalance}`);
-                            const reply = `User: ${tipcorn_result.senderResponse.twitchUsername} tipped ${totalTippedAmount} CORN to ${recipientResponse.twitchUsername} user`;
-                            
                             return pending.complete(event, reply);
                         } case databaseAPI.paymentCode.QueryFailure: {
                             const reply = cmdHelper.commandReply(event, {
