@@ -34,7 +34,7 @@ module.exports = Object.create({
 
         try {
 
-            cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]), {
+            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
@@ -46,19 +46,19 @@ module.exports = Object.create({
             const receiverName = cmdHelper.clean.atLower(event.args[1]);
             const tipcorn_amount = cmdHelper.clean.amount(event.args[0]);
 
-            cmdHelper.throwIfCondition(event, tipcorn_amount <= 0, {
+            await cmdHelper.throwIfConditionReply(event, tipcorn_amount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            cmdHelper.throwIfCondition(event, tipcorn_amount > databaseAPI.MAX_WALLET_AMOUNT, {
+            await cmdHelper.throwIfConditionReply(event, tipcorn_amount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            cmdHelper.throwIfCondition(event, receiverName === '', {
+            await cmdHelper.throwIfConditionReply(event, receiverName === '', {
                 method: cmdHelper.message.noname,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
@@ -66,7 +66,7 @@ module.exports = Object.create({
 
             const { id: receiverId } = await helix.getUserLogin(receiverName);
 
-            cmdHelper.throwIfCondition(event, !receiverId, {
+            await cmdHelper.throwIfConditionReply(event, !receiverId, {
                 method: cmdHelper.message.badname,
                 params: { receiverName },
                 reply: cmdHelper.reply.chat
@@ -74,7 +74,7 @@ module.exports = Object.create({
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
 
-            cmdHelper.throwIfCondition(event, tipcorn_result.status && tipcorn_result.status !== 200, {
+            await cmdHelper.throwIfConditionReply(event, tipcorn_result.status && tipcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: tipcorn_result.status },
                 reply: cmdHelper.reply.whisper
@@ -118,9 +118,9 @@ module.exports = Object.create({
                             const totalTippedAmount = Math.abs(tipcorn_result.senderResponse.balanceChange);
                             
                             const reply = cmdHelper.commandReplies(event, [
-                                {reply: cmdHelper.reply.whisper, message: cmdHelper.message.tipcorn.recipient, params:{balanceChange: recipientResponse.balanceChange, twitchUsername: tipcorn_result.senderResponse.twitchUsername}},
-                                {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.tipcorn.tochat, params:{totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername}},
-                                {reply: cmdHelper.reply.whisper, message: cmdHelper.message.tipcorn.sender, params:{totalTippedAmount, twitchUsername: recipientResponse.twitchUsername, userBalance: tipcorn_result.senderResponse.userBalance}}
+                                {reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.recipient, params:{who: recipientResponse.twitchUsername, senderName: tipcorn_result.senderResponse.twitchUsername, balanceChange: recipientResponse.balanceChange}},
+                                {reply: cmdHelper.reply['chatnomention-who'], message: cmdHelper.message.tipcorn.tochat, params:{who: event.target, totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername}},
+                                {reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.sender, params:{who: tipcorn_result.senderResponse.twitchUsername, totalTippedAmount, twitchUsername: recipientResponse.twitchUsername, userBalance: tipcorn_result.senderResponse.userBalance}}
                             ]);
                             return pending.complete(event, reply);
                         } case databaseAPI.paymentCode.QueryFailure: {
@@ -133,22 +133,29 @@ module.exports = Object.create({
                             });
                             return pending.complete(event, reply);
                         } default: {
-                            cmdHelper.throwIfCondition(event, true, {
-                                method: cmdHelper.message.somethingwrong,
-                                params: { configs: event.configs, code: tipcorn_result.senderResponse.code },
+                            await cmdHelper.throwIfConditionReply(event, true, {
+                                method: cmdHelper.message.pleasereport,
+                                params: { configs: event.configs, code: tipcorn_result.senderResponse.code }, //entryId
                                 reply: cmdHelper.reply.whisper
                             });
                         }
                     }
                 } default: {
-                    cmdHelper.throwIfCondition(event, true, {
-                        method: cmdHelper.message.somethingwrong,
-                        params: { configs: event.configs, code: tipcorn_result.senderResponse.code },
-                        reply: cmdHelper.reply.whisper
+                    await cmdHelper.throwAndLogError(event, {
+                        method: cmdHelper.message.pleasereport,
+                        params: {
+                            configs: event.configs,
+                            twitchUsername: tipcorn_result.senderResponse.twitchUsername,
+                            twitchId: tipcorn_result.senderResponse.twitchId,
+                            code: tipcorn_result.senderResponse.code
+                        }
                     });
                 }
             }
         } catch (error) {
+
+            if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
+        
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

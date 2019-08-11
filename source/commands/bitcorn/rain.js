@@ -35,7 +35,7 @@ module.exports = Object.create({
 
         try {
 
-            cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
+            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
@@ -47,19 +47,19 @@ module.exports = Object.create({
             const rain_user_count = cmdHelper.clean.amount(event.args[1]);
             const rain_amount = cmdHelper.clean.amount(event.args[0]);
 
-            cmdHelper.throwIfCondition(event, rain_amount <= 0, {
+            await cmdHelper.throwIfConditionReply(event, rain_amount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            cmdHelper.throwIfCondition(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
+            await cmdHelper.throwIfConditionReply(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            cmdHelper.throwIfCondition(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
+            await cmdHelper.throwIfConditionReply(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
                 method: cmdHelper.message.numpeople,
                 params: { configs: event.configs, max: databaseAPI.MAX_RAIN_USERS },
                 reply: cmdHelper.reply.chat
@@ -67,7 +67,7 @@ module.exports = Object.create({
 
             const chatternamesArr = activityTracker.getChatterActivity(event.target).filter(x => x.username !== twitchUsername);
 
-            cmdHelper.throwIfCondition(event, chatternamesArr.length === 0, {
+            await cmdHelper.throwIfConditionReply(event, chatternamesArr.length === 0, {
                 method: cmdHelper.message.nochatters,
                 params: {},
                 reply: cmdHelper.reply.chat
@@ -79,7 +79,7 @@ module.exports = Object.create({
 
             const rain_result = await databaseAPI.rainRequest(recipients, twitchId, twitchUsername);
 
-            cmdHelper.throwIfCondition(event, rain_result.status && rain_result.status !== 200, {
+            await cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: rain_result.status },
                 reply: cmdHelper.reply.whisper
@@ -150,14 +150,21 @@ module.exports = Object.create({
                         return pending.complete(event, reply);
                     }
                 } default: {
-                    cmdHelper.throwIfCondition(event, true, {
-                        method: cmdHelper.message.somethingwrong,
-                        params: { configs: event.configs, code: rain_result.senderResponse.code },
-                        reply: cmdHelper.reply.whisper
+                    await cmdHelper.throwAndLogError(event, {
+                        method: cmdHelper.message.pleasereport,
+                        params: {
+                            configs: event.configs,
+                            twitchUsername: rain_result.senderResponse.twitchUsername,
+                            twitchId: rain_result.senderResponse.twitchId,
+                            code: rain_result.senderResponse.code
+                        }
                     });
                 }
             }
         } catch (error) {
+
+            if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
+        
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

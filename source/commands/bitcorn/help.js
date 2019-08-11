@@ -37,6 +37,9 @@ module.exports = Object.create({
                 params: {}
             }));
         } catch (error) {
+
+            if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
+        
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

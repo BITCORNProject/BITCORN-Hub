@@ -34,7 +34,7 @@ module.exports = Object.create({
 
         try {
 
-            cmdHelper.throwIfCondition(event, !cmdHelper.isNumber(event.args[0]), {
+            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
@@ -44,25 +44,25 @@ module.exports = Object.create({
             //IMPORTANT: Do not .toLowerCase() the address is case sensitive
             const to_cornaddy = cmdHelper.clean.at(event.args[1]);
 
-            cmdHelper.throwIfCondition(event, withdraw_amount <= 0, {
+            await cmdHelper.throwIfConditionReply(event, withdraw_amount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
-            cmdHelper.throwIfCondition(event, withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT, {
+            await cmdHelper.throwIfConditionReply(event, withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
-            cmdHelper.throwIfCondition(event, withdraw_amount >= databaseAPI.MAX_WALLET_AMOUNT, {
+            await cmdHelper.throwIfConditionReply(event, withdraw_amount >= databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
-            cmdHelper.throwIfCondition(event, !to_cornaddy, {
+            await cmdHelper.throwIfConditionReply(event, !to_cornaddy, {
                 method: cmdHelper.message.cornaddyneeded,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
@@ -73,7 +73,7 @@ module.exports = Object.create({
 
             const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
 
-            cmdHelper.throwIfCondition(event, withdraw_result.status && withdraw_result.status !== 200, {
+            await cmdHelper.throwIfConditionReply(event, withdraw_result.status && withdraw_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: withdraw_result.status },
                 reply: cmdHelper.reply.whisper
@@ -113,18 +113,25 @@ module.exports = Object.create({
                             message: cmdHelper.message.success.withdraw,
                             reply: cmdHelper.reply.whisper
                         },
-                        params: {txid: withdraw_result.content.txid}
+                        params: { txid: withdraw_result.content.txid }
                     });
                     return pending.complete(event, reply);
                 } default: {
-                    cmdHelper.throwIfCondition(event, true, {
-                        method: cmdHelper.message.somethingwrong,
-                        params: { configs: event.configs, code: withdraw_result.code },
-                        reply: cmdHelper.reply.whisper
+                    await cmdHelper.throwAndLogError(event, {
+                        method: cmdHelper.message.pleasereport,
+                        params: {
+                            configs: event.configs,
+                            twitchUsername: withdraw_result.content.twitchUsername,
+                            twitchId: withdraw_result.content.twitchId,
+                            code: withdraw_result.code
+                        }
                     });
                 }
             }
         } catch (error) {
+
+            if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
+        
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

@@ -7,6 +7,7 @@
 const util = require('util');
 const tmi = require('../config/tmi');
 const JsonFile = require('../../source/utils/json-file');
+const databaseAPI = require('../config/api-interface/database-api');
 
 function brackets(value) {
     return value ? value.replace('<', '').replace('>', '') : ''
@@ -38,16 +39,44 @@ function _respond(func, target, condition, reply) {
 
 const funcs = {
     'chat': (event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${event.user.username}, ${reply}` : reply),
-    'whisper': (event, condition, reply) => _respond(tmi.botWhisper, event.user.username, condition, reply)
+    'whisper': (event, condition, reply) => _respond(tmi.botWhisper, event.user.username, condition, reply),
+    'chat-who': (who, event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${who}, ${reply}` : reply),
+    // DO NOT change the parameter list event is a placeholder - 'whisper-who': (who, event, condition, reply)
+    // so both mnethods match in their signiture
+    'whisper-who': (who, event, condition, reply) => _respond(tmi.botWhisper, who, condition, reply)
 };
 
-function throwIfCondition(event, condition, obj) {
+function throwIfConditionReply(event, condition, obj) {
     const message = obj.method(obj.params);
     if (obj.reply(event, condition, message)) {
         const e = new Error(message);
         e.hasMessage = true;
         throw e;
     }
+}
+
+async function throwAndLogError(event, obj) {
+    
+    const message = obj.method(obj.params);
+    const error = new Error(message);
+    const sendData = {
+        twitchId: obj.params.twitchId,
+        twitchUsername: obj.params.twitchUsername,
+        command: event.configs.name,
+        errorcode: obj.params.code,
+        botData: JSON.stringify(event),
+        errorMessage: error.message,
+        stacktrace: error.stack,
+    };
+    
+    const error_log_result = await databaseAPI.errorlogRequest(sendData);
+    
+    error.hasMessage = true;
+    error.twitchUsername = obj.params.twitchUsername;
+    error.sendData = sendData;
+    error.sendResponse = error_log_result;
+    throw error;
+    
 }
 
 function commandReply(event, obj) {
@@ -68,7 +97,7 @@ function commandReplies(event, objs) {
     for (let index = 0; index < objs.length; index++) {
         const obj = objs[index];
         reply = obj.message(obj.params);
-        obj.reply(event, true, reply);
+        obj.reply(obj.params.who, event, true, reply);
     }
     return reply;
 }
@@ -84,7 +113,22 @@ function commandHelp(event, obj) {
     funcs[event.type](event, true, reply);
     return reply;
 }
-//an error occured please contact bitcorn support staff on discord
+
+function sendErrorMessage(error) {
+    if (error.sendResponse) {
+        if (error.sendResponse.status && error.sendResponse.status !== 200) {
+            return true;
+        } else if (error.sendResponse.id !== 0) {
+            tmi.botWhisper(error.twitchUsername, `${error.message} entryId: ${error.sendResponse.id}`);                
+            return true;
+        } else if (error.sendData) {
+            tmi.botWhisper(error.twitchUsername, error.message);
+            return true;
+        }
+    }
+    return false;
+}
+
 const messageStrings = new JsonFile('./settings/strings.json', {
     enabled: `%s%s down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`,
     example: `Here is an example of the command - %s`,
@@ -97,6 +141,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     cornaddyneeded: `Can not withdraw without a cornaddy - $withdraw <amount> <address>`,
     apifailed: `Can not connect to server %s%s failed, please report this: status %d`,
     somethingwrong: `Something went wrong with the %s%s command, please report this: code %d`,
+    pleasereport: `Something went wrong with the %s%s command, please report this to https://discord.gg/9j3mkCd CryptoTradersTV Discord bitcorn-support channel`,
     commanderror: `Command error in %s%s, please report this: %s`,
     help: `cttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ cttvCorn`,
     usebitcorn: `Use $bitcorn to register and see your balance`,
@@ -171,6 +216,7 @@ module.exports = {
         cornaddyneeded: () => util.format(strings().cornaddyneeded),
         apifailed: (obj) => util.format(strings().apifailed, obj.configs.prefix, obj.configs.name, obj.status),
         somethingwrong: (obj) => util.format(strings().somethingwrong, obj.configs.prefix, obj.configs.name, obj.code),
+        pleasereport: (obj) => util.format(strings().pleasereport, obj.configs.prefix, obj.configs.name),
         commanderror: (obj) => util.format(strings().commanderror, obj.configs.prefix, obj.configs.name, obj.error),
         help: () => util.format(strings().help),
         usebitcorn: () => util.format(strings().usebitcorn),
@@ -207,7 +253,7 @@ module.exports = {
             notnewuser: (obj) => util.format(strings().bitcorn.notnewuser, obj.balance, obj.cornaddy)
         },
         tipcorn: {
-            recipient: (obj) => util.format(strings().tipcorn.recipient, obj.balanceChange, obj.twitchUsername),
+            recipient: (obj) => util.format(strings().tipcorn.recipient, obj.balanceChange, obj.senderName),
             tochat: (obj) => util.format(strings().tipcorn.tochat, obj.senderName, obj.recipientName, obj.totalTippedAmount),
             sender: (obj) => util.format(strings().tipcorn.sender, obj.twitchUsername, obj.totalTippedAmount, obj.userBalance)
         }
@@ -216,12 +262,17 @@ module.exports = {
         chat: (event, condition, reply) => funcs['chat'](event, condition, reply),
         chatnomention: (event, condition, reply) => funcs['chat'](event, condition, reply, false),
         whisper: (event, condition, reply) => funcs['whisper'](event, condition, reply),
-        respond: (event, condition, reply) => funcs[event.type](event, condition, reply)
+        respond: (event, condition, reply) => funcs[event.type](event, condition, reply),
+        'chat-who': (who, event, condition, reply) => funcs['chat-who'](who, event, condition, reply),
+        'chatnomention-who': (who, event, condition, reply) => funcs['chat-who'](who, event, condition, reply, false),
+        'whisper-who': (who, event, condition, reply) => funcs['whisper-who'](who, event, condition, reply)
     },
-    throwIfCondition: throwIfCondition,
+    throwIfConditionReply: throwIfConditionReply,
+    throwAndLogError: throwAndLogError,
     commandReply: commandReply,
     commandReplyByCondition: commandReplyByCondition,
     commandReplies: commandReplies,
     commandError: commandError,
-    commandHelp: commandHelp
+    commandHelp: commandHelp,
+    sendErrorMessage: sendErrorMessage
 };

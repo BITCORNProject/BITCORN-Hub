@@ -29,7 +29,8 @@ function DatabaseEndpoint() {
         subticker: '/payout',
         tipcorn: '/tipcorn',
         withdraw: '/withdraw',
-        token: '/token'
+        token: '/token',
+        errorlog: '/boterror'
     });
 
     this.paymentCode = {
@@ -144,6 +145,13 @@ Expect code: this.paymentCode
 */
 DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitchId, twitchUsername) {
     return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().subticker}`, recipients, twitchId, twitchUsername);
+}
+
+/*
+Expect id: generated from database insert
+*/
+DatabaseEndpoint.prototype.errorlogRequest = async function (sendData) {
+    return this.makeRequest(`${this.db_endpoints.getValues().errorlog}`, sendData); 
 }
 
 module.exports = new DatabaseEndpoint();

@@ -43,7 +43,7 @@ module.exports = Object.create({
 
             const token_result = await databaseAPI.tokenRequest(token, twitchId, twitchUsername);
 
-            cmdHelper.throwIfCondition(event, token_result.status && token_result.status !== 200, {
+            await cmdHelper.throwIfConditionReply(event, token_result.status && token_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: {configs: event.configs, status: token_result.status},
                 reply: cmdHelper.reply.whisper
@@ -68,12 +68,19 @@ module.exports = Object.create({
                 });
                 return pending.complete(event, reply);
             }
-            cmdHelper.throwIfCondition(event, true, {
-                method: cmdHelper.message.somethingwrong,
-                params: {configs: event.configs, code: token_result.senderResponse.code},
-                reply: cmdHelper.reply.whisper
+            await cmdHelper.throwAndLogError(event, {
+                method: cmdHelper.message.pleasereport,
+                params: {
+                    configs: event.configs,
+                    twitchUsername: token_result.senderResponse.twitchUsername,
+                    twitchId: token_result.senderResponse.twitchId,
+                    code: token_result.senderResponse.code
+                }
             });
         } catch (error) {
+
+            if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
+        
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

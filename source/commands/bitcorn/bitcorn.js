@@ -38,7 +38,7 @@ module.exports = Object.create({
 
             const bitcorn_result = await databaseAPI.bitcornRequest(twitchId, twitchUsername);
             
-            cmdHelper.throwIfCondition(event, bitcorn_result.status && bitcorn_result.status !== 200, {
+            cmdHelper.throwIfConditionReply(event, bitcorn_result.status && bitcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: {configs: event.configs, status: bitcorn_result.status},
                 reply: cmdHelper.reply.whisper
@@ -57,14 +57,21 @@ module.exports = Object.create({
                     });
                     return pending.complete(event, reply);
                 } default: {
-                    cmdHelper.throwIfCondition(event, true, {
-                        method: cmdHelper.message.somethingwrong,
-                        params: {configs: event.configs, code: bitcorn_result.code},
-                        reply: cmdHelper.reply.whisper
+                    await cmdHelper.throwAndLogError(event, {
+                        method: cmdHelper.message.pleasereport,
+                        params: {
+                            configs: event.configs,
+                            twitchUsername: bitcorn_result.content.twitchUsername,
+                            twitchId: bitcorn_result.content.twitchId,
+                            code: bitcorn_result.code
+                        }
                     });
                 }
             }
         } catch (error) {
+
+            if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
+        
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {
