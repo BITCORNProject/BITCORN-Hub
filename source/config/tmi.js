@@ -11,7 +11,6 @@ const tmiCommands = require('../tmi-commands');
 const accessLevels = require('../../settings/access-levels');
 const { Queue } = require('../../public/js/server/queue');
 const { Timer } = require('../../public/js/server/timer');
-const mysql = require('../config/databases/mysql');
 const math = require('../../source/utils/math');
 
 const chatQueue = {
@@ -144,25 +143,23 @@ async function onMessage(type, target, user, msg, self) {
                 //if (command.configs.whisper && type !== 'whisper') return { success: false, message: `type=${type}` };
                 //if (!command.configs.whisper && type === 'whisper') return { success: false, message: `type=${type}` };
                 if (!command.configs.whisper && type === 'whisper') return { success: false, message: `Command ${cname} whisper not enabled type=${type}` };
+                const timer = new Timer();
 
-                if (accessLevels.userHasAccess(user, command.configs.accessLevel) === true) {
-                    const timer = new Timer();
-                    timer.start();
-                    const result = await command.execute(Object.create({
-                        type,
-                        target,
-                        msg,
-                        args,
-                        user,
-                        configs: command.configs
-                    }));
-                    timer.stop(`Command Execution: ${result.event.user.username} ${result.event.configs.name} ${result.event.msg} `);
-                    console.log(result);
-                    if (result.success === false) {
-                        console.log(`Command ${result.event.configs.prefix}${result.event.configs.name} execution failed - message: ${result.message}`, result);
-                    }
-                    return result;
+                timer.start();
+                const result = await command.execute(Object.create({
+                    type,
+                    target,
+                    msg,
+                    args,
+                    user,
+                    configs: command.configs
+                }));
+                timer.stop(`Command Execution: ${result.event.user.username} ${result.event.configs.name} ${result.event.msg} `);
+                console.log(result);
+                if (result.success === false) {
+                    console.log(`Command ${result.event.configs.prefix}${result.event.configs.name} execution failed - message: ${result.message}`, result);
                 }
+                return result;
             } else {
                 botSay(target, command.description);
                 return { success: true };
@@ -178,9 +175,12 @@ async function onMessage(type, target, user, msg, self) {
         return failed_result;
     } catch (error) {
         const result = { success: false, message: `Command ${msg.trim()} is not for this bot for user ${user.username}` };
-        const logged = await mysql.logit('Auto.Twitch', `Error: ${error}`);
+        /*
+            // TODO: log to file or database
+                const logged = logit('Auto.Twitch', `Error: ${error}`);
+                console.log(logged);
+        */
         console.log(result);
-        console.log(logged);
         console.error(error);
         return result;
     }

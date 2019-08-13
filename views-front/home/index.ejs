@@ -392,39 +392,6 @@
                                 </form>
                             </div>
                             <div id="tabs-control-settings-3">
-                                <form id="control-settings-mysql-form">
-                                    <div>Database Settings</div>
-                                    <div id="control-settings-mysql-inputs">
-
-                                        <div id="control-settings-mysql-connectionLimit" class="item-container"><label
-                                                class="item-label">connectionLimit</label><input class="item-input"
-                                                type="text" value="0" name="connectionLimit" />
-                                        </div>
-                                        <div id="control-settings-mysql-server" class="item-container"><label
-                                                class="item-label">SERVER</label><input class="item-input"
-                                                type="password" value="127.0.0.1" name="host" />
-                                        </div>
-                                        <div id="control-settings-mysql-username" class="item-container"><label
-                                                class="item-label">USERNAME</label><input class="item-input"
-                                                type="password" value="dbuser" name="user" />
-                                        </div>
-                                        <div id="control-settings-mysql-password" class="item-container"><label
-                                                class="item-label">PASSWORD</label><input class="item-input"
-                                                type="password" value="super5ecretpass" name="password" />
-                                        </div>
-                                        <div id="control-settings-mysql-database" class="item-container"><label
-                                                class="item-label">DATABASE</label><input class="item-input"
-                                                type="password" value="namedb" name="database" />
-                                        </div>
-
-                                    </div>
-
-                                    <div>
-                                        <input id="control-settings-database-save-button" type="submit" value="Save" />
-                                    </div>
-                                </form>
-                            </div>
-                            <div id="tabs-control-settings-4">
                                 <form id="control-settings-access-levels-form">
                                     <div>Access Levels</div>
                                     <div id="control-settings-access-levels-inputs">
@@ -484,7 +451,7 @@
                                     </div>
                                 </form>
                             </div>
-                            <div id="tabs-control-settings-5">
+                            <div id="tabs-control-settings-4">
                                 <div>EMPTY TAB Settings</div>
                             </div>
                         </div>
@@ -566,15 +533,6 @@
                     controls: {
                         jircdelayms: $('#control-settings-server-irc-delay-ms input'),
                         jmaxrainusercache: $('#control-settings-server-max-rain-user-cache input')
-                    }
-                },
-                mysql: {
-                    controls: {
-                        jconnectionlimit: $('#control-settings-mysql-connectionLimit input'),
-                        jserver: $('#control-settings-mysql-server input'),
-                        jusername: $('#control-settings-mysql-username input'),
-                        jpassword: $('#control-settings-mysql-password input'),
-                        jdatabase: $('#control-settings-mysql-database input')
                     }
                 },
                 'access-levels': {

@@ -15,7 +15,7 @@ const databaseAPI = require('./config/api-interface/database-api');
 const { Timer } = require('../public/js/server/timer');
 const { Ticker } = require('../public/js/server/ticker');
 
-const sub_tier_award_ticker_name = 'sub-tier-awawd-ticker-no-wallet';
+const sub_tier_award_ticker_name = 'sub-tier-awawd-ticker';
 
 const MINUTE_AWARD_MULTIPLIER = 4.333333333333333;
 

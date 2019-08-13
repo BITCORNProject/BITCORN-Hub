@@ -1,7 +1,6 @@
 "use strict";
 
 const auth = require('../settings/auth');
-const mysqlauth = require('../settings/mysqlauth');
 const serverSettings = require('../settings/server-settings');
 
 const tmi = require('./config/tmi');
@@ -53,7 +52,6 @@ controlActions.set('control-give-aways', async (data) => { });
 controlActions.set('control-settings', async (data) => {
     return { 
         auth: auth.getValues(), 
-        mysql: mysqlauth.getValues(),
         server: serverSettings.getValues(), 
         'access-levels': accessLevels.getValues() 
     };
@@ -144,9 +142,6 @@ async function init(app) {
                 } else if ('server' in parsed) {
                     result = serverSettings.setValues(parsed.server);
                     updated = 'server';
-                } else if ('mysql' in parsed) {
-                    result.success = mysqlauth.setValues(parsed.mysql);
-                    updated = 'mysql';
                 } else if ('access-levels' in parsed) {
                     for (const key in parsed['access-levels']) {
                         if (parsed['access-levels'][key].hasOwnProperty('priority') === true) {

@@ -12,14 +12,12 @@ exports.io = () => io;
 
         const orderedRequires = [];
 
-        orderedRequires.push(require('./source/config/databases/mysql'));
         orderedRequires.push(require('./source/config/tmi'));   
         orderedRequires.push(require('./source/config/authorize/kraken'));
         orderedRequires.push(require('./source/config/authorize/helix'));  
         orderedRequires.push(require('./source/control-panel'));
         orderedRequires.push(require('./source/activity-tracker'));
         orderedRequires.push(require('./source/sub-ticker'));
-        //orderedRequires.push(require('./source/tx-monitor'));
         orderedRequires.push(require('./source/announcement-scheduler'));
         
         const app = require('./source/config/express');

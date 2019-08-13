@@ -4,23 +4,15 @@
 */
 
 "use strict";
-const assert = require('assert');
-const fetch = require('node-fetch');
 
-const walletSettings = require('../settings/wallet-settings');
-const wallet = require('../source/config/wallet');
-const mysql = require('../source/config/databases/mysql');
-const math = require('../source/utils/math');
-const helix = require('../source/config/authorize/helix');
-
-const { Ticker } = require('../public/js/server/ticker');
+const _ = require('./test-dependencies');
 
 (async () => {
     try {
         var start = new Date().getTime();
 
         const url = `https://bitcorn-role-sync.azurewebsites.net/discord`;
-        const discord_endpoint = await fetch(url, {
+        const discord_endpoint = await _.fetch(url, {
             method: 'GET'
         });
 

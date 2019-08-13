@@ -113,6 +113,15 @@ DatabaseEndpoint.prototype._criticalRecipientsRequest = async function (path, re
     });
 }
 
+DatabaseEndpoint.prototype._criticalRecipientsRequestIdUsername = async function (path, recipients, twitchId, twitchUsername) {
+    //recipients = [recipient = { twitchId: '', twitchUsername: '', amount: 0 }]
+    return this._criticalArbitraryRequest(`${path}`, twitchId, {
+        recipients,
+        id: twitchId,
+        username: twitchUsername
+    });
+}
+
 // With arbitrary body data
 DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId, twitchUsername) {
     return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().bitcorn}`, twitchId, {
