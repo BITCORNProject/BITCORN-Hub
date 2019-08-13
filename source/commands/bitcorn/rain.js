@@ -16,7 +16,6 @@ const pending = new Pending('rain');
 module.exports = Object.create({
     configs: {
         name: 'rain',
-        accessLevel: 'OWNER',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Rain a certain Amount to the last 1-3 of People who were active',

@@ -7,7 +7,6 @@
 module.exports = Object.create({
     configs: {
         name: 'template',
-        accessLevel: 'OWNER',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'template command description',

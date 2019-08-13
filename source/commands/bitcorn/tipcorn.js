@@ -15,7 +15,6 @@ const pending = new Pending('tipcorn');
 module.exports = Object.create({
     configs: {
         name: 'tipcorn',
-        accessLevel: 'OWNER',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Tips a user with bitcorn',

@@ -16,7 +16,6 @@ const pending = new Pending('token');
 module.exports = Object.create({
     configs: {
         name: 'token',
-        accessLevel: 'OWNER',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Receive a Token to log in to our Bot\'s API',

@@ -14,7 +14,6 @@ const pending = new Pending('bitcorn');
 module.exports = Object.create({
     configs: {
         name: 'bitcorn',
-        accessLevel: 'CHAT',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'View your BITCORN balance and get a BITCORN wallet address if you are not registered',

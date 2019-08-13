@@ -7,7 +7,6 @@ const tmi = require('./config/tmi');
 const kraken = require('./config/authorize/kraken');
 const helix = require('./config/authorize/helix');
 const tmiCommands = require('./tmi-commands');
-const accessLevels = require('../settings/access-levels');
 
 //ConfigsModel.deleteMany({}).exec();
 const controlNames = [
@@ -39,7 +38,7 @@ controlActions.set('control-commands', async (data) => {
             commandConfigs[prefix][key] = value.configs || value;
         });
     }
-    return { commands: commandConfigs, prefixes: prefixes, access: accessLevels.keys };
+    return { commands: commandConfigs, prefixes: prefixes };
 });
 controlActions.set('control-subscription', async (data) => {
     const user = await helix.getUserLogin(tmi.mainChannel());
@@ -52,8 +51,7 @@ controlActions.set('control-give-aways', async (data) => { });
 controlActions.set('control-settings', async (data) => {
     return { 
         auth: auth.getValues(), 
-        server: serverSettings.getValues(), 
-        'access-levels': accessLevels.getValues() 
+        server: serverSettings.getValues()
     };
 });
 
@@ -105,23 +103,6 @@ async function init(app) {
             socket.on('chatroom-channels', (data, fn) => {
                 fn(tmi.getChannels());
             });
-            socket.on('access-levels', (data, fn) => {
-                switch (data.action) {
-                    case 'add':
-                        accessLevels.add(data.name);
-                        accessLevels.setValues(accessLevels.data);
-                        accessLevels.setAccessLevels();
-                        break;
-                    case 'remove':
-                        accessLevels.remove(data.name);
-                        accessLevels.setValues(accessLevels.data);
-                        accessLevels.setAccessLevels();
-                        break;
-                    default:
-                        break;
-                }
-                fn(accessLevels.access);
-            });
             socket.on('control-commands-changed', async (parsed) => {
 
                 if (!tmiCommands.hasCommand(parsed.prefix, parsed.name)) return;
@@ -142,20 +123,6 @@ async function init(app) {
                 } else if ('server' in parsed) {
                     result = serverSettings.setValues(parsed.server);
                     updated = 'server';
-                } else if ('access-levels' in parsed) {
-                    for (const key in parsed['access-levels']) {
-                        if (parsed['access-levels'][key].hasOwnProperty('priority') === true) {
-                            accessLevels.data[key] = parsed['access-levels'][key];
-                        } else {
-                            accessLevels.data[key].names = parsed['access-levels'][key]
-                                .split(/[\r\n]/g)
-                                .filter(x => x);
-                        }
-                    }
-
-                    result = accessLevels.setValues(accessLevels.data);
-                    accessLevels.setAccessLevels();
-                    updated = 'access-levels';
                 }
                 if (result.success === false) {
                     console.error(result.error);

@@ -15,7 +15,6 @@ const pending = new Pending('withdraw');
 module.exports = Object.create({
     configs: {
         name: 'withdraw',
-        accessLevel: 'CHAT',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Withraw your funds off the bot :: Commands do not work in Direct Messages',

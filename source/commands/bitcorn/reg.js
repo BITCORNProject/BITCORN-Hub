@@ -14,7 +14,6 @@ const pending = new Pending('reg');
 module.exports = Object.create({
     configs: {
         name: 'reg',
-        accessLevel: 'CHAT',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Tells user to use $bitcorn instead.',

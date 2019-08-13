@@ -14,7 +14,6 @@ const pending = new Pending('help');
 module.exports = Object.create({
     configs: {
         name: 'help',
-        accessLevel: 'CHAT',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Prints bitcorn commands to the chat.',

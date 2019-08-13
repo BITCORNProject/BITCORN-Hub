@@ -8,7 +8,6 @@ const tmi = require("tmi.js");
 const auth = require('../../settings/auth');
 const serverSettings = require('../../settings/server-settings');
 const tmiCommands = require('../tmi-commands');
-const accessLevels = require('../../settings/access-levels');
 const { Queue } = require('../../public/js/server/queue');
 const { Timer } = require('../../public/js/server/timer');
 const math = require('../../source/utils/math');
@@ -170,7 +169,7 @@ async function onMessage(type, target, user, msg, self) {
             return message_result;
         }
 
-        const failed_result = { success: success, message: `User ${user.username} does not have access to ${command.configs.name}` };
+        const failed_result = { success: success, message: `${user.username} can not use the command ${command.configs.name}` };
         console.log(failed_result);
         return failed_result;
     } catch (error) {

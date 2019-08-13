@@ -11,7 +11,6 @@ const reloadModule = require('../../../reload-module');
 module.exports = Object.create({
     configs: {
         name: 'reload-mod',
-        accessLevel: 'OWNER',
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Reload a changed module from chat.',

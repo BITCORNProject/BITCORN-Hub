@@ -191,16 +191,6 @@
                                                 readonly style="font-weight: bolder; background-color:lightyellow;" />
                                         </div>
 
-                                        <div id="control-commands-accessLevel" class="item-container">
-                                            <label class="item-label">ACCESS_LEVEL</label>
-                                            <select id="control-commands-accessLevel-select" name="accessLevel">
-                                                <option value="NONE">NONE</option>
-                                                <option value="CHAT">CHAT</option>
-                                                <option value="FOLLOWER">FOLLOWER</option>
-                                                <option value="OWNER">OWNER</option>
-                                            </select>
-                                        </div>
-
                                         <div id="control-commands-cooldown" class="item-container">
                                             <label class="item-label">COOLDOWN</label>
                                             <input class="item-input" type="number" value="30000" name="cooldown" />
@@ -285,9 +275,7 @@
                             <ul>
                                 <li><a href="#tabs-control-settings-1">Auth</a></li>
                                 <li><a href="#tabs-control-settings-2">Server</a></li>
-                                <li><a href="#tabs-control-settings-3">Database</a></li>
-                                <li><a href="#tabs-control-settings-4">Access</a></li>
-                                <li><a href="#tabs-control-settings-5">...New</a></li>
+                                <li><a href="#tabs-control-settings-3">...New</a></li>
                             </ul>
 
                             <div id="tabs-control-settings-1">
@@ -392,66 +380,6 @@
                                 </form>
                             </div>
                             <div id="tabs-control-settings-3">
-                                <form id="control-settings-access-levels-form">
-                                    <div>Access Levels</div>
-                                    <div id="control-settings-access-levels-inputs">
-
-                                        <div id="settings-accordion">
-                                            <div class="group">
-                                                <h3 class="DontMove">NONE</h3>
-                                                <div>
-                                                    <p>User has no access to commands</p>
-                                                    <textarea name="NONE" cols="40" rows="5"></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="group" style="display: none;">
-                                                <h3 class="DontMove">CHAT</h3>
-                                                <div>
-                                                    <p>User is in the chat room, not a follower (Do Not Edit)</p>
-                                                    <textarea name="CHAT" cols="40" rows="5"></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="group">
-                                                <h3>FOLLOWER</h3>
-                                                <div>
-                                                    <p>User follows the channel and has access to follower level
-                                                        commands
-                                                    </p>
-                                                    <textarea name="FOLLOWER" cols="40" rows="5"></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="group">
-                                                <h3 class="DontMove">OWNER</h3>
-                                                <div>
-                                                    <p>User can use same commands as the owner</p>
-                                                    <textarea name="OWNER" cols="40" rows="5"></textarea>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-
-                                    <div>
-                                    </div>
-
-                                    <div style="width: 100%;">
-                                        <input id="control-settings-access-levels-save-button" type="submit"
-                                            value="Save" />
-                                        <span style="display: inline-block; width: 100%; text-align: right;">
-                                            <label class="item-label">Categories:</label>
-                                            <span style="margin-right: 30px;">
-                                                <input id="control-settings-access-levels-add" type="text" value="" />
-                                                <input type='button' value="Add" onclick="onAccessLevelsAdd()" />
-                                            </span>
-                                            <span style="margin-left: 30px;">
-                                                <select id="control-settings-access-levels-remove"></select>
-                                                <input type='button' value="Remove" onclick="onAccessLevelsRemove()" />
-                                            </span>
-                                        </span>
-                                    </div>
-                                </form>
-                            </div>
-                            <div id="tabs-control-settings-4">
                                 <div>EMPTY TAB Settings</div>
                             </div>
                         </div>
@@ -496,7 +424,6 @@
                 controls: {
                     jprefix: $('#control-commands-prefix input'),
                     jname: $('#control-commands-name input'),
-                    jaccessLevel: $('#control-commands-accessLevel select'),
                     jcooldown: $('#control-commands-cooldown input'),
                     jexample: $('#control-commands-example input'),
                     jdescription: $('#control-commands-description input'),
@@ -533,11 +460,6 @@
                     controls: {
                         jircdelayms: $('#control-settings-server-irc-delay-ms input'),
                         jmaxrainusercache: $('#control-settings-server-max-rain-user-cache input')
-                    }
-                },
-                'access-levels': {
-                    controls: {
-                        jtextareas: $('#control-settings-access-levels-inputs textarea'),
                     }
                 }
             }
@@ -659,16 +581,6 @@
 
                                 if (inputname in items[item]) {
                                     parent.show();
-                                    if (inputname === 'accessLevel') {
-                                        jcontrol.empty();
-                                        for (const ak in data.result.access) {
-                                            if (data.result.access.hasOwnProperty(ak)) {
-                                                const access = data.result.access[ak];
-                                                const jopt = $('<option>', { value: access, text: access });
-                                                jcontrol.append(jopt);
-                                            }
-                                        }
-                                    }
 
                                     let val = items[item][inputname];
                                     if (typeof val === "boolean") {
@@ -786,49 +698,7 @@
 
             for (const item in data.result) {
                 if (data.result.hasOwnProperty(item)) {
-                    if (item === 'access-levels') {
-
-                        const jaccordion = $('#settings-accordion');
-                        jaccordion.empty();
-
-                        const keys = Object.keys(data.result[item]);
-                        for (let i = 0; i < keys.length; i++) {
-
-                            for (const name in data.result[item]) {
-                                if (data.result[item].hasOwnProperty(name)) {
-                                    if (data.result[item][name].priority !== i) continue;
-                                    const accesses = data.result[item][name].names;
-                                    const jcontent = $(makeGroup({
-                                        name: name,
-                                        class: dontmove.indexOf(name) !== -1 ? 'DontMove' : '',
-                                        description: `Enter description here`
-                                    }));
-                                    if (dontshow.indexOf(name) !== -1) {
-                                        jcontent.css({ display: 'none' });
-                                    }
-                                    const jtextarea = jcontent.find('textarea').empty();
-                                    for (let i = 0; i < accesses.length; i++) {
-                                        const access = accesses[i];
-                                        jtextarea.append(`${access}\n`);
-                                    }
-                                    jaccordion.append(jcontent);
-                                }
-                            }
-                        }
-
-                        jaccordion.accordion("refresh");
-                        /*const jtextareas = panels.settings[item].controls.jtextareas;
-
-                        $.each(jtextareas, (k, value) => {
-                            const name = value.name;
-                            const accesses = data.result[item][name];
-                            $(value).empty();
-                            for (let i = 0; i < accesses.length; i++) {
-                                const access = accesses[i];
-                                $(value).append(`${access}\n`);
-                            }
-                        });*/
-                    } else if (panels.settings[item]) {
+                    if (panels.settings[item]) {
                         for (const propname in panels.settings[item].controls) {
 
                             const jcontrol = panels.settings[item].controls[propname];
@@ -864,7 +734,6 @@
             }
             // TODO: do each below on tab change
             getChatrooms();
-            getAccessLevels();
 
         }
 
@@ -891,41 +760,6 @@
             });
         }
 
-        function onAccessLevelsAdd() {
-            const jinput = $('#control-settings-access-levels-add');
-            const name = jinput.val();
-            console.log("Add Access Attempt " + name);
-            socket.emit('access-levels', { action: 'add', name: name }, (access) => {
-                jinput.val("");
-                console.log("Added Access " + name);
-                setTimeout(getAccessLevels, 500);
-                animateColorBG($('#control-settings-access-levels-remove'), "#9e9");
-                $(makeGroup({
-                    name: name,
-                    class: dontmove.indexOf(name) !== -1 ? 'DontMove' : '',
-                    description: `Enter description here`
-                })).insertBefore($('#settings-accordion .group').last());
-                $("#settings-accordion").accordion("refresh");
-            });
-        }
-
-        function onAccessLevelsRemove() {
-
-            const joption = $('#control-settings-access-levels-remove option:selected');
-            const name = joption.text();
-            const value = joption.val();
-            const nth = +value + 1;
-            console.log("Remove Access Attempt " + name + "at value " + value);
-
-            socket.emit('access-levels', { action: 'remove', name: name }, (access) => {
-                console.log("Removed Access " + name);
-                setTimeout(getAccessLevels, 500);
-                animateColorBG($('#control-settings-access-levels-remove'), "#e99");
-                $(`#settings-accordion .group:nth-child(${nth})`).remove();
-                $("#settings-accordion").accordion("refresh");
-            });
-        }
-
         function getChatrooms() {
             socket.emit('chatroom-channels', {}, (channels) => {
                 const jselect = $('#control-settings-auth-chatrooms-part');
@@ -936,19 +770,6 @@
                         value: channel,
                         text: channel
                     }));
-                }
-            });
-        }
-
-        function getAccessLevels() {
-            socket.emit('access-levels', {}, (access) => {
-                const jselect = $('#control-settings-access-levels-remove');
-                jselect.empty();
-                for (const key in access) {
-                    jselect.append($('<option>', {
-                        value: access[key],
-                        text: key
-                    }).css({ 'background-color': dontremove.indexOf(key) !== -1 ? 'red' : 'white' }));
                 }
             });
         }
@@ -1003,77 +824,7 @@
         $(document).ready(() => {
 
             $("#tabs-control-settings").tabs();
-            $("#settings-accordion").accordion({
-                collapsible: true,
-                active: false,
-                heightStyle: "content",
-                header: "> div > h3"
-            })
-                .sortable({
-                    axis: "y",
-                    handle: "h3",
-                    cancel: ".DontMove",
-                    start: function (event, ui) {
-                        const data = gdata['control-settings'];
-                        indices.start = ui.item.index();
-                        indices.max = Object.keys(data.result['access-levels']).length - 1;
-                    },
-                    stop: function (event, ui) {
-                        const data = gdata['control-settings'];
-                        indices.stop = ui.item.index();
-                        if (indices.stop === 0 || indices.stop === indices.max) {
-                            indices.stop = indices.start;
-                            $(this).sortable("cancel");
-                        } else {
-
-                            console.log(data.result['access-levels']);
-
-                            const result = data.result['access-levels'];
-                            const keys = Object.keys(result);
-                            const startKey = keys.filter(x => {
-                                return result[x].priority === indices.start;
-                            })[0];
-                            //const swapKey = keys.filter(x => {
-                            //    return result[x].priority === indices.stop;
-                            //})[0];
-                            //data.result['access-levels'][startKey].priority = indices.stop;
-                            //data.result['access-levels'][swapKey].priority = indices.start;
-
-                            if (indices.start > indices.stop) {
-                                for (let i = indices.start - 1; i >= indices.stop; i--) {
-                                    const currentKey = keys.filter(x => {
-                                        return result[x].priority === i;
-                                    }).map(x => {
-                                        data.result['access-levels'][x].priority++;
-                                    });
-                                }
-                            } else {
-                                for (let i = indices.start + 1; i <= indices.stop; i++) {
-                                    const currentKey = keys.filter(x => {
-                                        return result[x].priority === i;
-                                    }).map(x => {
-                                        data.result['access-levels'][x].priority--;
-                                    });
-                                }
-                            }
-                            data.result['access-levels'][startKey].priority = indices.stop;
-
-                            const send_data = {};
-                            send_data['access-levels'] = data.result['access-levels'];
-                            console.log(data.result['access-levels']);
-                            socket.emit('control-settings-changed', send_data);
-                        }
-                        // IE doesn't register the blur when sorting
-                        // so trigger focusout handlers to remove .ui-state-focus
-                        ui.item.children("h3").triggerHandler("focusout");
-
-                        // Refresh accordion to handle new order
-                        $(this).accordion("refresh");
-
-                        getAccessLevels();
-                    }
-                });
-
+           
             $('#theme-change').click(() => {
                 themeIndex = (themeIndex + 1) % 3;
                 setThemeFromIndex(themeIndex);
