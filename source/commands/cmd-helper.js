@@ -64,7 +64,7 @@ async function throwAndLogError(event, obj) {
         twitchUsername: obj.params.twitchUsername,
         command: event.configs.name,
         errorcode: obj.params.code,
-        botData: JSON.stringify(event),
+        botData: JSON.stringify(event.__proto__),
         errorMessage: error.message,
         stacktrace: error.stack,
     };
@@ -92,12 +92,24 @@ function commandReplyByCondition(event, condition, obj) {
     return reply;
 }
 
+function commandRepliesWho(event, objs) {
+    return _commandReplies(event, objs, (obj, args) => {
+        obj.reply(obj.params.who, args.event, args.condition, args.reply);
+    });;
+}
+
 function commandReplies(event, objs) {
+    return _commandReplies(event, objs, (obj, args) => {
+        obj.reply(args.event, args.condition, args.reply);
+    });
+}
+
+function _commandReplies(event, objs, func) {
     let reply = ``;
     for (let index = 0; index < objs.length; index++) {
         const obj = objs[index];
         reply = obj.message(obj.params);
-        obj.reply(obj.params.who, event, true, reply);
+        func(obj, {event, condition: true, reply});
     }
     return reply;
 }
@@ -154,6 +166,11 @@ const messageStrings = new JsonFile('./settings/strings.json', {
         tipcorn: `You do not have enough in your balance! (%d CORN)`,
         withdraw: `You failed to withdraw: insufficient funds`
     },
+    invalidpaymentamount: {
+        rain: `Invalid amount, your balance! (%d CORN)`,
+        tipcorn: `Invalid amount, your balance! (%d CORN)`,
+        withdraw: `You failed to withdraw: invalid payment amount`
+    },
     queryfailure: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`,
         tipcorn: {
@@ -181,6 +198,10 @@ const messageStrings = new JsonFile('./settings/strings.json', {
         recipient: `You received %d BITCORN from %s!`,
         tochat: `cttvCorn @%s just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn`,
         sender: `You tipped %s %d BITCORN! Your BITCORN balance remaining is: %d`
+    },
+    rain: {
+        tochat: () => ``,
+        sender: () => `Thank you for spreading %d BITCORN by makin it rain on dem.. %s ..hoes?  Your BITCORN balance remaining is: %d`
     }
 });
 
@@ -229,6 +250,11 @@ module.exports = {
             tipcorn: (obj) => util.format(strings().insufficientfunds.tipcorn, obj.balance),
             withdraw: () => util.format(strings().insufficientfunds.withdraw)
         },
+        invalidpaymentamount: {
+            rain: (obj) => util.format(strings().invalidpaymentamount.rain, obj.balance),
+            tipcorn: (obj) => util.format(strings().insufficientfunds.tipcorn, obj.balance),
+            withdraw: () => util.format(strings().insufficientfunds.withdraw)
+        },
         queryfailure: {
             rain: () => util.format(strings().queryfailure.rain),
             tipcorn: {
@@ -256,6 +282,21 @@ module.exports = {
             recipient: (obj) => util.format(strings().tipcorn.recipient, obj.balanceChange, obj.senderName),
             tochat: (obj) => util.format(strings().tipcorn.tochat, obj.senderName, obj.recipientName, obj.totalTippedAmount),
             sender: (obj) => util.format(strings().tipcorn.sender, obj.twitchUsername, obj.totalTippedAmount, obj.userBalance)
+        },
+        rain: {
+            tochat: (obj) => {
+                /*
+                const successMessage = `FeelsRainMan %s, you all just received a glorious CORN shower of %d BITCORN rained on you by %s! FeelsRainMan`;
+                const failedMessage = ` // PepeWhy %s type $bitcorn to register an account PepeWhy`;
+
+                const successMessage = util.format(strings().rain.tochat.success, `FeelsRainMan ${obj.successNames}, you all just received a glorious CORN shower of ${obj.singleRainedAmount} BITCORN rained on you by ${obj.twitchUsername}! FeelsRainMan`;
+                const failedMessage = ` // PepeWhy ${obj.failureNames} type $bitcorn to register an account PepeWhy`;
+
+                const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
+                */
+                return 'allMsg';
+            },
+            sender: (obj) => util.format(strings().rain.sender, obj.totalRainedAmount, obj.successNames, obj.userBalance)
         }
     },
     reply: {
@@ -272,6 +313,7 @@ module.exports = {
     commandReply: commandReply,
     commandReplyByCondition: commandReplyByCondition,
     commandReplies: commandReplies,
+    commandRepliesWho: commandRepliesWho,
     commandError: commandError,
     commandHelp: commandHelp,
     sendErrorMessage: sendErrorMessage

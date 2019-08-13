@@ -22,9 +22,8 @@ const controlNames = [
 const controlActions = new Map();
 
 controlActions.set('control-dashboard', async (data) => {
-    const authValues = auth.getValues();
 
-    const user = await helix.getUserLogin(authValues.CHANNEL_NAME);
+    const user = await helix.getUserLogin(tmi.mainChannel());
     const stream = await helix.getStreamById(user.id);
     const game = await helix.getGame(stream.game_id);
     stream.game = stream.success === true && game ? game : {};
@@ -44,9 +43,7 @@ controlActions.set('control-commands', async (data) => {
     return { commands: commandConfigs, prefixes: prefixes, access: accessLevels.keys };
 });
 controlActions.set('control-subscription', async (data) => {
-    const authValues = auth.getValues();
-
-    const user = await helix.getUserLogin(authValues.CHANNEL_NAME);
+    const user = await helix.getUserLogin(tmi.mainChannel());
 
     const offset = data.index * data.limit;
     return kraken.getLimitedSubscribersById(user.id, data.limit, offset);

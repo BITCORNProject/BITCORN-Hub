@@ -53,16 +53,30 @@ function DatabaseEndpoint() {
     }
 }
 
-DatabaseEndpoint.prototype.makeRequest = async function (endpoint, data) {
+DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
     const { access_token } = await apiRequest.fetchToken(this.sql_db_auth.getValues());
-    const baseUrl = rooturl.getValues().database;
     return apiRequest.makeRequest(`${baseUrl}${endpoint}`, access_token, data);
 }
 
-DatabaseEndpoint.prototype.criticalRequest = async function (endpoint, twitchId, data) {
+DatabaseEndpoint.prototype.criticalRequestBase = async function (baseUrl, endpoint, twitchId, data) {
     const { access_token } = await apiRequest.fetchToken(this.sql_db_auth.getValues());
-    const baseUrl = rooturl.getValues().database;
     return apiRequest.criticalRequest(`${baseUrl}${endpoint}`, twitchId, access_token, data);
+}
+
+DatabaseEndpoint.prototype.makeRequest = async function (endpoint, data) {
+    return this.makeRequestBase(rooturl.getValues().database, endpoint, data);
+}
+
+DatabaseEndpoint.prototype.criticalRequest = async function (endpoint, twitchId, data) {
+    return this.criticalRequestBase(rooturl.getValues().database, endpoint, twitchId, data);
+}
+
+DatabaseEndpoint.prototype.makeRequestTest = async function (endpoint, data) {
+    return this.makeRequestBase(rooturl.getValues().test, endpoint, data);
+}
+
+DatabaseEndpoint.prototype.criticalRequestTest = async function (endpoint, twitchId, data) {
+    return this.criticalRequestBase(rooturl.getValues().test, endpoint, twitchId, data);
 }
 
 DatabaseEndpoint.prototype.getuserRequest = async function (twitchId, twitchUsername) {

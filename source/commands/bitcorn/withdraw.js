@@ -107,6 +107,15 @@ module.exports = Object.create({
                         params: {}
                     });
                     return pending.complete(event, reply);
+                } case databaseAPI.paymentCode.InvalidPaymentAmount: {
+                    const reply = cmdHelper.commandReply(event, {
+                        methods: {
+                            message: cmdHelper.message.invalidpaymentamount.withdraw,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: {}
+                    });
+                    return pending.complete(event, reply);
                 } case databaseAPI.walletCode.Success: {
                     const reply = cmdHelper.commandReply(event, {
                         methods: {
@@ -131,7 +140,7 @@ module.exports = Object.create({
         } catch (error) {
 
             if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
-        
+
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

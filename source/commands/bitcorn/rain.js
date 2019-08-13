@@ -104,6 +104,15 @@ module.exports = Object.create({
                         params: { balance: rain_result.senderResponse.userBalance }
                     });
                     return pending.complete(event, reply);
+                } case databaseAPI.paymentCode.InvalidPaymentAmount: {
+                    const reply = cmdHelper.commandReply(event, {
+                        methods: {
+                            message: cmdHelper.message.invalidpaymentamount.rain,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: { balance: rain_result.senderResponse.userBalance }
+                    });
+                    return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.QueryFailure: {
                     const reply = cmdHelper.commandReply(event, {
                         methods: {
@@ -141,6 +150,12 @@ module.exports = Object.create({
 
                         tmi.botSay(event.target, allMsg);
                         tmi.botWhisper(rain_result.senderResponse.twitchUsername, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
+                        
+                        /*const reply = cmdHelper.commandReplies(event, [
+                            {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.rain.tochat, params:{senderName: tipcorn_result.senderResponse.twitchUsername}},
+                            {reply: cmdHelper.reply.whisper, message: cmdHelper.message.rain.sender, params:{totalRainedAmount, successNames, userBalance: rain_result.senderResponse.userBalance}},
+                        ]);*/
+                        
                         const reply = `User: ${rain_result.senderResponse.twitchUsername} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
                         return pending.complete(event, reply);
                     } else {

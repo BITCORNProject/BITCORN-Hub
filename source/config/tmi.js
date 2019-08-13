@@ -19,6 +19,11 @@ const chatQueue = {
     isBusy: false
 };
 
+const whisperQueue = {
+    items: new Queue(),
+    isBusy: false
+};
+
 const BOT_CHAT = 'bot-chat';
 const BOT_WHISPER = 'bot-whisper';
 
@@ -45,14 +50,10 @@ async function sendChatMessages() {
                 value = await clients[BOT_CHAT].say(chatItem.target, chatItem.message)
                     .catch(error => { throw new Error(`Chat Channel [queue-size: ${chatQueue.items.size()}]: ${error}`) });
                 break;
-            case BOT_WHISPER:
-                value = await clients[BOT_WHISPER].whisper(chatItem.target, chatItem.message)
-                    .catch(error => { throw new Error(`Whisper Channel [queue-size: ${chatQueue.items.size()}]: ${error}`) });
-                break;
             default:
-                break;
+                console.error(`Queue chat item type [${chatItem.client}]`);
         }
-        console.log({value: value, sent: chatItem.client, to: chatItem.target, size: chatQueue.items.size(), message: chatItem.message});
+        console.log({ value: value, sent: chatItem.client, to: chatItem.target, size: chatQueue.items.size(), message: chatItem.message });
         chatQueue.items.dequeue();
     } catch (e) {
         console.error(e);
@@ -63,7 +64,39 @@ async function sendChatMessages() {
             chatQueue.isBusy = false;
             sendChatMessages();
         })
+}
 
+async function sendWhisperMessages() {
+
+    if (whisperQueue.items.size() == 0) return;
+
+    if (whisperQueue.isBusy === true) return;
+
+    whisperQueue.isBusy = true;
+
+    const whisperItem = whisperQueue.items.peek();
+
+    try {
+        let value = null;
+        switch (whisperItem.client) {
+            case BOT_WHISPER:
+                value = await clients[BOT_WHISPER].whisper(whisperItem.target, whisperItem.message)
+                    .catch(error => { throw new Error(`Whisper Channel [queue-size: ${whisperQueue.items.size()}]: ${error}`) });
+                break;
+            default:
+                console.error(`Queue whisper item type [${chatItem.client}]`);
+        }
+        console.log({ value: value, sent: whisperItem.client, to: whisperItem.target, size: whisperQueue.items.size(), message: whisperItem.message });
+        whisperQueue.items.dequeue();
+    } catch (e) {
+        console.error(e);
+    }
+
+    (new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS)))
+        .then(() => {
+            whisperQueue.isBusy = false;
+            sendWhisperMessages();
+        })
 }
 
 async function onMessage(type, target, user, msg, self) {
@@ -71,7 +104,7 @@ async function onMessage(type, target, user, msg, self) {
 
         const { success, command, args, message } = tmiCommands.verifyCommand(msg.trim());
 
-        
+
         if (success === true) {
             const cname = command.configs.prefix + command.configs.name
             if ('cooldown' in command.configs) {
@@ -214,11 +247,25 @@ function botRespond(type, target, message) {
 }
 
 function enqueueMessageByType(client, target, message) {
-    if (clients[client].readyState() != 'OPEN') {
-        console.log({ success: false, message: `IRC client ${client} not OPEN`, 'irc-client': client, position: chatQueue.items.size() });
+
+    switch (client) {
+        case BOT_CHAT:
+            if (clients[client].readyState() != 'OPEN') {
+                console.log({ success: false, message: `IRC client ${client} not OPEN`, 'irc-client': client, position: chatQueue.items.size() });
+            }
+            chatQueue.items.enqueue({ target, message, client });
+            sendChatMessages();
+            break;
+        case BOT_WHISPER:
+            if (clients[client].readyState() != 'OPEN') {
+                console.log({ success: false, message: `IRC client ${client} not OPEN`, 'irc-client': client, position: whisperQueue.items.size() });
+            }
+            whisperQueue.items.enqueue({ target, message, client });
+            sendWhisperMessages();
+            break;
+        default:
+            console.error(`Queue enqueueMessageByType item type [${client}]`);
     }
-    chatQueue.items.enqueue({ target, message, client });
-    sendChatMessages();
 }
 
 function cleanChannel(channel) {
@@ -264,8 +311,17 @@ function removeChatUser(channel, username) {
     }
 }
 
+function getChannels() {
+    return auth.data.CHANNEL_NAME.split(',').map(x => x.trim());
+}
+
+function mainChannel() {
+    return getChannels()[0];
+}
+
 async function init() {
 
+    const channels = getChannels();
     clients[BOT_CHAT] = new tmi.client({
         connection: {
             cluster: "aws",
@@ -275,9 +331,7 @@ async function init() {
             username: auth.data.BOT_USERNAME,
             password: auth.data.OAUTH_TOKEN
         },
-        channels: [
-            auth.data.CHANNEL_NAME
-        ]
+        channels: channels
     });
 
     clients[BOT_WHISPER] = new tmi.client({
@@ -290,9 +344,7 @@ async function init() {
             username: auth.data.BOT_USERNAME,
             password: auth.data.OAUTH_TOKEN
         },
-        channels: [
-            auth.data.CHANNEL_NAME
-        ]
+        channels: channels
     });
 
     clients[BOT_CHAT].on('connected', onConnectedChatHandler);
@@ -337,7 +389,7 @@ async function partChannel(channel) {
 }
 
 function getChannels() {
-    return clients[BOT_CHAT].getChannels().map(x => cleanChannel(x));
+    return auth.data.CHANNEL_NAME.split(',').map(x => cleanChannel(x));
 }
 
 function getChatUsers(channel) {
@@ -353,6 +405,8 @@ function removeMessageCallback(callback) {
 }
 
 exports.init = init;
+exports.getChannels = getChannels;
+exports.mainChannel = mainChannel;
 exports.botSay = botSay;
 exports.botWhisper = botWhisper;
 exports.botRespond = botRespond;

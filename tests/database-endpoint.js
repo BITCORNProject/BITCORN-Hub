@@ -23,54 +23,17 @@ const { Ticker } = require('../public/js/server/ticker');
 (async () => {
     try {
 
+        const amount = 1;
+        //const {id: senderId, login: senderName} = await helix.getUserLogin('callowcreation');
+        const {id: receiverId, login: receiverName} = await helix.getUserLogin('naivebot');
 
-        //const insertuser_result = await databaseAPI.insertuserRequest('5699696963', 'user0neqwerty0987');
+        const senderId = '123123123'
+        const senderName = 'name123123123'
+        const result = await databaseApi.criticalRequestTest(databaseApi.db_endpoints.data.tipcorn, senderId, {
+            senderId, senderName, receiverId, receiverName, amount
+        });
 
-        const amount = 100;//math.fixed8(1 / 1);
-
-        const [{ id: twitchId, login: twitchUsername },
-        { id: twitchId1, login: twitchUsername1 }] = await Promise.all([
-            helix.getUserLogin('morepizza308'),
-            helix.getUserLogin('bitcornhub')
-        ]);
-
-        const { id: botId, login: botUsername } = await helix.getUserLogin('callowcreation');
-
-        const recipients = [];
-
-        const length = 5;
-        for (let index = 0; index < length; index++) {
-            if(index % 2) {
-                recipients.push({
-                    twitchId: twitchId,
-                    twitchUsername: twitchUsername,
-                    amount: amount
-                });
-            } else {
-                recipients.push({
-                    twitchId: twitchId1,
-                    twitchUsername: twitchUsername1,
-                    amount: amount
-                });
-            }
-        }
-
-        var start = new Date().getTime();
-        const buffer = crypto.randomBytes(16);
-        const [request_result1] = await Promise.all([
-            databaseAPI.bitcornRequest(twitchId, twitchUsername)
-        ]);
-
-        if(request_result1.error) {
-            console.error(request_result1.error);
-            // No user in database?
-
-        } else {
-            console.log(request_result1);
-            if(request_result1.twitchid) {
-
-            }
-        }
+        console.log(result);
 
         var end0 = new Date().getTime();
         var time0 = (end0 - start) / 1000;

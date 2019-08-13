@@ -116,11 +116,11 @@ module.exports = Object.create({
                         case databaseAPI.paymentCode.Success: {
 
                             const totalTippedAmount = Math.abs(tipcorn_result.senderResponse.balanceChange);
-                            
-                            const reply = cmdHelper.commandReplies(event, [
-                                {reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.recipient, params:{who: recipientResponse.twitchUsername, senderName: tipcorn_result.senderResponse.twitchUsername, balanceChange: recipientResponse.balanceChange}},
-                                {reply: cmdHelper.reply['chatnomention-who'], message: cmdHelper.message.tipcorn.tochat, params:{who: event.target, totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername}},
-                                {reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.sender, params:{who: tipcorn_result.senderResponse.twitchUsername, totalTippedAmount, twitchUsername: recipientResponse.twitchUsername, userBalance: tipcorn_result.senderResponse.userBalance}}
+
+                            const reply = cmdHelper.commandRepliesWho(event, [
+                                { reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.recipient, params: { who: recipientResponse.twitchUsername, senderName: tipcorn_result.senderResponse.twitchUsername, balanceChange: recipientResponse.balanceChange } },
+                                { reply: cmdHelper.reply['chatnomention-who'], message: cmdHelper.message.tipcorn.tochat, params: { who: event.target, totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername } },
+                                { reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.sender, params: { who: tipcorn_result.senderResponse.twitchUsername, totalTippedAmount, twitchUsername: recipientResponse.twitchUsername, userBalance: tipcorn_result.senderResponse.userBalance } }
                             ]);
                             return pending.complete(event, reply);
                         } case databaseAPI.paymentCode.QueryFailure: {
@@ -130,6 +130,24 @@ module.exports = Object.create({
                                     reply: cmdHelper.reply.chat
                                 },
                                 params: { twitchUsername: recipientResponse.twitchUsername }
+                            });
+                            return pending.complete(event, reply);
+                        } case databaseAPI.paymentCode.InsufficientFunds: {
+                            const reply = cmdHelper.commandReply(event, {
+                                methods: {
+                                    message: cmdHelper.message.insufficientfunds.tipcorn,
+                                    reply: cmdHelper.reply.whisper
+                                },
+                                params: { balance: tipcorn_result.senderResponse.userBalance }
+                            });
+                            return pending.complete(event, reply);
+                        } case databaseAPI.paymentCode.InvalidPaymentAmount: {
+                            const reply = cmdHelper.commandReply(event, {
+                                methods: {
+                                    message: cmdHelper.message.invalidpaymentamount.tipcorn,
+                                    reply: cmdHelper.reply.whisper
+                                },
+                                params: { balance: tipcorn_result.senderResponse.userBalance }
                             });
                             return pending.complete(event, reply);
                         } default: {
@@ -155,7 +173,7 @@ module.exports = Object.create({
         } catch (error) {
 
             if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
-        
+
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

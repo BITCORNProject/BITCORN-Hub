@@ -5,6 +5,7 @@
 "use strict";
 
 const fetch = require('node-fetch');
+const tmi = require('../source/config/tmi');
 const kraken = require('./config/authorize/kraken');
 const helix = require('./config/authorize/helix');
 const math = require('../source/utils/math');
@@ -125,7 +126,7 @@ async function init() {
     Ticker.remove(sub_tier_award_ticker_name);
 
     const tierticker = new Ticker(sub_tier_award_ticker_name, timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER, async function () { // 10 mins
-        const url = `https://tmi.twitch.tv/group/user/${auth.data.CHANNEL_NAME}/chatters`;
+        const url = `https://tmi.twitch.tv/group/user/${tmi.mainChannel()}/chatters`;
         const chatters_result = await fetch(url);
         const chatters_json = await chatters_result.json();
         viewers = [];
