@@ -32,6 +32,7 @@ Pending.prototype.reply = function(event, tmi) {
 
 Pending.prototype.respond = function(event, tmi, cmdHelper) {
     const message = `@${event.user.username}, ${cmdHelper.message.enabled({configs: event.configs})}`;
+    if(event.isDevelopment) return this.complete(event, message);
     tmi.botRespond(event.type, event.target, message);
     return this.complete(event, message);
 }
@@ -41,6 +42,7 @@ Pending.prototype.notEnabled = function(event) {
 }
 
 Pending.prototype.notAllowed = function(event) {
+    if(event.isProduction) return false;
     const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
     return allowed_testers.length > 0 && allowed_testers.indexOf(event.user.username) === -1;
 }

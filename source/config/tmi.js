@@ -4,6 +4,7 @@
 
 "use strict";
 
+const main = require('../../main');
 const tmi = require("tmi.js");
 const auth = require('../../settings/auth');
 const serverSettings = require('../../settings/server-settings');
@@ -102,7 +103,6 @@ async function onMessage(type, target, user, msg, self) {
 
         const { success, command, args, message } = tmiCommands.verifyCommand(msg.trim());
 
-
         if (success === true) {
             const cname = command.configs.prefix + command.configs.name
             if ('cooldown' in command.configs) {
@@ -151,7 +151,9 @@ async function onMessage(type, target, user, msg, self) {
                     msg,
                     args,
                     user,
-                    configs: command.configs
+                    configs: command.configs,
+                    isDevelopment: main.isDevelopment,
+                    isProduction: main.isProduction
                 }));
                 timer.stop(`Command Execution: ${result.event.user.username} ${result.event.configs.name} ${result.event.msg} `);
                 console.log(result);

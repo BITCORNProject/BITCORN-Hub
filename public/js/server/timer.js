@@ -21,8 +21,8 @@ const tickers = {};
     this.Timer.prototype.stop = function (label) {
         this.endtime = new Date().getTime();
         this.time = (this.endtime - this.starttime) / 1000;
-        if(label) {
-            console.log(`${label} ${this.time}`);
+        if (label) {
+            console.log({ label, time: this.time });
         }
         return this.time;
     }
