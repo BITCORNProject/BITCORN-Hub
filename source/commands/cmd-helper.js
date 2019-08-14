@@ -38,7 +38,7 @@ function _respond(func, target, condition, reply) {
 }
 
 const funcs = {
-    'chat': (event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${event.user.username}, ${reply}` : reply),
+    'chat': (event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${event.user['display-name']}, ${reply}` : reply),
     'whisper': (event, condition, reply) => _respond(tmi.botWhisper, event.user.username, condition, reply),
     'chat-who': (who, event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${who}, ${reply}` : reply),
     // DO NOT change the parameter list event is a placeholder - 'whisper-who': (who, event, condition, reply)
