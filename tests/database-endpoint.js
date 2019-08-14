@@ -21,7 +21,7 @@ const _ = require('./test-dependencies');
             {id: receiverId1, amount: amount},
         ];
 
-        const result = await _.databaseApi.criticalRequestTest(_.databaseApi.db_endpoints.data.getuser, receiverId, {
+        const result = await _.databaseApi.criticalRequestTest(_.databaseApi.db_endpoints.data.bitcorn, receiverId, {
             id: receiverId
         });
 

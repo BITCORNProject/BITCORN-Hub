@@ -23,8 +23,7 @@ function DatabaseEndpoint() {
     });
 
     this.db_endpoints = new JsonFile('./settings/db_endpoints.json', {
-        bitcorn: '/insertuser', // change to /getuser and refer user to sync site
-        getuser: '/getuser', // remove
+        bitcorn: '/getuser',
         rain: '/rain',
         subticker: '/payout',
         tipcorn: '/tipcorn',
@@ -124,10 +123,9 @@ DatabaseEndpoint.prototype._criticalRecipientsRequestIdUsername = async function
 }
 
 // With arbitrary body data
-DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId, twitchUsername) {
+DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId) {
     return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().bitcorn}`, twitchId, {
-        twitchId, // change to id needed
-        twitchUsername // remove
+        id: twitchId
     });
 }
 
