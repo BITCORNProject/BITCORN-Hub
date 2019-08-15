@@ -10,15 +10,19 @@ const _ = require('./test-dependencies');
 (async () => {
     try {
 
-        var start = new Date().getTime();
-
-
-        var end0 = new Date().getTime();
-        var time0 = (end0 - start) / 1000;
-        console.log('Execution time0: ' + time0);
+        const timer = new _.Timer();
+        timer.start();
         
+        
+        const filtered = [].filter(x => x.name === '')[0];
 
-        _.assert(time0);
+        console.log(filtered);
+
+
+        const time = timer.stop();
+        console.log('Execution time: ' + time);
+
+        _.assert(time);
     } catch (error) {
         console.error(error);
     }

@@ -104,12 +104,11 @@ DatabaseEndpoint.prototype._criticalArbitraryRequest = async function (path, twi
 /*
     Critical with recipients
 */
-DatabaseEndpoint.prototype._criticalRecipientsRequest = async function (path, recipients, twitchId, twitchUsername) {
+DatabaseEndpoint.prototype._criticalRecipientsRequest = async function (path, recipients, twitchId) {
     //recipients = [recipient = { twitchId: '', twitchUsername: '', amount: 0 }]
     return this._criticalArbitraryRequest(`${path}`, twitchId, {
         recipients,
-        twitchId,
-        twitchUsername
+        id: twitchId
     });
 }
 
@@ -145,8 +144,8 @@ DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, twitchUse
 /*
 Expect code: this.paymentCode
 */
-DatabaseEndpoint.prototype.rainRequest = async function (recipients, twitchId, twitchUsername) {// replace twitchId with id
-    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().rain}`, recipients, twitchId, twitchUsername);
+DatabaseEndpoint.prototype.rainRequest = async function (recipients, twitchId) {
+    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().rain}`, recipients, twitchId);
 }
 
 /*
@@ -165,8 +164,8 @@ DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, senderName
 /*
 Expect code: this.paymentCode
 */
-DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitchId, twitchUsername) {// replace twitchId with id
-    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().subticker}`, recipients, twitchId, twitchUsername);
+DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitchId) {
+    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().subticker}`, recipients, twitchId);
 }
 
 /*

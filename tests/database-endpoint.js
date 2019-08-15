@@ -9,8 +9,9 @@ const _ = require('./test-dependencies');
 
 (async () => {
     try {
-        var start = new Date().getTime();
-
+        const timer = new _.Timer();
+        timer.start();
+        
         const amount = 1;
         const {id: senderId} = await _.helix.getUserLogin('bitcornhub');
         const {id: receiverId} = await _.helix.getUserLogin('naivebot');
@@ -21,15 +22,16 @@ const _ = require('./test-dependencies');
             {id: receiverId1, amount: amount},
         ];
 
-        const result = await _.databaseApi.criticalRequestTest(_.databaseApi.db_endpoints.data.bitcorn, receiverId, {
-            id: receiverId
+        const result = await _.databaseApi.criticalRequest(_.databaseApi.db_endpoints.data.rain, senderId, {
+            id: senderId,
+            recipients,
+            amount
         });
 
         console.log(result);
 
-        var end0 = new Date().getTime();
-        var time0 = (end0 - start) / 1000;
-        console.log('Execution time0: ' + time0);
+        const time = timer.stop();
+        console.log('Execution time: ' + time);
 
         _.assert(_);
     } catch (error) {

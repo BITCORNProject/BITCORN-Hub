@@ -74,9 +74,9 @@ module.exports = Object.create({
 
             const items = chatternamesArr.slice(0, rain_user_count);
             const amount = math.fixed8(rain_amount / items.length);
-            const recipients = items.map(x => ({ twitchId: x.id, twitchUsername: x.username, amount: amount }));
+            const recipients = items.map(x => ({ id: x.id, amount: amount }));
 
-            const rain_result = await databaseAPI.rainRequest(recipients, twitchId, twitchUsername);
+            const rain_result = await databaseAPI.rainRequest(recipients, twitchId);
 
             await cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
@@ -84,16 +84,34 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.whisper
             });
 
+            cmdHelper.throwIfConditionReply(event, twitchId !== rain_result.senderResponse.platformUserId, {
+                method: cmdHelper.message.idmismatch,
+                params: { configs: event.configs, twitchId: twitchId, twitchid: rain_result.senderResponse.platformUserId },
+                reply: cmdHelper.reply.whisper
+            });
+            
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    const reply = cmdHelper.commandReply(event, {
-                        methods: {
-                            message: cmdHelper.message.norecipients.rain,
-                            reply: cmdHelper.reply.chat
-                        },
-                        params: {}
-                    });
-                    return pending.complete(event, reply);
+                    if(rain_result.recipientResponses.length > 0) {
+                        // missed out on rain
+                        const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
+                            return items.filter(m => m.id === x.platformUserId)[0].username;
+                        });
+                        const failureNames = failureNamesArray.join(' ');
+                        const reply = `PepeWhy ${failureNames} please visit the sync site https://bitcornsync.com/ to register an account PepeWhy`;
+                        
+                        tmi.botSay(event.target, reply);
+                        return pending.complete(event, reply);
+                    } else {
+                        const reply = cmdHelper.commandReply(event, {
+                            methods: {
+                                message: cmdHelper.message.norecipients.rain,
+                                reply: cmdHelper.reply.chat
+                            },
+                            params: {}
+                        });
+                        return pending.complete(event, reply);
+                    }
                 } case databaseAPI.paymentCode.InsufficientFunds: {
                     const reply = cmdHelper.commandReply(event, {
                         methods: {
@@ -128,39 +146,46 @@ module.exports = Object.create({
                     for (let i = 0; i < rain_result.recipientResponses.length; i++) {
                         const recipientResponse = rain_result.recipientResponses[i];
                         if (recipientResponse.code === databaseAPI.paymentCode.Success) {
-                            const msg = `Hey ${recipientResponse.twitchUsername}, ${rain_result.senderResponse.twitchUsername} just rained ${recipientResponse.balanceChange} $BITCORN on you in CryptoTradersTV's chat!`;
-                            //tmi.botWhisper(recipientResponse.twitchUsername, msg);
+
+                            const recipientName = items.filter(x => x.id === recipientResponse.platformUserId)[0].username;
+
+                            const msg = `Hey ${recipientName}, ${event.user['display-name']} just rained ${recipientResponse.balanceChange} $BITCORN on you in CryptoTradersTV's chat!`;
+                            //tmi.botWhisper(recipientName, msg);
                             totalRainedUsers += 1;
                             singleRainedAmount = recipientResponse.balanceChange;
                         }
                     }
                     if (totalRainedUsers > 0 && totalRainedAmount > 0) {
                         // missed out on rain
-                        const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => x.twitchUsername);
+                        const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
+                            return items.filter(m => m.id === x.platformUserId)[0].username;
+                        });
                         const failureNames = failureNamesArray.join(' ');
 
                         // success recipients
-                        const successNames = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => x.twitchUsername).join(' ');
+                        const successNames = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => {
+                            return items.filter(m => m.id === x.platformUserId)[0].username;
+                        });
 
-                        const successMessage = `FeelsRainMan ${successNames}, you all just received a glorious CORN shower of ${singleRainedAmount} BITCORN rained on you by ${rain_result.senderResponse.twitchUsername}! FeelsRainMan`;
-                        const failedMessage = ` // PepeWhy ${failureNames} type $bitcorn to register an account PepeWhy`;
+                        const successMessage = `FeelsRainMan ${successNames}, you all just received a glorious CORN shower of ${singleRainedAmount} BITCORN rained on you by ${event.user['display-name']}! FeelsRainMan`;
+                        const failedMessage = ` // PepeWhy ${failureNames} please visit the sync site https://bitcornsync.com/ to register an account PepeWhy`;
 
                         const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
 
                         tmi.botSay(event.target, allMsg);
-                        tmi.botWhisper(rain_result.senderResponse.twitchUsername, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
+                        tmi.botWhisper(event.user.username, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
                         
                         /*const reply = cmdHelper.commandReplies(event, [
-                            {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.rain.tochat, params:{senderName: tipcorn_result.senderResponse.twitchUsername}},
+                            {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.rain.tochat, params:{senderName: event.user['display-name']}},
                             {reply: cmdHelper.reply.whisper, message: cmdHelper.message.rain.sender, params:{totalRainedAmount, successNames, userBalance: rain_result.senderResponse.userBalance}},
                         ]);*/
                         
-                        const reply = `User: ${rain_result.senderResponse.twitchUsername} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
+                        const reply = `User: ${event.user.username} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
                         return pending.complete(event, reply);
                     } else {
-                        const failedNameAndCodes = rain_result.recipientResponses.filter(x => x.code !== 1).map(x => `${x.twitchUsername}:code:${x.code}`).join(' ');
+                        const failedNameAndCodes = rain_result.recipientResponses.filter(x => x.code !== 1).map(x => `${x.platformUserId}:code:${x.code}`).join(' ');
                         const reply = `No rain ${event.configs.prefix}${event.configs.name} command, please report this: totalRainedAmount=${totalRainedAmount} codes:${failedNameAndCodes}`;
-                        tmi.botWhisper(rain_result.senderResponse.twitchUsername, reply);
+                        tmi.botWhisper(event.user.username, reply);
                         return pending.complete(event, reply);
                     }
                 } default: {
@@ -168,8 +193,8 @@ module.exports = Object.create({
                         method: cmdHelper.message.pleasereport,
                         params: {
                             configs: event.configs,
-                            twitchUsername: rain_result.senderResponse.twitchUsername,
-                            twitchId: rain_result.senderResponse.twitchId,
+                            twitchUsername: event.user['display-name'],
+                            twitchId: rain_result.senderResponse.platformUserId,
                             code: rain_result.senderResponse.code
                         }
                     });
