@@ -127,18 +127,20 @@ function commandHelp(event, obj) {
 }
 
 function sendErrorMessage(error) {
+    const retVal = false;
     if (error.sendResponse) {
         if (error.sendResponse.status && error.sendResponse.status !== 200) {
-            return true;
+            retVal =  true;
         } else if (error.sendResponse.id !== 0) {
             tmi.botWhisper(error.twitchUsername, `${error.message} entryId: ${error.sendResponse.id}`);                
-            return true;
+            retVal =  true;
         } else if (error.sendData) {
             tmi.botWhisper(error.twitchUsername, error.message);
-            return true;
+            retVal =  true;
         }
     }
-    return false;
+    console.log({success: false, error});
+    return retVal;
 }
 
 const messageStrings = new JsonFile('./settings/strings.json', {
