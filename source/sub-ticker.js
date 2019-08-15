@@ -10,21 +10,22 @@ const kraken = require('./config/authorize/kraken');
 const helix = require('./config/authorize/helix');
 const math = require('../source/utils/math');
 const databaseAPI = require('./config/api-interface/database-api');
+const serverSettings = require('../settings/server-settings');
 
 const { Timer } = require('../public/js/server/timer');
 const { Ticker } = require('../public/js/server/ticker');
 
 const sub_tier_award_ticker_name = 'sub-tier-awawd-ticker';
 
-const MINUTE_AWARD_MULTIPLIER = 4.333333333333333;
-
-let viewers = [];
+const MINUTE_AWARD_MULTIPLIER = serverSettings.getValues().MINUTE_AWARD_MULTIPLIER;
 
 const sub_plans_bitcorn = {
     '1000': math.fixed8(0.25 * MINUTE_AWARD_MULTIPLIER),
     '2000': math.fixed8(0.50 * MINUTE_AWARD_MULTIPLIER),
     '3000': math.fixed8(1.00 * MINUTE_AWARD_MULTIPLIER)
 };
+
+let viewers = [];
 
 async function tickBitCornSub(limit = 100) {
 
@@ -131,7 +132,7 @@ async function init() {
     Ticker.stop(sub_tier_award_ticker_name);
     Ticker.remove(sub_tier_award_ticker_name);
 
-    const tierticker = new Ticker(sub_tier_award_ticker_name, timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER, async function () { // 10 mins
+    const tierticker = new Ticker(sub_tier_award_ticker_name, timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER, async function () {
         const url = `https://tmi.twitch.tv/group/user/${tmi.mainChannel()}/chatters`;
         const chatters_result = await fetch(url);
         const chatters_json = await chatters_result.json();
