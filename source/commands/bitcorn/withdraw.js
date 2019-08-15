@@ -68,9 +68,7 @@ module.exports = Object.create({
             });
 
             const twitchId = cmdHelper.twitch.id(event.user);
-            const twitchUsername = cmdHelper.twitch.username(event.user);
-
-            const withdraw_result = await databaseAPI.withdrawRequest(twitchId, twitchUsername, withdraw_amount, to_cornaddy);
+            const withdraw_result = await databaseAPI.withdrawRequest(twitchId, withdraw_amount, to_cornaddy);
 
             await cmdHelper.throwIfConditionReply(event, withdraw_result.status && withdraw_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
@@ -78,6 +76,12 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.whisper
             });
 
+            cmdHelper.throwIfConditionReply(event, twitchId !== withdraw_result.content.platformUserId, {
+                method: cmdHelper.message.idmismatch,
+                params: { configs: event.configs, twitchId: twitchId, twitchid: withdraw_result.content.platformUserId },
+                reply: cmdHelper.reply.whisper
+            });
+            
             switch (withdraw_result.code) {
                 case databaseAPI.walletCode.TransactionTooLarge: {
                     const reply = cmdHelper.commandReply(event, {
@@ -129,7 +133,7 @@ module.exports = Object.create({
                         method: cmdHelper.message.pleasereport,
                         params: {
                             configs: event.configs,
-                            twitchUsername: withdraw_result.content.twitchUsername,
+                            twitchUsername: cmdHelper.twitch.username(event.user),
                             twitchId: withdraw_result.content.twitchId,
                             code: withdraw_result.code
                         }

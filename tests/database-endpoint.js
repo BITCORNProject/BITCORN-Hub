@@ -22,9 +22,9 @@ const _ = require('./test-dependencies');
             {id: receiverId1, amount: amount},
         ];
 
-        const result = await _.databaseApi.criticalRequest(_.databaseApi.db_endpoints.data.rain, senderId, {
+        const result = await _.databaseApi.criticalRequest(_.databaseApi.db_endpoints.data.withdraw, senderId, {
             id: senderId,
-            recipients,
+            cornaddy: 'Cvbnjjmmkk',
             amount
         });
 

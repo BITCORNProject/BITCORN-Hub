@@ -20,7 +20,7 @@ const _ = require('./test-dependencies');
         };
         const target = '#callowcreation';
         const type = 'chat';
-        const msg = `$rain 2 4`;
+        const msg = `$withdraw 2 ChxlknhyD`;
 
         const { success, command, args, message } = _.tmiCommands.verifyCommand(msg.trim());
 

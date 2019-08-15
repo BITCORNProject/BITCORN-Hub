@@ -131,10 +131,9 @@ DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId) {
 /*
 Expect code: this.walletCode
 */
-DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, twitchUsername, amount, cornaddy) {
+DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, amount, cornaddy) {
     return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().withdraw}`, twitchId, {
-        twitchId, // change to id needed
-        twitchUsername, // remove
+        id: twitchId,
         amount,
         cornaddy
     });
@@ -151,13 +150,11 @@ DatabaseEndpoint.prototype.rainRequest = async function (recipients, twitchId) {
 /*
 Expect code: this.paymentCode
 */
-DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, senderName, receiverId, receiverName, amount) {
+DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, receiverId, amount) {
     return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().tipcorn}`, senderId, {
-        senderId, // need
-        senderName,
-        receiverId, // need
-        receiverName,
-        amount // need
+        senderId,
+        receiverId,
+        amount
     });
 }
 
