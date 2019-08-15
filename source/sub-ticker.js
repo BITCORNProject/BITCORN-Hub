@@ -9,7 +9,6 @@ const tmi = require('../source/config/tmi');
 const kraken = require('./config/authorize/kraken');
 const helix = require('./config/authorize/helix');
 const math = require('../source/utils/math');
-const auth = require('../settings/auth');
 const databaseAPI = require('./config/api-interface/database-api');
 
 const { Timer } = require('../public/js/server/timer');
@@ -75,14 +74,21 @@ async function tickBitCornSub(limit = 100) {
         const subscription = lookupsub[0];
 
         recipients.push({
-            twitchId: subscription.user._id,
-            twitchUsername: subscription.user.name,
+            id: subscription.user._id,
             amount: math.fixed8((+sub_plans_bitcorn[subscription.sub_plan]))
         });
     }
 
-    const { id: twitchId, login: twitchUsername } = await helix.getUserLogin('bitcornhub');
-    const subticker_result = await databaseAPI.subtickerRequest(recipients, twitchId, twitchUsername);
+    timers.tval = timers.get_chat_subs.stop();
+    console.log(`Prepared ${recipients.length} subs - Process Time: ${timers.tval}`);
+
+    // ----------------------------
+
+    timers.get_payout_response = new Timer();
+    timers.get_payout_response.start();
+
+    const { id: twitchId } = await helix.getUserLogin('bitcornhub');
+    const subticker_result = await databaseAPI.subtickerRequest(recipients, twitchId);
 
     switch (subticker_result.senderResponse.code) {
         case databaseAPI.paymentCode.Success:
@@ -92,8 +98,8 @@ async function tickBitCornSub(limit = 100) {
         default:
             console.error(`Something went wrong with the subticker, please report this: code ${subticker_result.senderResponse.code}`);
     }
-    timers.tval = timers.get_chat_subs.stop();
-    console.log(`Prepared and sent for ${recipients.length} subs - Process Time: ${timers.tval}`);
+    timers.tval = timers.get_payout_response.stop();
+    console.log(`Response from payout ${subticker_result.recipientResponses.length} subs - Process Time: ${timers.tval}`);
 
     // ----------------------------
 
