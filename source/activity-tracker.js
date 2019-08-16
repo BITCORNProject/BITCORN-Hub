@@ -7,8 +7,9 @@
 const tmi = require('./config/tmi');
 
 const JsonFile = require('../source/utils/json-file');
+const serverSettings = require('../settings/server-settings');
 
-const MAX_RAIN_USER_CACHE = 25 * 1.4;
+const MAX_RAIN_USER_CACHE = serverSettings.getValues().MAX_RAIN_USER_CACHE;
 let activeChatters = {};
 const cursorIndex = {};
 

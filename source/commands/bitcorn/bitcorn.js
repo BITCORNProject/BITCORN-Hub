@@ -33,44 +33,40 @@ module.exports = Object.create({
         try {
 
             const twitchId = cmdHelper.twitch.id(event.user);
-            const twitchUsername = cmdHelper.twitch.username(event.user);
 
-            const bitcorn_result = await databaseAPI.bitcornRequest(twitchId, twitchUsername);
-            
+            const bitcorn_result = await databaseAPI.bitcornRequest(twitchId);
+
             cmdHelper.throwIfConditionReply(event, bitcorn_result.status && bitcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
-                params: {configs: event.configs, status: bitcorn_result.status},
+                params: { configs: event.configs, status: bitcorn_result.status },
                 reply: cmdHelper.reply.whisper
             });
 
-            switch (bitcorn_result.code) {
-                case databaseAPI.paymentCode.Success: {
-                    
-                    const reply = cmdHelper.commandReplyByCondition(event, bitcorn_result.content.isnewuser, {
-                        reply: cmdHelper.reply.whisper,
-                        messages: [cmdHelper.message.bitcorn.notnewuser, cmdHelper.message.bitcorn.isnewuser],
-                        params: [
-                            { balance: bitcorn_result.content.balance, cornaddy: bitcorn_result.content.cornaddy },
-                            { balance: bitcorn_result.content.balance, cornaddy: bitcorn_result.content.cornaddy },
-                        ]
-                    });
-                    return pending.complete(event, reply);
-                } default: {
-                    await cmdHelper.throwAndLogError(event, {
-                        method: cmdHelper.message.pleasereport,
-                        params: {
-                            configs: event.configs,
-                            twitchUsername: bitcorn_result.content.twitchUsername,
-                            twitchId: bitcorn_result.content.twitchId,
-                            code: bitcorn_result.code
-                        }
-                    });
-                }
-            }
+            cmdHelper.throwIfConditionReply(event, bitcorn_result.error, {
+                method: cmdHelper.message.bitcorn.isnewuser,
+                params: {},
+                reply: cmdHelper.reply.chat
+            });
+
+            cmdHelper.throwIfConditionReply(event, twitchId !== bitcorn_result.twitchid, {
+                method: cmdHelper.message.idmismatch,
+                params: { configs: event.configs, twitchId: twitchId, twitchid: bitcorn_result.twitchid },
+                reply: cmdHelper.reply.whisper
+            });
+
+            const reply = cmdHelper.commandReply(event, {
+                methods: {
+                    message: cmdHelper.message.bitcorn.notnewuser,
+                    reply: cmdHelper.reply.whisper
+                },
+                params: { balance: bitcorn_result.balance, cornaddy: bitcorn_result.cornaddy }
+            });
+            return pending.complete(event, reply);
+
         } catch (error) {
 
             if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
-        
+
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {
