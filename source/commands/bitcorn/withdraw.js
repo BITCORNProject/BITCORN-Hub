@@ -150,7 +150,7 @@ module.exports = Object.create({
     }
 });
 
-function canNotWithdraw(event, withdraw_amount) {
+async function canNotWithdraw(event, withdraw_amount) {
     const high_withdraw_users = fs.readFileSync('high_withdraw_limit_users.txt', 'utf-8').split('\r\n').filter(x => x);
     if (high_withdraw_users.indexOf(event.user.username) === -1) {
         return false;
