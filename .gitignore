@@ -6,3 +6,4 @@
 *.env
 auth.json
 access.json
+command_testers.txt
