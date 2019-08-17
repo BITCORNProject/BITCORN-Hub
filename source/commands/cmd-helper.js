@@ -38,7 +38,7 @@ function _respond(func, target, condition, reply) {
 }
 
 const funcs = {
-    'chat': (event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${event.user.username}, ${reply}` : reply),
+    'chat': (event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${event.user['display-name']}, ${reply}` : reply),
     'whisper': (event, condition, reply) => _respond(tmi.botWhisper, event.user.username, condition, reply),
     'chat-who': (who, event, condition, reply, mention = true) => _respond(tmi.botSay, event.target, condition, mention ? `@${who}, ${reply}` : reply),
     // DO NOT change the parameter list event is a placeholder - 'whisper-who': (who, event, condition, reply)
@@ -127,18 +127,20 @@ function commandHelp(event, obj) {
 }
 
 function sendErrorMessage(error) {
+    const retVal = false;
     if (error.sendResponse) {
         if (error.sendResponse.status && error.sendResponse.status !== 200) {
-            return true;
+            retVal =  true;
         } else if (error.sendResponse.id !== 0) {
             tmi.botWhisper(error.twitchUsername, `${error.message} entryId: ${error.sendResponse.id}`);                
-            return true;
+            retVal =  true;
         } else if (error.sendData) {
             tmi.botWhisper(error.twitchUsername, error.message);
-            return true;
+            retVal =  true;
         }
     }
-    return false;
+    console.log({success: false, error});
+    return retVal;
 }
 
 const messageStrings = new JsonFile('./settings/strings.json', {
@@ -152,6 +154,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     nochatters: `There are no active chatters, let's make some noise cttvCarlos cttvGo cttv3`,
     cornaddyneeded: `Can not withdraw without a cornaddy - $withdraw <amount> <address>`,
     apifailed: `Can not connect to server %s%s failed, please report this: status %d`,
+    idmismatch: `Something unexpected happened %s%s failed, please report this: twitchId=%s twitchid=%s`,
     somethingwrong: `Something went wrong with the %s%s command, please report this: code %d`,
     pleasereport: `Something went wrong with the %s%s command, please report this to https://discord.gg/9j3mkCd CryptoTradersTV Discord bitcorn-support channel`,
     commanderror: `Command error in %s%s, please report this: %s`,
@@ -191,7 +194,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
         failed: `You need to register with the $bitcorn command to request a token`
     },
     bitcorn: {
-        isnewuser: `Hey! You just registered a new BITCORN wallet address %s to your twitchID! Your current balance of $BITCORN is %s`,
+        isnewuser: `Hey! You are not registered please visit the sync site https://bitcornsync.com/`,
         notnewuser: `Howdy BITCORN Farmer!  You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`
     },
     tipcorn: {
@@ -236,6 +239,7 @@ module.exports = {
         nochatters: () => util.format(strings().nochatters),
         cornaddyneeded: () => util.format(strings().cornaddyneeded),
         apifailed: (obj) => util.format(strings().apifailed, obj.configs.prefix, obj.configs.name, obj.status),
+        idmismatch: (obj) => util.format(strings().idmismatch, obj.configs.prefix, obj.configs.name, obj.twitchId, obj.twitchid),
         somethingwrong: (obj) => util.format(strings().somethingwrong, obj.configs.prefix, obj.configs.name, obj.code),
         pleasereport: (obj) => util.format(strings().pleasereport, obj.configs.prefix, obj.configs.name),
         commanderror: (obj) => util.format(strings().commanderror, obj.configs.prefix, obj.configs.name, obj.error),
@@ -275,7 +279,7 @@ module.exports = {
             failed: () => util.format(strings().token.failed),
         },
         bitcorn: {
-            isnewuser: (obj) => util.format(strings().bitcorn.isnewuser, obj.cornaddy, obj.balance),
+            isnewuser: (obj) => util.format(strings().bitcorn.isnewuser),
             notnewuser: (obj) => util.format(strings().bitcorn.notnewuser, obj.balance, obj.cornaddy)
         },
         tipcorn: {

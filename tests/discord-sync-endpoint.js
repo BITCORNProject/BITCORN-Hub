@@ -9,8 +9,9 @@ const _ = require('./test-dependencies');
 
 (async () => {
     try {
-        var start = new Date().getTime();
-
+        const timer = new _.Timer();
+        timer.start();
+        
         const url = `https://bitcorn-role-sync.azurewebsites.net/discord`;
         const discord_endpoint = await _.fetch(url, {
             method: 'GET'
@@ -19,9 +20,8 @@ const _ = require('./test-dependencies');
         console.log(discord_endpoint);
         console.log(`Sent Discord Sync ${await discord_endpoint.text()}`);
 
-        var end0 = new Date().getTime();
-        var time0 = (end0 - start) / 1000;
-        console.log('Execution time0: ' + time0);
+        const time = timer.stop();
+        console.log('Execution time: ' + time);
 
         assert(discord_endpoint);
     } catch (error) {
