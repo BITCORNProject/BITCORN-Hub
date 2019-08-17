@@ -8,10 +8,9 @@ const moduleloader = require('./commands/moduleloader');
 
 const JsonFile = require('../source/utils/json-file');
 
-const commandPrefixes = ['!', '$'];
+const commandPrefixes = ['$'];
 const commandsPaths = [
     './system',
-    './twitch',
     './bitcorn'
 ];
 
@@ -52,7 +51,7 @@ function reloadDirty(command) {
     const { name, prefix } = prefixname(command);
 
     if (prefix in maps) {
-        if(maps[prefix].has(name) === true) {
+        if (maps[prefix].has(name) === true) {
             return setCommandMapsValues(command);
         } else {
             return addCommand(command);
@@ -79,7 +78,7 @@ function addCommand(command) {
 function setCommandMapsValues(command) {
     const { name, prefix, data } = prefixname(command);
     files[prefix].set(name, new JsonFile(`./settings/commands/${prefix}/${name}.json`, data));
-    if(command.configs) {
+    if (command.configs) {
         for (const key in command.__proto__.configs) {
             if (key in files[prefix].get(name).data) {
                 continue;
@@ -112,12 +111,12 @@ function verifyCommand(message) {
         const name = args.shift().toLowerCase();
 
         if (maps[prefix].has(name) === true) {
-            return {success: true, command: maps[prefix].get(name), args: args};
+            return { success: true, command: maps[prefix].get(name), args: args };
         } else {
-            return {success: false, message: `Message ${message} is not a command`};
+            return { success: false, message: `Message ${message} is not a command` };
         }
     } else {
-        return {success: false, message: `Message prefix no match ${message}`};
+        return { success: false, message: `Message prefix no match ${message}` };
     }
 }
 
@@ -130,7 +129,6 @@ function prefixname(command) {
 }
 
 (async () => {
-    //ConfigsModel.deleteMany({}).exec();
     for (let i = 0; i < commandsPaths.length; i++) {
 
         const commandsPath = commandsPaths[i];
@@ -140,7 +138,7 @@ function prefixname(command) {
             addCommand(command);
 
             const jfile = files[command.configs.prefix].get(command.configs.name);
-            const file_configs = jfile.data; //await ConfigsModel.findOne({ name: command.configs.name, prefix: command.configs.prefix }).exec();
+            const file_configs = jfile.data;
 
             if (file_configs) {
                 for (const key in file_configs) {
@@ -150,19 +148,12 @@ function prefixname(command) {
                 }
                 reloadDirty(command);
                 const result = jfile.setValues(file_configs);
-                if(result.success === true) {
-                    console.log(`Loaded db entry for command ${command.configs.name}`);
+                if (result.success === true) {
+                    console.log({ success: result.success, message: `Loaded db entry for command ${command.configs.name}` });
                 } else {
-                    console.log(`Failed to to load command ${command.configs.name}`);
+                    console.log({ success: result.success, message: `Failed to to load command ${command.configs.name}` });
                 }
-
-            }/* else {
-                try {
-                    await (new ConfigsModel(command.configs)).save();
-                } catch (error) {
-                    console.error(error, command.configs);
-                }
-            }*/
+            }
         }
     }
 })();
