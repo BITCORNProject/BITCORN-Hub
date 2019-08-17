@@ -88,7 +88,7 @@ async function sendWhisperMessages() {
         console.log({ value: value, sent: whisperItem.client, to: whisperItem.target, size: whisperQueue.items.size(), message: whisperItem.message });
         whisperQueue.items.dequeue();
     } catch (e) {
-        console.error(e);
+        console.error(e, { to: whisperItem.target, size: whisperQueue.items.size(), message: whisperItem.message, sent: whisperItem.client });
     }
 
     (new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS)))
@@ -115,7 +115,9 @@ async function onMessage(type, target, user, msg, self) {
                             const timeLeft = math.fixed((cooldownTime - time) * 0.001, 2);
                             const cooldown_result = { success: false, message: `@${user.username} cooldown ${timeLeft} seconds remaining on ${cname} command` };
                             console.log(cooldown_result);
-                            botWhisper(user.username, cooldown_result.message);
+                            if(cname === '$withdraw') {
+                                botWhisper(user.username, cooldown_result.message);
+                            }
                             return cooldown_result;
                         }
                     } else {
@@ -130,7 +132,9 @@ async function onMessage(type, target, user, msg, self) {
                             const timeLeft = math.fixed((cooldownTime - time) * 0.001, 2);
                             const cooldown_result = { success: false, message: `@${user.username} global cooldown ${timeLeft} seconds remaining on ${cname} command` };
                             console.log(cooldown_result);
-                            botWhisper(user.username, cooldown_result.message);
+                            if(cname === '$withdraw') {
+                                botWhisper(user.username, cooldown_result.message);
+                            }
                             return cooldown_result;
                         }
                     }
