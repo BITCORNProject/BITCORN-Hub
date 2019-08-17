@@ -15,7 +15,7 @@ module.exports = Object.create({
         global_cooldown: false,
         description: 'Reload a changed module from chat.',
         example: '',
-        prefix: '!'
+        prefix: '$'
     },
     async execute(event) {
         const commandPath = reloadModule.fixPath(event.args[0]);
