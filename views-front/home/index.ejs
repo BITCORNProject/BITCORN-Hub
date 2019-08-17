@@ -361,8 +361,6 @@
                             <div id="tabs-control-settings-2">
                                 <form id="control-settings-server-form">
                                     <div>Server Settings</div>
-                                    <div class="notice">Some changes to these settings will require a server restart.
-                                    </div>
                                     <div id="control-settings-server-inputs">
 
                                         <div id="control-settings-server-irc-delay-ms" class="item-container"><label
@@ -373,11 +371,6 @@
                                         <div id="control-settings-server-max-rain-user-cache" class="item-container"><label
                                                 class="item-label">MAX_RAIN_USER_CACHE</label><input class="item-input"
                                                 type="text" value="25" name="MAX_RAIN_USER_CACHE" />
-                                        </div>
-
-                                        <div id="control-settings-server-minute-award-multiplier" class="item-container"><label
-                                                class="item-label">MINUTE_AWARD_MULTIPLIER</label><input class="item-input"
-                                                type="text" value="4.33333333333" name="MINUTE_AWARD_MULTIPLIER" />
                                         </div>
                                     </div>
 
@@ -466,8 +459,7 @@
                 server: {
                     controls: {
                         jircdelayms: $('#control-settings-server-irc-delay-ms input'),
-                        jmaxrainusercache: $('#control-settings-server-max-rain-user-cache input'),
-                        jmuniteawardmultiplier: $('#control-settings-server-minute-award-multiplier input')
+                        jmaxrainusercache: $('#control-settings-server-max-rain-user-cache input')
                     }
                 }
             }

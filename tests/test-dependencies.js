@@ -4,7 +4,6 @@
 
 "use strict";
 
-const { Queue } = require('../public/js/server/queue');
 const { Ticker } = require('../public/js/server/ticker');
 const { Timer } = require('../public/js/server/timer');
 
@@ -22,7 +21,6 @@ module.exports = {
     fs: require('fs'),
     assert: require('assert'),
     fetch: require('node-fetch'),
-    main: require('../main'),
     math: require('../source/utils/math'),
     kraken: require('../source/config/authorize/kraken'),
     helix: require('../source/config/authorize/helix'),
@@ -30,8 +28,6 @@ module.exports = {
     apiRequest: require('../source/config/api-interface/api-request'),
     databaseApi: require('../source/config/api-interface/database-api'),
     JsonFile: require('../source/utils/json-file'),
-    tmiCommands: require('../source/tmi-commands'),
     Ticker: Ticker,
-    Timer: Timer,
-    Queue: Queue
-};
+    Timer: Timer
+}

@@ -23,7 +23,8 @@ function DatabaseEndpoint() {
     });
 
     this.db_endpoints = new JsonFile('./settings/db_endpoints.json', {
-        bitcorn: '/getuser',
+        bitcorn: '/insertuser', // change to /getuser and refer user to sync site
+        getuser: '/getuser', // remove
         rain: '/rain',
         subticker: '/payout',
         tipcorn: '/tipcorn',
@@ -104,11 +105,12 @@ DatabaseEndpoint.prototype._criticalArbitraryRequest = async function (path, twi
 /*
     Critical with recipients
 */
-DatabaseEndpoint.prototype._criticalRecipientsRequest = async function (path, recipients, twitchId) {
+DatabaseEndpoint.prototype._criticalRecipientsRequest = async function (path, recipients, twitchId, twitchUsername) {
     //recipients = [recipient = { twitchId: '', twitchUsername: '', amount: 0 }]
     return this._criticalArbitraryRequest(`${path}`, twitchId, {
         recipients,
-        id: twitchId
+        twitchId,
+        twitchUsername
     });
 }
 
@@ -122,18 +124,20 @@ DatabaseEndpoint.prototype._criticalRecipientsRequestIdUsername = async function
 }
 
 // With arbitrary body data
-DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId) {
+DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId, twitchUsername) {
     return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().bitcorn}`, twitchId, {
-        id: twitchId
+        twitchId, // change to id needed
+        twitchUsername // remove
     });
 }
 
 /*
 Expect code: this.walletCode
 */
-DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, amount, cornaddy) {
+DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, twitchUsername, amount, cornaddy) {
     return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().withdraw}`, twitchId, {
-        id: twitchId,
+        twitchId, // change to id needed
+        twitchUsername, // remove
         amount,
         cornaddy
     });
@@ -143,26 +147,28 @@ DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, amount, c
 /*
 Expect code: this.paymentCode
 */
-DatabaseEndpoint.prototype.rainRequest = async function (recipients, twitchId) {
-    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().rain}`, recipients, twitchId);
+DatabaseEndpoint.prototype.rainRequest = async function (recipients, twitchId, twitchUsername) {// replace twitchId with id
+    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().rain}`, recipients, twitchId, twitchUsername);
 }
 
 /*
 Expect code: this.paymentCode
 */
-DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, receiverId, amount) {
+DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, senderName, receiverId, receiverName, amount) {
     return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().tipcorn}`, senderId, {
-        senderId,
-        receiverId,
-        amount
+        senderId, // need
+        senderName,
+        receiverId, // need
+        receiverName,
+        amount // need
     });
 }
 
 /*
 Expect code: this.paymentCode
 */
-DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitchId) {
-    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().subticker}`, recipients, twitchId);
+DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitchId, twitchUsername) {// replace twitchId with id
+    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().subticker}`, recipients, twitchId, twitchUsername);
 }
 
 /*

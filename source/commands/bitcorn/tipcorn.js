@@ -40,6 +40,7 @@ module.exports = Object.create({
             });
 
             const twitchId = cmdHelper.twitch.id(event.user);
+            const twitchUsername = cmdHelper.twitch.username(event.user);
 
             const receiverName = cmdHelper.clean.atLower(event.args[1]);
             const tipcorn_amount = cmdHelper.clean.amount(event.args[0]);
@@ -70,7 +71,7 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.chat
             });
 
-            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcorn_amount);
+            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, twitchUsername, receiverId, receiverName, tipcorn_amount);
 
             await cmdHelper.throwIfConditionReply(event, tipcorn_result.status && tipcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
@@ -78,12 +79,6 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.whisper
             });
 
-            cmdHelper.throwIfConditionReply(event, twitchId !== tipcorn_result.senderResponse.platformUserId, {
-                method: cmdHelper.message.idmismatch,
-                params: { configs: event.configs, twitchId: twitchId, twitchid: tipcorn_result.senderResponse.platformUserId },
-                reply: cmdHelper.reply.whisper
-            });
-            
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
                     const reply = cmdHelper.commandReply(event, {
@@ -122,9 +117,9 @@ module.exports = Object.create({
                             const totalTippedAmount = Math.abs(tipcorn_result.senderResponse.balanceChange);
 
                             const reply = cmdHelper.commandRepliesWho(event, [
-                                { reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.recipient, params: { who: receiverName, senderName: event.user.username, balanceChange: recipientResponse.balanceChange } },
-                                { reply: cmdHelper.reply['chatnomention-who'], message: cmdHelper.message.tipcorn.tochat, params: { who: event.target, totalTippedAmount, senderName: event.user['display-name'], recipientName: receiverName } },
-                                { reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.sender, params: { who: event.user.username, totalTippedAmount, twitchUsername: receiverName, userBalance: tipcorn_result.senderResponse.userBalance } }
+                                { reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.recipient, params: { who: recipientResponse.twitchUsername, senderName: tipcorn_result.senderResponse.twitchUsername, balanceChange: recipientResponse.balanceChange } },
+                                { reply: cmdHelper.reply['chatnomention-who'], message: cmdHelper.message.tipcorn.tochat, params: { who: event.target, totalTippedAmount, senderName: tipcorn_result.senderResponse.twitchUsername, recipientName: recipientResponse.twitchUsername } },
+                                { reply: cmdHelper.reply['whisper-who'], message: cmdHelper.message.tipcorn.sender, params: { who: tipcorn_result.senderResponse.twitchUsername, totalTippedAmount, twitchUsername: recipientResponse.twitchUsername, userBalance: tipcorn_result.senderResponse.userBalance } }
                             ]);
                             return pending.complete(event, reply);
                         } case databaseAPI.paymentCode.QueryFailure: {
@@ -133,7 +128,7 @@ module.exports = Object.create({
                                     message: cmdHelper.message.queryfailure.tipcorn.recipient,
                                     reply: cmdHelper.reply.chat
                                 },
-                                params: { twitchUsername: receiverName }
+                                params: { twitchUsername: recipientResponse.twitchUsername }
                             });
                             return pending.complete(event, reply);
                         } case databaseAPI.paymentCode.InsufficientFunds: {
@@ -167,7 +162,7 @@ module.exports = Object.create({
                         method: cmdHelper.message.pleasereport,
                         params: {
                             configs: event.configs,
-                            twitchUsername: cmdHelper.twitch.username(event.user),
+                            twitchUsername: tipcorn_result.senderResponse.twitchUsername,
                             twitchId: tipcorn_result.senderResponse.twitchId,
                             code: tipcorn_result.senderResponse.code
                         }

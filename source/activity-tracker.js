@@ -7,10 +7,8 @@
 const tmi = require('./config/tmi');
 
 const JsonFile = require('../source/utils/json-file');
-const serverSettings = require('../settings/server-settings');
 
-const MAX_RAIN_USER_CACHE = serverSettings.getValues().MAX_RAIN_USER_CACHE;
-const MAX_RAIN_USER_CACHE_WITH_PADDING = MAX_RAIN_USER_CACHE * 1.4;
+const MAX_RAIN_USER_CACHE = 25 * 1.4;
 let activeChatters = {};
 const cursorIndex = {};
 
@@ -32,42 +30,37 @@ const activityTracker = new JsonFile('./settings/activity-tracker.json', {});
 function addToActiveChatters(target, id, username) {
     if (ommit_usernames.indexOf(username) !== -1) return;
 
-    if (activeChatters[target] === undefined) {
+    if(activeChatters[target] === undefined) {
         activeChatters[target] = [];
     }
-
-    activeChatters[target] = activeChatters[target].filter(x => x);
-
-    const indexed = activeChatters[target].filter(x => x).map((x, i) => ({ index: i, id: x.id, username: x.username, count: x.count }));
-
-    let found = indexed.filter(x => x.id === id)[0];
-
-    if (!found) {
-        activeChatters[target].unshift({ index: 0, id, username, count: 0 });
-        found = activeChatters[target][0];
+    if(cursorIndex[target] === undefined) {
+        cursorIndex[target] = -1;
     }
 
-    const current = activeChatters[target].splice(found.index, 1)[0];
-
-    current.count += 1;
-
-    activeChatters[target].unshift(current);
-
-    activeChatters[target].length = MAX_RAIN_USER_CACHE_WITH_PADDING;
+    cursorIndex[target] = (cursorIndex[target] + 1) % MAX_RAIN_USER_CACHE;
+    activeChatters[target][cursorIndex[target]] = { id, username };
 
     activityTracker.setValues(activeChatters);
 }
 
 function getChatterActivity(target) {
 
-    if (activeChatters[target] === undefined) return [];
+    if(activeChatters[target] === undefined) return [];
+    
+    const chatternames = {};
+    for (let index = 0; index < activeChatters[target].length; index++) {
+        const username = activeChatters[target][index].username;
+        const id = activeChatters[target][index].id;
+        if (!chatternames[username]) chatternames[username] = { id, username, count: 0 };
+        chatternames[username].count++;
+    }
 
-    let chatternamesArr = [];
-    chatternamesArr = chatternamesArr.concat(activeChatters[target]);
-    chatternamesArr.length = MAX_RAIN_USER_CACHE;
+    const chatternamesArr = [];
+    for (const key in chatternames) {
+        chatternamesArr.push(chatternames[key]);
+    }
 
     chatternamesArr.sort((a, b) => b.count - a.count);
-    chatternamesArr = chatternamesArr.map(x => ({ id: x.id, username: x.username }));
 
     return chatternamesArr;
 }

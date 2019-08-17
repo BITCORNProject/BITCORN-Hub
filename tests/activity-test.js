@@ -21,9 +21,9 @@ const { Ticker } = require('../public/js/server/ticker');
 
 (async () => {
     try {
-        const timer = new _.Timer();
-        timer.start();
-        
+
+        const start = new Date().getTime();
+
         const chatternamesArr = activityTracker.getChatterActivity('callowcreation');
         console.log(chatternamesArr);
 
@@ -41,8 +41,9 @@ const { Ticker } = require('../public/js/server/ticker');
         
         console.log(rain_result);
 
-        const time = timer.stop();
-        console.log('Execution time: ' + time);
+        const end0 = new Date().getTime();
+        const time0 = (end0 - start) / 1000;
+        console.log('Execution time0: ' + time0);
 
         assert(time0);
     } catch (error) {

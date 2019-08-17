@@ -89,10 +89,6 @@ async function sendWhisperMessages() {
         whisperQueue.items.dequeue();
     } catch (e) {
         console.error(e);
-        if(whisperItem.target === auth.getValues().BOT_USERNAME) {
-            console.log({ value: value, sent: whisperItem.client, to: whisperItem.target, size: whisperQueue.items.size(), message: whisperItem.message });
-            whisperQueue.items.dequeue();
-        }
     }
 
     (new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS)))

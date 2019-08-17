@@ -15,21 +15,21 @@ exports.io = () => io;
 
         const orderedRequires = [];
 
-        orderedRequires.push(require('./source/config/tmi'));
+        orderedRequires.push(require('./source/config/tmi'));   
         orderedRequires.push(require('./source/config/authorize/kraken'));
-        orderedRequires.push(require('./source/config/authorize/helix'));
+        orderedRequires.push(require('./source/config/authorize/helix'));  
         orderedRequires.push(require('./source/control-panel'));
         orderedRequires.push(require('./source/activity-tracker'));
-        if (exports.isProduction) {
+        if(exports.isProduction) {
             orderedRequires.push(require('./source/sub-ticker'));
         }
         orderedRequires.push(require('./source/announcement-scheduler'));
-
+        
         const app = require('./source/config/express');
-
+    
         const auth = require('./settings/auth');
-
-        const { server } = await new Promise(async (resolve) => {
+    
+        const {server} = await new Promise(async (resolve) => {
             const server = app.listen(auth.data.PORT, () => {
                 resolve({ server: server, port: server.address().port });
             });
@@ -37,28 +37,28 @@ exports.io = () => io;
         console.log({ success: true, message: `Server listening on port ${auth.data.PORT}` })
 
         io = require('socket.io')(server);
-
+    
         const connections = new Map();
-
+    
         io.on('connection', async (socket) => {
             if (connections.has(socket.id) === true) {
                 console.log("PROBLEM ???");
             }
-
-            console.log({ message: `client connection: ${socket.handshake.headers.referer}` });
+    
+            console.log(`client connection: ${socket.handshake.headers.referer}`);
             app.emit('connection', socket);
-
+    
             connections.set(socket.id, socket);
-
+    
             socket.on('disconnect', async () => {
                 if (connections.has(socket.id) === true) {
                     connections.delete(socket.id);
                 }
-                console.log({ message: `disconnect: ${socket.handshake.headers.referer}` });
+                console.log(`disconnect: ${socket.handshake.headers.referer}`);
                 app.emit('disconnect', socket);
             });
         });
-
+    
         for (let i = 0; i < orderedRequires.length; i++) {
             const item = orderedRequires[i];
             console.log(await item.init(app));
