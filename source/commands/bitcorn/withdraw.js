@@ -49,11 +49,14 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.whisper
             });
 
-            await cmdHelper.throwIfConditionReply(event, canNotWithdraw(event, withdraw_amount), {
-                method: cmdHelper.message.maxamount,
-                params: { configs: event.configs },
-                reply: cmdHelper.reply.whisper
-            });
+            const high_withdraw_users = fs.readFileSync('high_withdraw_limit_users.txt', 'utf-8').split('\r\n').filter(x => x);
+            if (high_withdraw_users.indexOf(event.user.username) === -1) {
+                await cmdHelper.throwIfConditionReply(event, withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT, {
+                    method: cmdHelper.message.maxamount,
+                    params: { configs: event.configs },
+                    reply: cmdHelper.reply.whisper
+                });
+            }
 
             await cmdHelper.throwIfConditionReply(event, withdraw_amount >= databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
@@ -151,12 +154,8 @@ module.exports = Object.create({
 });
 
 async function canNotWithdraw(event, withdraw_amount) {
-    const high_withdraw_users = fs.readFileSync('high_withdraw_limit_users.txt', 'utf-8').split('\r\n').filter(x => x);
-    if (high_withdraw_users.indexOf(event.user.username) === -1) {
-        return false;
-    }
 
-    const getuser_result = await databaseAPI.bitcornRequest(cmdHelper.twitch.id(event.user), cmdHelper.twitch.username(event.user));
+    /*const getuser_result = await databaseAPI.bitcornRequest(cmdHelper.twitch.id(event.user), cmdHelper.twitch.username(event.user));
 
     if (getuser_result.code) {
         switch (getuser_result.code) {
@@ -170,7 +169,8 @@ async function canNotWithdraw(event, withdraw_amount) {
                 }
             }
         }
-    }
+    }*/
 
     return withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT;
+
 }
