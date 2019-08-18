@@ -49,6 +49,8 @@ function addToActiveChatters(target, id, username) {
 
     const current = activeChatters[target].splice(found.index, 1)[0];
 
+    delete current.index;
+
     current.count += 1;
 
     activeChatters[target].unshift(current);
@@ -66,7 +68,10 @@ function getChatterActivity(target) {
     chatternamesArr = chatternamesArr.concat(activeChatters[target]);
     chatternamesArr.length = MAX_RAIN_USER_CACHE;
 
-    chatternamesArr.sort((a, b) => b.count - a.count);
+    // INFO:    Comment below 'sort' to use most active
+    //          Uncomment to use most recent
+    //chatternamesArr.sort((a, b) => b.count - a.count);
+
     chatternamesArr = chatternamesArr.map(x => ({ id: x.id, username: x.username }));
 
     return chatternamesArr;
@@ -76,8 +81,20 @@ async function init() {
 
     tmi.addMessageCallback(onChatMessage);
 
-    activeChatters = activityTracker.getValues();
+    // converter used to reformat the activity file from id, username to include count
+    const converter = activityTracker.getValues();
 
+    for (const target in converter) {
+        const value = converter[target];
+        if (activeChatters[target] === undefined) {
+            activeChatters[target] = [];
+        }
+        for (let i = 0; i < value.length; i++) {
+            const item = value[i];
+            if(!item || item.count) continue;
+            addToActiveChatters(target, item.id, item.username);
+        }
+    }
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
 
