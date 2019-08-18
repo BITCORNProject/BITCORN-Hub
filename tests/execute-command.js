@@ -14,13 +14,13 @@ const _ = require('./test-dependencies');
         timer.start();
         
         const user = {
-            'user-id': "75987197",
-            'display-name': "caLLowCreation",
-            username: "callowcreation"
+            'user-id': "175987197",
+            'display-name': "1caLLowCreation",
+            username: "1callowcreation"
         };
-        const target = '#callowcreation';
+        const target = '#d4rkcide';
         const type = 'chat';
-        const msg = `$withdraw 2 ChxlknhyD`;
+        const msg = `$bitcorn`;
 
         const { success, command, args, message } = _.tmiCommands.verifyCommand(msg.trim());
 
