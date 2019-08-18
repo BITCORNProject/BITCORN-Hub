@@ -26,7 +26,9 @@ Pending.prototype.complete = function(event, message) {
 
 Pending.prototype.reply = function(event, tmi) {
     const message = `@${event.user.username} command ${event.configs.prefix}${event.configs.name} is pending please wait for a response`;      
-    tmi.botWhisper(event.user.username, message);
+    if(`${event.configs.prefix}${event.configs.name}` === '$withdraw') {
+        tmi.botWhisper(event.user.username, message);
+    }
     return { success: false, event, message };
 }
 
@@ -42,7 +44,6 @@ Pending.prototype.notEnabled = function(event) {
 }
 
 Pending.prototype.notAllowed = function(event) {
-    if(event.isProduction) return false;
     const allowed_testers = fs.readFileSync('command_testers.txt', 'utf-8').split('\r\n').filter(x => x);
     return allowed_testers.length > 0 && allowed_testers.indexOf(event.user.username) === -1;
 }
