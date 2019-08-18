@@ -1,5 +1,0 @@
-{
-    "appService.showBuildDuringDeployPrompt": false,
-    "appService.defaultWebAppToDeploy": "/subscriptions/0dc7da68-f159-4e7c-a622-51bf32317a2c/resourceGroups/BITCORNhub/providers/Microsoft.Web/sites/BITCORNhub",
-    "appService.deploySubpath": ""
-}
