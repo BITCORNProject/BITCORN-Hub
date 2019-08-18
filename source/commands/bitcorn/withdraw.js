@@ -49,7 +49,7 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.whisper
             });
 
-            await cmdHelper.throwIfConditionReply(event, withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT, {
+            await cmdHelper.throwIfConditionReply(event, canNotWithdraw(event, withdraw_amount), {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
@@ -153,3 +153,28 @@ module.exports = Object.create({
         }
     }
 });
+
+async function canNotWithdraw(event, withdraw_amount) {
+    const high_withdraw_users = fs.readFileSync('high_withdraw_limit_users.txt', 'utf-8').split('\r\n').filter(x => x);
+    if (high_withdraw_users.indexOf(event.user.username) === -1) {
+        return false;
+    }
+
+    const getuser_result = await databaseAPI.bitcornRequest(cmdHelper.twitch.id(event.user), cmdHelper.twitch.username(event.user));
+
+    if (getuser_result.code) {
+        switch (getuser_result.code) {
+            case databaseAPI.paymentCode.Success: {
+                if (getuser_result.content.isnewuser === false) {
+                    const balance = getuser_result.content.balance;
+                    const MAX_PER_MIL_AMOUNT = 60000000;
+                    const value = balance / MAX_PER_MIL_AMOUNT;
+
+                    return value >= 1 || withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT;
+                }
+            }
+        }
+    }
+
+    return withdraw_amount > databaseAPI.MAX_WITHDRAW_AMOUNT;
+}
