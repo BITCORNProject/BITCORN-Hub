@@ -165,7 +165,7 @@ module.exports = Object.create({
                         // success recipients
                         const successNames = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => {
                             return items.filter(m => m.id === x.platformUserId)[0].username;
-                        });
+                        }).join(' ');
 
                         const successMessage = `FeelsRainMan ${successNames}, you all just received a glorious CORN shower of ${singleRainedAmount} BITCORN rained on you by ${event.user['display-name']}! FeelsRainMan`;
                         const failedMessage = ` // PepeWhy ${failureNames} please visit the sync site https://bitcornsync.com/ to register an account PepeWhy`;
