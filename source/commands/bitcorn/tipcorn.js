@@ -18,7 +18,7 @@ module.exports = Object.create({
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Tips a user with bitcorn',
-        example: '$tipcorn <amount> <username>',
+        example: '$tipcorn <username> <amount>',
         prefix: '$',
         whisper: false,
         enabled: true
@@ -33,24 +33,26 @@ module.exports = Object.create({
 
         try {
 
-            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]), {
+            const receiverArg = event.args[0];
+            const amountArg = event.args[1];
+
+            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(amountArg), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
             });
 
             const twitchId = cmdHelper.twitch.id(event.user);
+            const receiverName = cmdHelper.clean.atLower(receiverArg);
+            const tipcornAmount = cmdHelper.clean.amount(amountArg);
 
-            const receiverName = cmdHelper.clean.atLower(event.args[1]);
-            const tipcorn_amount = cmdHelper.clean.amount(event.args[0]);
-
-            await cmdHelper.throwIfConditionReply(event, tipcorn_amount <= 0, {
+            await cmdHelper.throwIfConditionReply(event, tipcornAmount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            await cmdHelper.throwIfConditionReply(event, tipcorn_amount > databaseAPI.MAX_WALLET_AMOUNT, {
+            await cmdHelper.throwIfConditionReply(event, tipcornAmount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
@@ -70,7 +72,7 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.chat
             });
 
-            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcorn_amount);
+            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
 
             await cmdHelper.throwIfConditionReply(event, tipcorn_result.status && tipcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
