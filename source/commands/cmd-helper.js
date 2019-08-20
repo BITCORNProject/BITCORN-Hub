@@ -7,6 +7,7 @@
 const util = require('util');
 const tmi = require('../config/tmi');
 const JsonFile = require('../../source/utils/json-file');
+const errorLogger = require('../../source/utils/error-logger');
 const databaseAPI = require('../config/api-interface/database-api');
 
 function brackets(value) {

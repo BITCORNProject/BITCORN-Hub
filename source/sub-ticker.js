@@ -97,6 +97,16 @@ async function tickBitCornSub(limit = 100) {
             console.log(`Sub ticker payout ${balanceChange} to ${subticker_result.recipientResponses.length} subscribers`);
             break;
         default:
+        
+        await cmdHelper.throwAndLogError(event, {
+            method: cmdHelper.message.pleasereport,
+            params: {
+                configs: event.configs,
+                twitchUsername: 'bitcornhub',
+                twitchId: rain_result.senderResponse.platformUserId,
+                code: rain_result.senderResponse.code
+            }
+        });
             console.error(`Something went wrong with the subticker, please report this: code ${subticker_result.senderResponse.code}`);
     }
     timers.tval = timers.get_payout_response.stop();
