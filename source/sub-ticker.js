@@ -9,6 +9,8 @@ const tmi = require('../source/config/tmi');
 const kraken = require('./config/authorize/kraken');
 const helix = require('./config/authorize/helix');
 const math = require('../source/utils/math');
+const auth = require('../settings/auth');
+const errorLogger = require('../source/utils/error-logger');
 const databaseAPI = require('./config/api-interface/database-api');
 const serverSettings = require('../settings/server-settings');
 
@@ -88,8 +90,10 @@ async function tickBitCornSub(limit = 100) {
     timers.get_payout_response = new Timer();
     timers.get_payout_response.start();
 
-    const { id: twitchId } = await helix.getUserLogin('bitcornhub');
+    const { id: twitchId, login: twitchUsername } = await helix.getUserLogin(auth.data.BOT_USERNAME);
     const subticker_result = await databaseAPI.subtickerRequest(recipients, twitchId);
+
+    console.log(subticker_result.senderResponse.code);
 
     switch (subticker_result.senderResponse.code) {
         case databaseAPI.paymentCode.Success:
@@ -97,17 +101,23 @@ async function tickBitCornSub(limit = 100) {
             console.log(`Sub ticker payout ${balanceChange} to ${subticker_result.recipientResponses.length} subscribers`);
             break;
         default:
-        
-        await cmdHelper.throwAndLogError(event, {
-            method: cmdHelper.message.pleasereport,
-            params: {
-                configs: event.configs,
-                twitchUsername: 'bitcornhub',
-                twitchId: rain_result.senderResponse.platformUserId,
-                code: rain_result.senderResponse.code
-            }
-        });
-            console.error(`Something went wrong with the subticker, please report this: code ${subticker_result.senderResponse.code}`);
+
+            const sendData = {
+                twitchId: twitchId,
+                twitchUsername: twitchUsername,
+                command: 'sub-ticker'
+            };
+            const error = await errorLogger.logError(
+                sendData,
+                subticker_result.senderResponse.code,
+                `Something went wrong with the subticker`,
+                {
+                    viewers: viewers.length,
+                    subscriptions: subscriptions.length,
+                    recipients: recipients.length
+                });
+
+            console.error(error);
     }
     timers.tval = timers.get_payout_response.stop();
     console.log(`Response from payout ${subticker_result.recipientResponses.length} subs - Process Time: ${timers.tval}`);

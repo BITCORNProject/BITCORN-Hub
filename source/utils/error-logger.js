@@ -4,7 +4,9 @@
 
 "use strict";
 
-async function throwAndLogError(event, obj, logRequest) {
+const databaseAPI = require('../config/api-interface/database-api');
+
+async function throwAndLogError(event, obj) {
     
     const message = obj.method(obj.params);
     
@@ -14,7 +16,7 @@ async function throwAndLogError(event, obj, logRequest) {
         command: event.configs.name,
     };
     
-    const error = await logError(sendData, obj.params.code, message, JSON.stringify(event.__proto__), logRequest);
+    const error = await logError(sendData, obj.params.code, message, JSON.stringify(event.__proto__));
     
     error.hasMessage = true;
     error.twitchUsername = obj.params.twitchUsername;
@@ -23,7 +25,7 @@ async function throwAndLogError(event, obj, logRequest) {
     
 }
 
-async function logError(sendData, errorcode, message, botData, logRequest) {
+async function logError(sendData, errorcode, message, botData) {
     const error = new Error(message);
 
     sendData.errorcode = errorcode;
@@ -32,10 +34,15 @@ async function logError(sendData, errorcode, message, botData, logRequest) {
 
     sendData.botData = botData;
 
-    const error_log_result = await logRequest(sendData);
+    const error_log_result = await databaseAPI.errorlogRequest(sendData);
 
-    error.logSuccess = error_log_result.sendResponse && error_log_result.sendResponse.id > 0;
+    error.logSuccess = error_log_result.id && error_log_result.id > 0;
     error.sendData = sendData;
     error.sendResponse = error_log_result;
     return error;
 }
+
+module.exports = {
+    logError: logError,
+    throwAndLogError: throwAndLogError
+};
