@@ -375,6 +375,21 @@
                                                 type="text" value="25" name="MAX_RAIN_USER_CACHE" />
                                         </div>
 
+                                        <div id="control-settings-server-max-rain-users" class="item-container"><label
+                                                class="item-label">MAX_RAIN_USERS</label><input class="item-input"
+                                                type="text" value="25" name="MAX_RAIN_USERS" />
+                                        </div>
+
+                                        <div id="control-settings-server-min-rain-amount" class="item-container"><label
+                                            class="item-label">MIN_RAIN_AMOUNT</label><input class="item-input"
+                                            type="text" value="25" name="MIN_RAIN_AMOUNT" />
+                                        </div>
+
+                                        <div id="control-settings-server-min-tipcorn-amount" class="item-container"><label
+                                            class="item-label">MIN_TIPCORN_AMOUNT</label><input class="item-input"
+                                            type="text" value="25" name="MIN_TIPCORN_AMOUNT" />
+                                        </div>
+
                                         <div id="control-settings-server-minute-award-multiplier" class="item-container"><label
                                                 class="item-label">MINUTE_AWARD_MULTIPLIER</label><input class="item-input"
                                                 type="text" value="4.33333333333" name="MINUTE_AWARD_MULTIPLIER" />
@@ -467,6 +482,9 @@
                     controls: {
                         jircdelayms: $('#control-settings-server-irc-delay-ms input'),
                         jmaxrainusercache: $('#control-settings-server-max-rain-user-cache input'),
+                        jmaxrainusers: $('#control-settings-server-max-rain-users input'),
+                        jminrainamount: $('#control-settings-server-min-rain-amount input'),
+                        jmintipcornamount: $('#control-settings-server-min-tipcorn-amount input'),
                         jmuniteawardmultiplier: $('#control-settings-server-minute-award-multiplier input')
                     }
                 }

@@ -9,6 +9,7 @@ const databaseAPI = require('../../config/api-interface/database-api');
 const math = require('../../utils/math');
 const activityTracker = require('../../activity-tracker');
 const cmdHelper = require('../cmd-helper');
+const serverSettings = require('../../../settings/server-settings');
 const Pending = require('../../utils/pending');
 
 const pending = new Pending('rain');
@@ -19,7 +20,7 @@ module.exports = Object.create({
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Rain a certain Amount to the last 1-3 of People who were active',
-        example: '$rain <amount> <1-3>',
+        example: '$rain <1-10> <amount>',
         prefix: '$',
         whisper: false,
         enabled: true
@@ -34,7 +35,7 @@ module.exports = Object.create({
 
         try {
 
-            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
+            cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
@@ -43,22 +44,22 @@ module.exports = Object.create({
             const twitchId = cmdHelper.twitch.id(event.user);
             const twitchUsername = cmdHelper.twitch.username(event.user);
 
-            const rain_user_count = cmdHelper.clean.amount(event.args[1]);
-            const rain_amount = cmdHelper.clean.amount(event.args[0]);
+            const rain_user_count = cmdHelper.clean.amount(event.args[0]);
+            const rain_amount = cmdHelper.clean.amount(event.args[1]);
 
-            await cmdHelper.throwIfConditionReply(event, rain_amount <= 0, {
+            cmdHelper.throwIfConditionReply(event, rain_amount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            await cmdHelper.throwIfConditionReply(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
+            cmdHelper.throwIfConditionReply(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            await cmdHelper.throwIfConditionReply(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
+            cmdHelper.throwIfConditionReply(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
                 method: cmdHelper.message.numpeople,
                 params: { configs: event.configs, max: databaseAPI.MAX_RAIN_USERS },
                 reply: cmdHelper.reply.chat
@@ -66,7 +67,7 @@ module.exports = Object.create({
 
             const chatternamesArr = activityTracker.getChatterActivity(event.target).filter(x => x.username !== twitchUsername);
 
-            await cmdHelper.throwIfConditionReply(event, chatternamesArr.length === 0, {
+            cmdHelper.throwIfConditionReply(event, chatternamesArr.length === 0, {
                 method: cmdHelper.message.nochatters,
                 params: {},
                 reply: cmdHelper.reply.chat
@@ -78,28 +79,29 @@ module.exports = Object.create({
 
             const rain_result = await databaseAPI.rainRequest(recipients, twitchId);
 
-            await cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
+            cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: rain_result.status },
                 reply: cmdHelper.reply.whisper
             });
 
-            cmdHelper.throwIfConditionReply(event, twitchId !== rain_result.senderResponse.platformUserId, {
-                method: cmdHelper.message.idmismatch,
-                params: { configs: event.configs, twitchId: twitchId, twitchid: rain_result.senderResponse.platformUserId },
-                reply: cmdHelper.reply.whisper
-            });
-            
+            cmdHelper.throwIfConditionReply(event, rain_result.senderResponse.code !== databaseAPI.paymentCode.InternalServerError
+                && twitchId !== rain_result.senderResponse.platformUserId, {
+                    method: cmdHelper.message.idmismatch,
+                    params: { configs: event.configs, twitchId: twitchId, twitchid: rain_result.senderResponse.platformUserId },
+                    reply: cmdHelper.reply.whisper
+                });
+
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    if(rain_result.recipientResponses.length > 0) {
+                    if (rain_result.recipientResponses.length > 0) {
                         // missed out on rain
                         const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
                             return items.filter(m => m.id === x.platformUserId)[0].username;
                         });
                         const failureNames = failureNamesArray.join(' ');
                         const reply = `PepeWhy ${failureNames} please visit the sync site https://bitcornsync.com/ to register an account PepeWhy`;
-                        
+
                         tmi.botSay(event.target, reply);
                         return pending.complete(event, reply);
                     } else {
@@ -174,12 +176,12 @@ module.exports = Object.create({
 
                         tmi.botSay(event.target, allMsg);
                         tmi.botWhisper(event.user.username, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
-                        
+
                         /*const reply = cmdHelper.commandReplies(event, [
                             {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.rain.tochat, params:{senderName: event.user['display-name']}},
                             {reply: cmdHelper.reply.whisper, message: cmdHelper.message.rain.sender, params:{totalRainedAmount, successNames, userBalance: rain_result.senderResponse.userBalance}},
                         ]);*/
-                        
+
                         const reply = `User: ${event.user.username} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
                         return pending.complete(event, reply);
                     } else {
@@ -203,7 +205,7 @@ module.exports = Object.create({
         } catch (error) {
 
             if (cmdHelper.sendErrorMessage(error)) return pending.complete(event, error.message);
-        
+
             if (error.hasMessage) return pending.complete(event, error.message);
 
             return pending.complete(event, cmdHelper.commandError(event, {

@@ -56,7 +56,7 @@ function throwIfConditionReply(event, condition, obj) {
 }
 
 async function throwAndLogError(event, obj) {
-    
+
     const message = obj.method(obj.params);
     const error = new Error(message);
     const sendData = {
@@ -68,15 +68,15 @@ async function throwAndLogError(event, obj) {
         errorMessage: error.message,
         stacktrace: error.stack,
     };
-    
+
     const error_log_result = await databaseAPI.errorlogRequest(sendData);
-    
+
     error.hasMessage = true;
     error.twitchUsername = obj.params.twitchUsername;
     error.sendData = sendData;
     error.sendResponse = error_log_result;
     throw error;
-    
+
 }
 
 function commandReply(event, obj) {
@@ -109,7 +109,7 @@ function _commandReplies(event, objs, func) {
     for (let index = 0; index < objs.length; index++) {
         const obj = objs[index];
         reply = obj.message(obj.params);
-        func(obj, {event, condition: true, reply});
+        func(obj, { event, condition: true, reply });
     }
     return reply;
 }
@@ -130,16 +130,16 @@ function sendErrorMessage(error) {
     const retVal = false;
     if (error.sendResponse) {
         if (error.sendResponse.status && error.sendResponse.status !== 200) {
-            retVal =  true;
+            retVal = true;
         } else if (error.sendResponse.id !== 0) {
-            tmi.botWhisper(error.twitchUsername, `${error.message} entryId: ${error.sendResponse.id}`);                
-            retVal =  true;
+            tmi.botWhisper(error.twitchUsername, `${error.message} entryId: ${error.sendResponse.id}`);
+            retVal = true;
         } else if (error.sendData) {
             tmi.botWhisper(error.twitchUsername, error.message);
-            retVal =  true;
+            retVal = true;
         }
     }
-    console.log({success: false, error});
+    console.log({ success: false, error });
     return retVal;
 }
 
@@ -222,7 +222,7 @@ module.exports = {
         brackets: brackets,
         at: at,
         atLower: atLower,
-        amount: amount    
+        amount: amount
     },
     twitch: {
         id: (user) => user['user-id'],
@@ -247,7 +247,7 @@ module.exports = {
         usebitcorn: () => util.format(strings().usebitcorn),
         notnumber: (obj) => util.format(strings().notnumber, obj.configs.example),
         success: {
-            withdraw:  (obj) => util.format(strings().success.withdraw, obj.txid),
+            withdraw: (obj) => util.format(strings().success.withdraw, obj.txid),
         },
         insufficientfunds: {
             rain: (obj) => util.format(strings().insufficientfunds.rain),
