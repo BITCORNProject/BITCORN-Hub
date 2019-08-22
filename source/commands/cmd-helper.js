@@ -165,7 +165,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
         withdraw: `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`
     },
     insufficientfunds: {
-        rain: `You do not have enough in your balance! (%d CORN)`,
+        rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`,
         tipcorn: `You do not have enough in your balance! (%d CORN)`,
         withdraw: `You failed to withdraw: insufficient funds`
     },
@@ -250,7 +250,7 @@ module.exports = {
             withdraw:  (obj) => util.format(strings().success.withdraw, obj.txid),
         },
         insufficientfunds: {
-            rain: (obj) => util.format(strings().insufficientfunds.rain, obj.balance),
+            rain: (obj) => util.format(strings().insufficientfunds.rain),
             tipcorn: (obj) => util.format(strings().insufficientfunds.tipcorn, obj.balance),
             withdraw: () => util.format(strings().insufficientfunds.withdraw)
         },

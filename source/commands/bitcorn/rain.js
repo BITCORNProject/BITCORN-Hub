@@ -116,7 +116,7 @@ module.exports = Object.create({
                     const reply = cmdHelper.commandReply(event, {
                         methods: {
                             message: cmdHelper.message.insufficientfunds.rain,
-                            reply: cmdHelper.reply.whisper
+                            reply: cmdHelper.reply.chat
                         },
                         params: { balance: rain_result.senderResponse.userBalance }
                     });
