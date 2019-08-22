@@ -82,7 +82,7 @@ async function init() {
     tmi.addMessageCallback(onChatMessage);
 
     // converter used to reformat the activity file from id, username to include count
-    const converter = activityTracker.getValues();
+    /*const converter = activityTracker.getValues();
 
     for (const target in converter) {
         const value = converter[target];
@@ -94,7 +94,10 @@ async function init() {
             if(!item || item.count) continue;
             addToActiveChatters(target, item.id, item.username);
         }
-    }
+    }*/
+    
+    activeChatters = activityTracker.getValues();
+
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
 
