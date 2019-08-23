@@ -20,9 +20,11 @@ exports.io = () => io;
         orderedRequires.push(require('./source/config/authorize/helix'));
         orderedRequires.push(require('./source/control-panel'));
         orderedRequires.push(require('./source/activity-tracker'));
+
+        orderedRequires.push(require('./source/sub-ticker'));
         if (exports.isProduction) {
-            orderedRequires.push(require('./source/sub-ticker'));
         }
+        
         orderedRequires.push(require('./source/announcement-scheduler'));
 
         const app = require('./source/config/express');

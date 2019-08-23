@@ -211,7 +211,7 @@
                                             <input class="item-input" type="text" value="!commands-example"
                                                 name="example" />
                                         </div>
-                                        
+
                                         <div id="control-commands-whisper" class="item-container">
                                             <label class="item-label">WHISPER</label>
                                             <input type="checkbox" value="true" name="whisper" />
@@ -390,9 +390,16 @@
                                             type="text" value="100" name="MIN_TIPCORN_AMOUNT" />
                                         </div>
 
-                                        <div id="control-settings-server-minute-award-multiplier" class="item-container"><label
-                                                class="item-label">MINUTE_AWARD_MULTIPLIER</label><input class="item-input"
-                                                type="text" value="4.33333333333" name="MINUTE_AWARD_MULTIPLIER" />
+                                        <div id="control-settings-server-min-tipcorn-amount" class="item-container">
+                                            <label class="item-label">MIN_TIPCORN_AMOUNT</label><input
+                                                class="item-input" type="text" value="100" name="MIN_TIPCORN_AMOUNT" />
+                                        </div>
+
+                                        <div id="control-settings-server-minute-award-multiplier"
+                                            class="item-container"><label
+                                                class="item-label">MINUTE_AWARD_MULTIPLIER</label><input
+                                                class="item-input" type="text" value="4.33333333333"
+                                                name="MINUTE_AWARD_MULTIPLIER" />
                                         </div>
                                     </div>
 
@@ -637,7 +644,7 @@
                 }
 
                 const setBool = (k) => {
-                    if(result[k]) {
+                    if (result[k]) {
                         data.result.commands[result.prefix][result.name][k] = true;
                     } else {
                         data.result.commands[result.prefix][result.name][k] = false;
@@ -647,7 +654,7 @@
                 setBool('global_cooldown');
                 setBool('whisper');
                 setBool('enabled');
-                
+
                 socket.emit('control-commands-changed', data.result.commands[result.prefix][result.name]);
             });
         }
@@ -850,7 +857,7 @@
         $(document).ready(() => {
 
             $("#tabs-control-settings").tabs();
-           
+
             $('#theme-change').click(() => {
                 themeIndex = (themeIndex + 1) % 3;
                 setThemeFromIndex(themeIndex);
