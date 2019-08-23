@@ -36,7 +36,7 @@ module.exports = Object.create({
             const receiverArg = event.args[0];
             const amountArg = event.args[1];
 
-            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(amountArg), {
+            cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(amountArg), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
@@ -46,19 +46,19 @@ module.exports = Object.create({
             const receiverName = cmdHelper.clean.atLower(receiverArg);
             const tipcornAmount = cmdHelper.clean.amount(amountArg);
 
-            await cmdHelper.throwIfConditionReply(event, tipcornAmount <= 0, {
+            cmdHelper.throwIfConditionReply(event, tipcornAmount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            await cmdHelper.throwIfConditionReply(event, tipcornAmount > databaseAPI.MAX_WALLET_AMOUNT, {
+            cmdHelper.throwIfConditionReply(event, tipcornAmount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            await cmdHelper.throwIfConditionReply(event, receiverName === '', {
+            cmdHelper.throwIfConditionReply(event, receiverName === '', {
                 method: cmdHelper.message.noname,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
@@ -66,7 +66,7 @@ module.exports = Object.create({
 
             const { id: receiverId } = await helix.getUserLogin(receiverName);
 
-            await cmdHelper.throwIfConditionReply(event, !receiverId, {
+            cmdHelper.throwIfConditionReply(event, !receiverId, {
                 method: cmdHelper.message.badname,
                 params: { receiverName },
                 reply: cmdHelper.reply.chat
@@ -74,7 +74,7 @@ module.exports = Object.create({
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
 
-            await cmdHelper.throwIfConditionReply(event, tipcorn_result.status && tipcorn_result.status !== 200, {
+            cmdHelper.throwIfConditionReply(event, tipcorn_result.status && tipcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: tipcorn_result.status },
                 reply: cmdHelper.reply.whisper
@@ -157,7 +157,7 @@ module.exports = Object.create({
                             });
                             return pending.complete(event, reply);
                         } default: {
-                            await cmdHelper.throwIfConditionReply(event, true, {
+                            cmdHelper.throwIfConditionReply(event, true, {
                                 method: cmdHelper.message.pleasereport,
                                 params: { configs: event.configs, code: tipcorn_result.senderResponse.code }, //entryId
                                 reply: cmdHelper.reply.whisper

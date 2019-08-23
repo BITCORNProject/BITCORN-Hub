@@ -33,7 +33,7 @@ module.exports = Object.create({
 
         try {
 
-            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]), {
+            cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
@@ -43,19 +43,19 @@ module.exports = Object.create({
             //IMPORTANT: Do not .toLowerCase() the address is case sensitive
             const to_cornaddy = cmdHelper.clean.at(event.args[1]);
 
-            await cmdHelper.throwIfConditionReply(event, withdraw_amount <= 0, {
+            cmdHelper.throwIfConditionReply(event, withdraw_amount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
-            await cmdHelper.throwIfConditionReply(event, withdraw_amount >= databaseAPI.MAX_WALLET_AMOUNT, {
+            cmdHelper.throwIfConditionReply(event, withdraw_amount >= databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
             });
 
-            await cmdHelper.throwIfConditionReply(event, !to_cornaddy, {
+            cmdHelper.throwIfConditionReply(event, !to_cornaddy, {
                 method: cmdHelper.message.cornaddyneeded,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.whisper
@@ -64,7 +64,7 @@ module.exports = Object.create({
             const twitchId = cmdHelper.twitch.id(event.user);
             const withdraw_result = await databaseAPI.withdrawRequest(twitchId, withdraw_amount, to_cornaddy);
 
-            await cmdHelper.throwIfConditionReply(event, withdraw_result.status && withdraw_result.status !== 200, {
+            cmdHelper.throwIfConditionReply(event, withdraw_result.status && withdraw_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: withdraw_result.status },
                 reply: cmdHelper.reply.whisper

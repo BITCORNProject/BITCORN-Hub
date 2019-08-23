@@ -34,7 +34,7 @@ module.exports = Object.create({
 
         try {
 
-            await cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
+            cmdHelper.throwIfConditionReply(event, !cmdHelper.isNumber(event.args[0]) || !cmdHelper.isNumber(event.args[1]), {
                 method: cmdHelper.message.notnumber,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.respond
@@ -46,19 +46,19 @@ module.exports = Object.create({
             const rain_user_count = cmdHelper.clean.amount(event.args[1]);
             const rain_amount = cmdHelper.clean.amount(event.args[0]);
 
-            await cmdHelper.throwIfConditionReply(event, rain_amount <= 0, {
+            cmdHelper.throwIfConditionReply(event, rain_amount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            await cmdHelper.throwIfConditionReply(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
+            cmdHelper.throwIfConditionReply(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },
                 reply: cmdHelper.reply.chat
             });
 
-            await cmdHelper.throwIfConditionReply(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
+            cmdHelper.throwIfConditionReply(event, rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS, {
                 method: cmdHelper.message.numpeople,
                 params: { configs: event.configs, max: databaseAPI.MAX_RAIN_USERS },
                 reply: cmdHelper.reply.chat
@@ -66,7 +66,7 @@ module.exports = Object.create({
 
             const chatternamesArr = activityTracker.getChatterActivity(event.target).filter(x => x.username !== twitchUsername);
 
-            await cmdHelper.throwIfConditionReply(event, chatternamesArr.length === 0, {
+            cmdHelper.throwIfConditionReply(event, chatternamesArr.length === 0, {
                 method: cmdHelper.message.nochatters,
                 params: {},
                 reply: cmdHelper.reply.chat
@@ -78,7 +78,7 @@ module.exports = Object.create({
 
             const rain_result = await databaseAPI.rainRequest(recipients, twitchId);
 
-            await cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
+            cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: rain_result.status },
                 reply: cmdHelper.reply.whisper

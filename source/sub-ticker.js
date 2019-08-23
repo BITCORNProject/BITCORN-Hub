@@ -93,49 +93,61 @@ async function tickBitCornSub(limit = 100) {
     const { id: twitchId, login: twitchUsername } = await helix.getUserLogin(auth.data.BOT_USERNAME);
     const subticker_result = await databaseAPI.subtickerRequest(recipients, twitchId);
 
-    console.log(subticker_result.senderResponse.code);
+    console.log(subticker_result);
 
-    switch (subticker_result.senderResponse.code) {
-        case databaseAPI.paymentCode.Success:
-            const balanceChange = Math.abs(subticker_result.senderResponse.balanceChange);
-            console.log(`Sub ticker payout ${balanceChange} to ${subticker_result.recipientResponses.length} subscribers`);
-            break;
-        default:
+    let serverConnected = !((!subticker_result.senderResponse && subticker_result.status) && subticker_result.status !== 200);
+    let recipientLength = 0;
 
-            const sendData = {
-                twitchId: twitchId,
-                twitchUsername: twitchUsername,
-                command: 'sub-ticker'
-            };
-            const error = await errorLogger.logError(
-                sendData,
-                subticker_result.senderResponse.code,
-                `Something went wrong with the subticker`,
-                {
-                    viewers: viewers.length,
-                    subscriptions: subscriptions.length,
-                    recipients: recipients.length
-                });
+    if (serverConnected) {
+        console.log(subticker_result.senderResponse.code);
 
-            console.error(error);
+        switch (subticker_result.senderResponse.code) {
+            case databaseAPI.paymentCode.Success:
+                const balanceChange = Math.abs(subticker_result.senderResponse.balanceChange);
+                console.log(`Sub ticker payout ${balanceChange} to ${subticker_result.recipientResponses.length} subscribers`);
+                break;
+            default:
+
+                const sendData = {
+                    twitchId: twitchId,
+                    twitchUsername: twitchUsername,
+                    command: 'sub-ticker'
+                };
+                const error = await errorLogger.logError(
+                    sendData,
+                    subticker_result.senderResponse.code,
+                    `Something went wrong with the subticker`,
+                    {
+                        viewers: viewers.length,
+                        subscriptions: subscriptions.length,
+                        recipients: recipients.length
+                    });
+
+                console.error(error);
+        }
+        recipientLength = subticker_result.recipientResponses.length;
     }
+
     timers.tval = timers.get_payout_response.stop();
-    console.log(`Response from payout ${subticker_result.recipientResponses.length} subs - Process Time: ${timers.tval}`);
+    console.log(`Response from payout ${recipientLength} subs - Process Time: ${timers.tval}`);
 
     // ----------------------------
+    if (serverConnected) {
+        timers.discord_sync_send = new Timer();
+        timers.discord_sync_send.start();
 
-    timers.discord_sync_send = new Timer();
-    timers.discord_sync_send.start();
+        const url = `https://bitcornsync.com/subsync`;
+        const discord_endpoint = await fetch(url, {
+            method: 'POST'
+        });
 
-    const url = `https://bitcornsync.com/subsync`;
-    const discord_endpoint = await fetch(url, {
-        method: 'POST'
-    });
+        timers.tval = timers.discord_sync_send.stop();
 
-    timers.tval = timers.discord_sync_send.stop();
-
-    console.log(`Sent Discord Sync ${await discord_endpoint.text()} `);
-    console.log(`Finished subtier ticker - Process Time: ${timers.tval}`);
+        console.log(`Sent Discord Sync ${await discord_endpoint.text()} `);
+        console.log(`Finished subtier ticker - Process Time: ${timers.tval}`);
+    } else {
+        console.log(`Can not connect to API server for sub ticker`);
+    }
 
     // ----------------------------
     timers.tval = timers.total.stop();
