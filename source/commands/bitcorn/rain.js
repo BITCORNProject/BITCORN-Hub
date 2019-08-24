@@ -20,7 +20,7 @@ module.exports = Object.create({
         cooldown: 1000 * 30,
         global_cooldown: false,
         description: 'Rain a certain Amount to the last 1-3 of People who were active',
-        example: '$rain <1-10> <amount>',
+        example: '$rain <amount> <1-10>',
         prefix: '$',
         whisper: false,
         enabled: true
@@ -43,9 +43,9 @@ module.exports = Object.create({
 
             const twitchId = cmdHelper.twitch.id(event.user);
             const twitchUsername = cmdHelper.twitch.username(event.user);
-
-            const rain_user_count = cmdHelper.clean.amount(event.args[0]);
-            const rain_amount = cmdHelper.clean.amount(event.args[1]);
+            
+            const rain_amount = cmdHelper.clean.amount(event.args[0]);
+            const rain_user_count = cmdHelper.clean.amount(event.args[1]);
 
             cmdHelper.throwIfConditionReply(event, rain_amount <= 0, {
                 method: cmdHelper.message.nonegitive,
