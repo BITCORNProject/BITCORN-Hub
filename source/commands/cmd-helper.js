@@ -128,7 +128,7 @@ function commandHelp(event, obj) {
 }
 
 function sendErrorMessage(error) {
-    const retVal = false;
+    let retVal = false;
     if (error.sendResponse) {
         if (error.sendResponse.status && error.sendResponse.status !== 200) {
             retVal = true;
