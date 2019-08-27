@@ -5,6 +5,8 @@
 "use strict";
 
 const JsonFile = require('../source/utils/json-file');
+
+// These are example values
 const auth = new JsonFile('./settings/auth.json', {
     PORT: 3000,
     BOT_USERNAME: 'wollac',
