@@ -4,6 +4,7 @@
 
 "use strict";
 
+const fs = require('fs');
 const main = require('../../main');
 const tmi = require("tmi.js");
 const auth = require('../../settings/auth');
@@ -12,6 +13,10 @@ const tmiCommands = require('../tmi-commands');
 const { Queue } = require('../../public/js/server/queue');
 const { Timer } = require('../../public/js/server/timer');
 const math = require('../../source/utils/math');
+
+const JsonFile = require('../utils/json-file');
+
+const catchLogs = new JsonFile('./entry-errors/catch-logs.json', []);
 
 const chatQueue = {
     items: new Queue(),
@@ -89,7 +94,7 @@ async function sendWhisperMessages() {
         whisperQueue.items.dequeue();
     } catch (e) {
         console.error(e);
-        if(whisperItem.target === auth.getValues().BOT_USERNAME) {
+        if (whisperItem.target === auth.getValues().BOT_USERNAME) {
             console.log({ value: value, sent: whisperItem.client, to: whisperItem.target, size: whisperQueue.items.size(), message: whisperItem.message });
             whisperQueue.items.dequeue();
         }
@@ -119,7 +124,7 @@ async function onMessage(type, target, user, msg, self) {
                             const timeLeft = math.fixed((cooldownTime - time) * 0.001, 2);
                             const cooldown_result = { success: false, message: `@${user.username} cooldown ${timeLeft} seconds remaining on ${cname} command` };
                             console.log(cooldown_result);
-                            if(cname === '$withdraw') {
+                            if (cname === '$withdraw') {
                                 botWhisper(user.username, cooldown_result.message);
                             }
                             return cooldown_result;
@@ -136,7 +141,7 @@ async function onMessage(type, target, user, msg, self) {
                             const timeLeft = math.fixed((cooldownTime - time) * 0.001, 2);
                             const cooldown_result = { success: false, message: `@${user.username} global cooldown ${timeLeft} seconds remaining on ${cname} command` };
                             console.log(cooldown_result);
-                            if(cname === '$withdraw') {
+                            if (cname === '$withdraw') {
                                 botWhisper(user.username, cooldown_result.message);
                             }
                             return cooldown_result;
@@ -191,6 +196,10 @@ async function onMessage(type, target, user, msg, self) {
         */
         console.log(result);
         console.error(error);
+
+        catchLogs.data.push({ time: new Date(), error: { message: error.message, stack: error.stack }, result });
+        catchLogs.setValues(catchLogs.data);
+
         return result;
     }
 }

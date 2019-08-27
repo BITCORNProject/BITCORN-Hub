@@ -9,7 +9,7 @@ const databaseAPI = require('../../config/api-interface/database-api');
 const cmdHelper = require('../cmd-helper');
 const Pending = require('../../utils/pending');
 
-const pending = new Pending('bitcorn');
+const pending = new Pending();
 
 module.exports = Object.create({
     configs: {
@@ -23,8 +23,6 @@ module.exports = Object.create({
         enabled: true
     },
     async execute(event) {
-
-        if (pending.started(event)) return pending.reply(event, tmi);
 
         if (pending.notEnabled(event)) return pending.respond(event, tmi, cmdHelper);
 
