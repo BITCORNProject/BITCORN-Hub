@@ -51,6 +51,12 @@ module.exports = Object.create({
                 reply: cmdHelper.reply.chat
             });
 
+            cmdHelper.throwIfConditionReply(event, rain_amount < serverSettings.getValues().MIN_RAIN_AMOUNT, {
+                method: cmdHelper.message.minamount,
+                params: { configs: event.configs, minamount: serverSettings.getValues().MIN_RAIN_AMOUNT },
+                reply: cmdHelper.reply.chat
+            });
+
             cmdHelper.throwIfConditionReply(event, rain_amount > databaseAPI.MAX_WALLET_AMOUNT, {
                 method: cmdHelper.message.maxamount,
                 params: { configs: event.configs },

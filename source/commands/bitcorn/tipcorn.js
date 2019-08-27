@@ -8,6 +8,7 @@ const tmi = require('../../config/tmi');
 const helix = require('../../config/authorize/helix');
 const databaseAPI = require('../../config/api-interface/database-api');
 const cmdHelper = require('../cmd-helper');
+const serverSettings = require('../../../settings/server-settings');
 const Pending = require('../../utils/pending');
 
 const pending = new Pending();
@@ -47,6 +48,12 @@ module.exports = Object.create({
             cmdHelper.throwIfConditionReply(event, tipcornAmount <= 0, {
                 method: cmdHelper.message.nonegitive,
                 params: { configs: event.configs },
+                reply: cmdHelper.reply.chat
+            });
+
+            cmdHelper.throwIfConditionReply(event, tipcornAmount < serverSettings.getValues().MIN_TIPCORN_AMOUNT, {
+                method: cmdHelper.message.minamount,
+                params: { configs: event.configs, minamount: serverSettings.getValues().MIN_TIPCORN_AMOUNT },
                 reply: cmdHelper.reply.chat
             });
 
