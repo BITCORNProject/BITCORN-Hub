@@ -57,27 +57,7 @@ function throwIfConditionReply(event, condition, obj) {
 }
 
 async function asyncThrowAndLogError(event, obj) {
-
-    const message = obj.method(obj.params);
-    const error = new Error(message);
-    const sendData = {
-        twitchId: obj.params.twitchId,
-        twitchUsername: obj.params.twitchUsername,
-        command: event.configs.name,
-        errorcode: obj.params.code,
-        botData: JSON.stringify(event.__proto__),
-        errorMessage: error.message,
-        stacktrace: error.stack,
-    };
-
-    const error_log_result = await databaseAPI.errorlogRequest(sendData);
-
-    error.hasMessage = true;
-    error.twitchUsername = obj.params.twitchUsername;
-    error.sendData = sendData;
-    error.sendResponse = error_log_result;
-    throw error;
-
+    throw errorLogger.asyncThrowAndLogError(event, obj);
 }
 
 function commandReply(event, obj) {
