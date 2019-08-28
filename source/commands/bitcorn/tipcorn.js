@@ -171,7 +171,7 @@ module.exports = Object.create({
                         }
                     }
                 } default: {
-                    await cmdHelper.throwAndLogError(event, {
+                    await cmdHelper.asyncThrowAndLogError(event, {
                         method: cmdHelper.message.pleasereport,
                         params: {
                             configs: event.configs,

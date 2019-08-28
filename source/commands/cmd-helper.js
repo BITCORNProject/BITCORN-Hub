@@ -56,7 +56,7 @@ function throwIfConditionReply(event, condition, obj) {
     }
 }
 
-async function throwAndLogError(event, obj) {
+async function asyncThrowAndLogError(event, obj) {
 
     const message = obj.method(obj.params);
     const error = new Error(message);
@@ -316,7 +316,7 @@ module.exports = {
         'whisper-who': (who, event, condition, reply) => funcs['whisper-who'](who, event, condition, reply)
     },
     throwIfConditionReply: throwIfConditionReply,
-    throwAndLogError: throwAndLogError,
+    asyncThrowAndLogError: asyncThrowAndLogError,
     commandReply: commandReply,
     commandReplyByCondition: commandReplyByCondition,
     commandReplies: commandReplies,

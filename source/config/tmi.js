@@ -37,7 +37,7 @@ const clients = {};
 const cooldowns = {};
 const global_cooldowns = {};
 
-async function sendChatMessages() {
+async function asyncSendChatMessages() {
 
     if (chatQueue.items.size() == 0) return;
 
@@ -66,11 +66,11 @@ async function sendChatMessages() {
     (new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS)))
         .then(() => {
             chatQueue.isBusy = false;
-            sendChatMessages();
+            asyncSendChatMessages();
         })
 }
 
-async function sendWhisperMessages() {
+async function asyncSendWhisperMessages() {
 
     if (whisperQueue.items.size() == 0) return;
 
@@ -103,11 +103,11 @@ async function sendWhisperMessages() {
     (new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS)))
         .then(() => {
             whisperQueue.isBusy = false;
-            sendWhisperMessages();
+            asyncSendWhisperMessages();
         })
 }
 
-async function onMessage(type, target, user, msg, self) {
+async function asyncOnMessage(type, target, user, msg, self) {
     try {
 
         const { success, command, args, message } = tmiCommands.verifyCommand(msg.trim());
@@ -204,19 +204,18 @@ async function onMessage(type, target, user, msg, self) {
     }
 }
 
-async function onWhisperHandler(target, user, msg, self) {
+function onWhisperHandler(target, user, msg, self) {
 
     if (user.username.toLowerCase() === auth.data.BOT_USERNAME.toLowerCase()) return { success: false, message: `self` };
 
-    onMessage('whisper', target, user, msg, self);
-
+    asyncOnMessage('whisper', target, user, msg, self);
 }
 
-async function onMessageHandler(target, user, msg, self) {
+function onMessageHandler(target, user, msg, self) {
 
     if (self) return { success: false, message: `self` };
 
-    onMessage('chat', target, user, msg, self);
+    asyncOnMessage('chat', target, user, msg, self);
 }
 
 function onConnectedChatHandler(addr, port) {
@@ -272,14 +271,14 @@ function enqueueMessageByType(client, target, message) {
                 console.log({ success: false, message: `IRC client ${client} not OPEN`, 'irc-client': client, position: chatQueue.items.size() });
             }
             chatQueue.items.enqueue({ target, message, client });
-            sendChatMessages();
+            asyncSendChatMessages();
             break;
         case BOT_WHISPER:
             if (clients[client].readyState() != 'OPEN') {
                 console.log({ success: false, message: `IRC client ${client} not OPEN`, 'irc-client': client, position: whisperQueue.items.size() });
             }
             whisperQueue.items.enqueue({ target, message, client });
-            sendWhisperMessages();
+            asyncSendWhisperMessages();
             break;
         default:
             console.error(`Queue enqueueMessageByType item type [${client}]`);
@@ -384,7 +383,7 @@ async function init() {
     }
 }
 
-async function joinChannel(channel) {
+async function asyncJoinChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].join(channel);
         addChannel(data);
@@ -395,7 +394,7 @@ async function joinChannel(channel) {
     }
 }
 
-async function partChannel(channel) {
+async function asyncPartChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].part(channel);
         removeChannel(data);
@@ -430,7 +429,7 @@ exports.botWhisper = botWhisper;
 exports.botRespond = botRespond;
 exports.getChannels = getChannels;
 exports.getChatUsers = getChatUsers;
-exports.joinChannel = joinChannel;
-exports.partChannel = partChannel;
+exports.asyncJoinChannel = asyncJoinChannel;
+exports.asyncPartChannel = asyncPartChannel;
 exports.addMessageCallback = addMessageCallback;
 exports.removeMessageCallback = removeMessageCallback;

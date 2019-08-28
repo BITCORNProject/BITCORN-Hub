@@ -65,7 +65,7 @@ module.exports = Object.create({
                 });
                 return pending.complete(event, reply);
             }
-            await cmdHelper.throwAndLogError(event, {
+            await cmdHelper.asyncThrowAndLogError(event, {
                 method: cmdHelper.message.pleasereport,
                 params: {
                     configs: event.configs,

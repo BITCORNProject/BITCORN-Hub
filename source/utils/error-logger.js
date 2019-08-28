@@ -6,7 +6,7 @@
 
 const databaseAPI = require('../config/api-interface/database-api');
 
-async function throwAndLogError(event, obj) {
+async function asyncThrowAndLogError(event, obj) {
     
     const message = obj.method(obj.params);
     
@@ -16,7 +16,7 @@ async function throwAndLogError(event, obj) {
         command: event.configs.name,
     };
     
-    const error = await logError(sendData, obj.params.code, message, JSON.stringify(event.__proto__));
+    const error = await asyncLogError(sendData, obj.params.code, message, JSON.stringify(event.__proto__));
     
     error.hasMessage = true;
     error.twitchUsername = obj.params.twitchUsername;
@@ -25,7 +25,7 @@ async function throwAndLogError(event, obj) {
     
 }
 
-async function logError(sendData, errorcode, message, botData) {
+async function asyncLogError(sendData, errorcode, message, botData) {
     const error = new Error(message);
 
     sendData.errorcode = errorcode;
@@ -43,6 +43,6 @@ async function logError(sendData, errorcode, message, botData) {
 }
 
 module.exports = {
-    logError: logError,
-    throwAndLogError: throwAndLogError
+    asyncLogError: asyncLogError,
+    asyncThrowAndLogError: asyncThrowAndLogError
 };

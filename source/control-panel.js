@@ -75,7 +75,7 @@ async function init(app) {
                 socket.on(name, onControlRequest);
             }
             socket.on('join-chatroom', async (data, fn) => {
-                const result = await tmi.joinChannel(data.channel);
+                const result = await tmi.asyncJoinChannel(data.channel);
                 if (result.success === true) {
                     fn(result);
                 } else {
@@ -88,7 +88,7 @@ async function init(app) {
                 }
             });
             socket.on('part-chatroom', async (data, fn) => {
-                const result = await tmi.partChannel(data.channel);
+                const result = await tmi.asyncPartChannel(data.channel);
                 if (result.success === true) {
                     fn(result);
                 } else {

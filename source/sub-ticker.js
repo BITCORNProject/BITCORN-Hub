@@ -29,7 +29,7 @@ const sub_plans_bitcorn = {
 
 let viewers = [];
 
-async function tickBitCornSub(limit = 100) {
+async function asyncTickBitCornSub(limit = 100) {
 
     const timers = {
         tval: 0,
@@ -113,7 +113,7 @@ async function tickBitCornSub(limit = 100) {
                     twitchUsername: twitchUsername,
                     command: 'sub-ticker'
                 };
-                const error = await errorLogger.logError(
+                const error = await errorLogger.asyncLogError(
                     sendData,
                     subticker_result.senderResponse.code,
                     `Something went wrong with the subticker`,
@@ -178,7 +178,7 @@ async function init() {
         }
 
         const limit = 100;
-        await tickBitCornSub(limit);
+        await asyncTickBitCornSub(limit);
     });
     tierticker.start();
 

@@ -122,7 +122,7 @@ module.exports = Object.create({
                     });
                     return pending.complete(event, reply);
                 } default: {
-                    await cmdHelper.throwAndLogError(event, {
+                    await cmdHelper.asyncThrowAndLogError(event, {
                         method: cmdHelper.message.pleasereport,
                         params: {
                             configs: event.configs,

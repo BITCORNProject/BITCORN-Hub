@@ -12,9 +12,8 @@ const serverSettings = require('../settings/server-settings');
 const MAX_RAIN_USER_CACHE = serverSettings.getValues().MAX_RAIN_USER_CACHE;
 const MAX_RAIN_USER_CACHE_WITH_PADDING = MAX_RAIN_USER_CACHE * 1.4;
 let activeChatters = {};
-const cursorIndex = {};
 
-async function onChatMessage(target, user, msg, self) {
+function onChatMessage(target, user, msg, self) {
     const event = Object.create({ target, user, msg, self });
     if (event.self) { return { success: false, message: `self`, event }; }
     addToActiveChatters(target, event.user['user-id'], event.user.username);

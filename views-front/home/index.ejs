@@ -529,7 +529,7 @@
             console.log("disconnected from server");
         });
 
-        async function sendToServer(info) {
+        async function asyncSendToServer(info) {
             return new Promise((resolve, reject) => {
                 socket.emit(info.name, info, (data) => {
                     resolve(data);
@@ -827,7 +827,7 @@
 
         function sendRequestToServer(key, keyIndex) {
 
-            sendToServer(controlNames[keyIndex].info(key))
+            asyncSendToServer(controlNames[keyIndex].info(key))
                 .then((result) => {
                     gdata[result.name] = result;
                     controlNames[getKeyIndex(result.name)].display(result.name);
