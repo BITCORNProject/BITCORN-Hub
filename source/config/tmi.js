@@ -4,7 +4,6 @@
 
 "use strict";
 
-const fs = require('fs');
 const main = require('../../main');
 const tmi = require("tmi.js");
 const auth = require('../../settings/auth');
@@ -329,7 +328,12 @@ function removeChatUser(channel, username) {
 }
 
 function getChannels() {
-    return auth.data.CHANNEL_NAME.split(',').map(x => x.trim());
+    return auth.getValues().CHANNEL_NAME.split(',').map(x => cleanChannel(x));
+}
+
+function setChannels(channels) {
+    auth.data.CHANNEL_NAME = channels.join(',');
+    auth.setValues(auth.data);
 }
 
 function mainChannel() {
@@ -386,8 +390,10 @@ async function init() {
 async function asyncJoinChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].join(channel);
-        addChannel(data);
-        return { success: true, channel: cleanChannel(data) };
+        addChannel(data[0]);
+        
+        setChannels(Object.keys(chatUsers));
+        return { success: true, channel: cleanChannel(data[0]) };
     } catch (error) {
         console.log(`Join Error: `, error);
         return { success: false, error: error };
@@ -397,16 +403,14 @@ async function asyncJoinChannel(channel) {
 async function asyncPartChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].part(channel);
-        removeChannel(data);
-        return { success: true, channel: cleanChannel(data) };
+        removeChannel(data[0]);
+        
+        setChannels(Object.keys(chatUsers));
+        return { success: true, channel: cleanChannel(data[0]) };
     } catch (error) {
         console.log(`Part Error: `, error);
         return { success: false, error: error };
     }
-}
-
-function getChannels() {
-    return auth.data.CHANNEL_NAME.split(',').map(x => cleanChannel(x));
 }
 
 function getChatUsers(channel) {
