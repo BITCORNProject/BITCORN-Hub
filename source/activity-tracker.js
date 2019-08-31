@@ -19,17 +19,18 @@ function onChatMessage(target, user, msg, self) {
     addToActiveChatters(target, event.user['user-id'], event.user.username);
 }
 
-const ommit_usernames = [
+const omit_usernames = [
     "nightbot",
     "cttvbotcorn",
     "bitcornhub",
-    "stay_hydrated_bot"
+    "stay_hydrated_bot",
+    "fakecornfakecorn"
 ];
 
 const activityTracker = new JsonFile('./settings/activity-tracker.json', {});
 
 function addToActiveChatters(target, id, username) {
-    if (ommit_usernames.indexOf(username) !== -1) return;
+    if (omit_usernames.indexOf(username) !== -1) return;
 
     if (activeChatters[target] === undefined) {
         activeChatters[target] = [];

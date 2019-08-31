@@ -61,7 +61,7 @@ async function asyncTickBitCornSub(limit = 100) {
     }
 
     timers.tval = timers.get_all_subs.stop();
-    console.log(`Get all subscriptions from Twitch API ${total} count - Process Time: ${timers.tval}`);
+    //console.log(`Get all subscriptions from Twitch API ${total} count - Process Time: ${timers.tval}`);
 
     // ----------------------------
 
@@ -83,7 +83,7 @@ async function asyncTickBitCornSub(limit = 100) {
     }
 
     timers.tval = timers.get_chat_subs.stop();
-    console.log(`Prepared ${recipients.length} subs - Process Time: ${timers.tval}`);
+    //console.log(`Prepared ${recipients.length} subs - Process Time: ${timers.tval}`);
 
     // ----------------------------
 
@@ -93,18 +93,18 @@ async function asyncTickBitCornSub(limit = 100) {
     const { id: twitchId, login: twitchUsername } = await helix.getUserLogin(auth.data.BOT_USERNAME);
     const subticker_result = await databaseAPI.subtickerRequest(recipients, twitchId);
 
-    console.log(subticker_result);
+    //console.log(subticker_result);
 
     let serverConnected = !((!subticker_result.senderResponse && subticker_result.status) && subticker_result.status !== 200);
     let recipientLength = 0;
 
     if (serverConnected) {
-        console.log(subticker_result.senderResponse.code);
+        //console.log(subticker_result.senderResponse.code);
 
         switch (subticker_result.senderResponse.code) {
             case databaseAPI.paymentCode.Success:
                 const balanceChange = Math.abs(subticker_result.senderResponse.balanceChange);
-                console.log(`Sub ticker payout ${balanceChange} to ${subticker_result.recipientResponses.length} subscribers`);
+                //console.log(`Sub ticker payout ${balanceChange} to ${subticker_result.recipientResponses.length} subscribers`);
                 break;
             default:
 
@@ -129,7 +129,7 @@ async function asyncTickBitCornSub(limit = 100) {
     }
 
     timers.tval = timers.get_payout_response.stop();
-    console.log(`Response from payout ${recipientLength} subs - Process Time: ${timers.tval}`);
+    //console.log(`Response from payout ${recipientLength} subs - Process Time: ${timers.tval}`);
 
     // ----------------------------
     if (serverConnected) {
@@ -144,7 +144,7 @@ async function asyncTickBitCornSub(limit = 100) {
         timers.tval = timers.discord_sync_send.stop();
 
         console.log(`Sent Discord Sync ${await discord_endpoint.text()} `);
-        console.log(`Finished subtier ticker - Process Time: ${timers.tval}`);
+        //console.log(`Finished subtier ticker - Process Time: ${timers.tval}`);
     } else {
         console.log(`Can not connect to API server for sub ticker`);
     }
