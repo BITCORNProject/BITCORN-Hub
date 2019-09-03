@@ -56,6 +56,16 @@ function throwIfConditionReply(event, condition, obj) {
     }
 }
 
+function throwIfConditionBanned(event, condition) {
+    if(condition) {
+        const username = module.exports.twitch.username(event.user);
+        const message = `BANNED: ${event.configs.prefix}${event.configs.name} ${username} :BANNED`;
+        const e = new Error(message);
+        e.hasMessage = true;
+        throw e;
+    }
+}
+
 async function asyncThrowAndLogError(event, obj) {
     throw errorLogger.asyncThrowAndLogError(event, obj);
 }
@@ -296,6 +306,7 @@ module.exports = {
         'whisper-who': (who, event, condition, reply) => funcs['whisper-who'](who, event, condition, reply)
     },
     throwIfConditionReply: throwIfConditionReply,
+    throwIfConditionBanned: throwIfConditionBanned,
     asyncThrowAndLogError: asyncThrowAndLogError,
     commandReply: commandReply,
     commandReplyByCondition: commandReplyByCondition,

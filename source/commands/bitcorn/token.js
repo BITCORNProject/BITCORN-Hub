@@ -40,6 +40,8 @@ module.exports = Object.create({
 
             const token_result = await databaseAPI.tokenRequest(token, twitchId, twitchUsername);
 
+            cmdHelper.throwIfConditionBanned(event, token_result.status && token_result.status === 423);
+
             cmdHelper.throwIfConditionReply(event, token_result.status && token_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: {configs: event.configs, status: token_result.status},

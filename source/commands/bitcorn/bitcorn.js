@@ -34,6 +34,8 @@ module.exports = Object.create({
 
             const bitcorn_result = await databaseAPI.bitcornRequest(twitchId);
 
+            cmdHelper.throwIfConditionBanned(event, bitcorn_result.status && bitcorn_result.status === 423);
+
             cmdHelper.throwIfConditionReply(event, bitcorn_result.status && bitcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: bitcorn_result.status },

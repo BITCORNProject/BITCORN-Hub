@@ -62,6 +62,8 @@ module.exports = Object.create({
             const twitchId = cmdHelper.twitch.id(event.user);
             const withdraw_result = await databaseAPI.withdrawRequest(twitchId, withdraw_amount, to_cornaddy);
 
+            cmdHelper.throwIfConditionBanned(event, withdraw_result.status && withdraw_result.status === 423);
+
             cmdHelper.throwIfConditionReply(event, withdraw_result.status && withdraw_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: withdraw_result.status },

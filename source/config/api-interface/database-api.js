@@ -32,6 +32,7 @@ function DatabaseEndpoint() {
     });
 
     this.paymentCode = {
+        Banned: -7,
         InternalServerError: -6,
         InvalidPaymentAmount: -5,
         DatabaseSaveFailure: -4,

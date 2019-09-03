@@ -41,7 +41,7 @@ module.exports = Object.create({
 
             const twitchId = cmdHelper.twitch.id(event.user);
             const twitchUsername = cmdHelper.twitch.username(event.user);
-            
+
             const rain_amount = cmdHelper.clean.amount(event.args[0]);
             const rain_user_count = cmdHelper.clean.amount(event.args[1]);
 
@@ -83,6 +83,8 @@ module.exports = Object.create({
 
             const rain_result = await databaseAPI.rainRequest(recipients, twitchId);
 
+            cmdHelper.throwIfConditionBanned(event, rain_result.status && rain_result.status === 423);
+
             cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: rain_result.status },
@@ -98,9 +100,9 @@ module.exports = Object.create({
 
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    if (rain_result.recipientResponses.length > 0) {
+                    if (recipientResponses.length > 0) {
                         // missed out on rain
-                        const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
+                        const failureNamesArray = recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
                             return items.filter(m => m.id === x.platformUserId)[0].username;
                         });
                         const failureNames = failureNamesArray.join(' ');
@@ -149,8 +151,11 @@ module.exports = Object.create({
                     const totalRainedAmount = Math.abs(rain_result.senderResponse.balanceChange);
                     let singleRainedAmount = 0;
                     let totalRainedUsers = 0;
-                    for (let i = 0; i < rain_result.recipientResponses.length; i++) {
-                        const recipientResponse = rain_result.recipientResponses[i];
+                    const tempResponses = rain_result.recipientResponses;
+                    tempResponses[0].code = databaseAPI.paymentCode.Banned;
+                    const recipientResponses = rain_result.recipientResponses.filter(x => x.code !== databaseAPI.paymentCode.Banned);
+                    for (let i = 0; i < recipientResponses.length; i++) {
+                        const recipientResponse = recipientResponses[i];
                         if (recipientResponse.code === databaseAPI.paymentCode.Success) {
 
                             const recipientName = items.filter(x => x.id === recipientResponse.platformUserId)[0].username;
@@ -161,39 +166,34 @@ module.exports = Object.create({
                             singleRainedAmount = recipientResponse.balanceChange;
                         }
                     }
-                    if (totalRainedUsers > 0 && totalRainedAmount > 0) {
-                        // missed out on rain
-                        const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
-                            return items.filter(m => m.id === x.platformUserId)[0].username;
-                        });
-                        const failureNames = failureNamesArray.join(' ');
 
-                        // success recipients
-                        const successNames = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => {
-                            return items.filter(m => m.id === x.platformUserId)[0].username;
-                        }).join(' ');
+                    // missed out on rain
+                    const failureNamesArray = recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
+                        return items.filter(m => m.id === x.platformUserId)[0].username;
+                    });
+                    const failureNames = failureNamesArray.join(' ');
 
-                        const successMessage = `FeelsRainMan ${successNames}, you all just received a glorious CORN shower of ${singleRainedAmount} BITCORN rained on you by ${event.user['display-name']}! FeelsRainMan`;
-                        const failedMessage = ` // PepeWhy ${failureNames} please visit the sync site https://bitcornsync.com/ to register an account PepeWhy`;
+                    // success recipients
+                    const successNames = recipientResponses.filter(x => x.code === databaseAPI.paymentCode.Success).map(x => {
+                        return items.filter(m => m.id === x.platformUserId)[0].username;
+                    }).join(' ');
 
-                        const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
+                    const successMessage = `FeelsRainMan ${successNames}, you all just received a glorious CORN shower of ${singleRainedAmount} BITCORN rained on you by ${event.user['display-name']}! FeelsRainMan`;
+                    const failedMessage = ` // PepeWhy ${failureNames} please visit the sync site https://bitcornsync.com/ to register an account PepeWhy`;
 
-                        tmi.botSay(event.target, allMsg);
-                        tmi.botWhisper(event.user.username, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
+                    const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
 
-                        /*const reply = cmdHelper.commandReplies(event, [
-                            {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.rain.tochat, params:{senderName: event.user['display-name']}},
-                            {reply: cmdHelper.reply.whisper, message: cmdHelper.message.rain.sender, params:{totalRainedAmount, successNames, userBalance: rain_result.senderResponse.userBalance}},
-                        ]);*/
+                    tmi.botSay(event.target, allMsg);
+                    tmi.botWhisper(event.user.username, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
 
-                        const reply = `User: ${event.user.username} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
-                        return pending.complete(event, reply);
-                    } else {
-                        const failedNameAndCodes = rain_result.recipientResponses.filter(x => x.code !== 1).map(x => `${x.platformUserId}:code:${x.code}`).join(' ');
-                        const reply = `No rain ${event.configs.prefix}${event.configs.name} command, please report this: totalRainedAmount=${totalRainedAmount} codes:${failedNameAndCodes}`;
-                        tmi.botWhisper(event.user.username, reply);
-                        return pending.complete(event, reply);
-                    }
+                    /*const reply = cmdHelper.commandReplies(event, [
+                        {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.rain.tochat, params:{senderName: event.user['display-name']}},
+                        {reply: cmdHelper.reply.whisper, message: cmdHelper.message.rain.sender, params:{totalRainedAmount, successNames, userBalance: rain_result.senderResponse.userBalance}},
+                    ]);*/
+
+                    const reply = `User: ${event.user.username} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
+                    return pending.complete(event, reply);
+
                 } default: {
                     await cmdHelper.asyncThrowAndLogError(event, {
                         method: cmdHelper.message.pleasereport,

@@ -79,6 +79,8 @@ module.exports = Object.create({
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
 
+            cmdHelper.throwIfConditionBanned(event, tipcorn_result.status && tipcorn_result.status === 423);
+
             cmdHelper.throwIfConditionReply(event, tipcorn_result.status && tipcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: tipcorn_result.status },
@@ -94,14 +96,20 @@ module.exports = Object.create({
 
             switch (tipcorn_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    const reply = cmdHelper.commandReply(event, {
-                        methods: {
-                            message: cmdHelper.message.norecipients.tipcorn,
-                            reply: cmdHelper.reply.chat
-                        },
-                        params: {}
-                    });
-                    return pending.complete(event, `${reply} - ${tipcorn_result.senderResponse.code}`);
+
+                    if(tipcorn_result.recipientResponses[0].code === databaseAPI.paymentCode.Banned) {
+                        cmdHelper.throwIfConditionBanned(event, true);
+                    } else {
+                        const reply = cmdHelper.commandReply(event, {
+                            methods: {
+                                message: cmdHelper.message.norecipients.tipcorn,
+                                reply: cmdHelper.reply.chat
+                            },
+                            params: {}
+                        });
+                        return pending.complete(event, `${reply} - ${tipcorn_result.senderResponse.code}`);
+                    }
+
                 } case databaseAPI.paymentCode.InsufficientFunds: {
                     const reply = cmdHelper.commandReply(event, {
                         methods: {
