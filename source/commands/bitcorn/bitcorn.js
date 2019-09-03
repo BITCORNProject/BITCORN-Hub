@@ -36,6 +36,8 @@ module.exports = Object.create({
 
             cmdHelper.throwIfConditionBanned(event, bitcorn_result.status && bitcorn_result.status === 423);
 
+            cmdHelper.throwIfConditionRefused(event, bitcorn_result.status && bitcorn_result.status === 503);
+
             cmdHelper.throwIfConditionReply(event, bitcorn_result.status && bitcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: bitcorn_result.status },

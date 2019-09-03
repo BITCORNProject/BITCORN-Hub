@@ -81,6 +81,8 @@ module.exports = Object.create({
 
             cmdHelper.throwIfConditionBanned(event, tipcorn_result.status && tipcorn_result.status === 423);
 
+            cmdHelper.throwIfConditionRefused(event, tipcorn_result.status && tipcorn_result.status === 503);
+
             cmdHelper.throwIfConditionReply(event, tipcorn_result.status && tipcorn_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: tipcorn_result.status },

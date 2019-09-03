@@ -85,6 +85,8 @@ module.exports = Object.create({
 
             cmdHelper.throwIfConditionBanned(event, rain_result.status && rain_result.status === 423);
 
+            cmdHelper.throwIfConditionRefused(event, rain_result.status && rain_result.status === 503);
+
             cmdHelper.throwIfConditionReply(event, rain_result.status && rain_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: rain_result.status },

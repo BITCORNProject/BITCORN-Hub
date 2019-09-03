@@ -56,14 +56,24 @@ function throwIfConditionReply(event, condition, obj) {
     }
 }
 
-function throwIfConditionBanned(event, condition) {
+function throwIfConditionSilently(message, condition) {
     if(condition) {
-        const username = module.exports.twitch.username(event.user);
-        const message = `BANNED: ${event.configs.prefix}${event.configs.name} ${username} :BANNED`;
         const e = new Error(message);
         e.hasMessage = true;
         throw e;
     }
+}
+
+function throwIfConditionBanned(event, condition) {
+    const username = module.exports.twitch.username(event.user);
+    const message = `BANNED: ${event.configs.prefix}${event.configs.name} ${username} :BANNED`;
+    throwIfConditionSilently(message, condition);
+}
+
+function throwIfConditionRefused(event, condition) {
+    const username = module.exports.twitch.username(event.user);
+    const message = `Refused: ${event.configs.prefix}${event.configs.name} ${username} :Refused`;
+    throwIfConditionSilently(message, condition);
 }
 
 async function asyncThrowAndLogError(event, obj) {
@@ -307,6 +317,7 @@ module.exports = {
     },
     throwIfConditionReply: throwIfConditionReply,
     throwIfConditionBanned: throwIfConditionBanned,
+    throwIfConditionRefused: throwIfConditionRefused,
     asyncThrowAndLogError: asyncThrowAndLogError,
     commandReply: commandReply,
     commandReplyByCondition: commandReplyByCondition,

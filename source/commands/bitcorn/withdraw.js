@@ -64,6 +64,8 @@ module.exports = Object.create({
 
             cmdHelper.throwIfConditionBanned(event, withdraw_result.status && withdraw_result.status === 423);
 
+            cmdHelper.throwIfConditionRefused(event, withdraw_result.status && withdraw_result.status === 503);
+
             cmdHelper.throwIfConditionReply(event, withdraw_result.status && withdraw_result.status !== 200, {
                 method: cmdHelper.message.apifailed,
                 params: { configs: event.configs, status: withdraw_result.status },
