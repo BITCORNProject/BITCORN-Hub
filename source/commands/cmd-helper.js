@@ -77,7 +77,8 @@ function throwIfConditionRefused(event, condition) {
 }
 
 async function asyncThrowAndLogError(event, obj) {
-    throw errorLogger.asyncThrowAndLogError(event, obj);
+    const e = await errorLogger.asyncThrowAndLogError(event, obj);
+    throw e;
 }
 
 function commandReply(event, obj) {
