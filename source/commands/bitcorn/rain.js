@@ -153,8 +153,6 @@ module.exports = Object.create({
                     const totalRainedAmount = Math.abs(rain_result.senderResponse.balanceChange);
                     let singleRainedAmount = 0;
                     let totalRainedUsers = 0;
-                    const tempResponses = rain_result.recipientResponses;
-                    tempResponses[0].code = databaseAPI.paymentCode.Banned;
                     const recipientResponses = rain_result.recipientResponses.filter(x => x.code !== databaseAPI.paymentCode.Banned);
                     for (let i = 0; i < recipientResponses.length; i++) {
                         const recipientResponse = recipientResponses[i];
