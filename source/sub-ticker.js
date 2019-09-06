@@ -136,7 +136,7 @@ async function asyncTickBitCornSub(limit = 100) {
         timers.discord_sync_send = new Timer();
         timers.discord_sync_send.start();
 
-        const url = `https://bitcornsync.com/subsync`;
+        const url = `https://twitch-api-sync.azurewebsites.net/subsync`;
         const discord_endpoint = await fetch(url, {
             method: 'POST'
         });
