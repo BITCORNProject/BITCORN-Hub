@@ -76,6 +76,12 @@ function throwIfConditionRefused(event, condition) {
     throwIfConditionSilently(message, condition);
 }
 
+function throwIfConditionSelf(event, condition) {
+    const username = module.exports.twitch.username(event.user);
+    const message = `Self: ${event.configs.prefix}${event.configs.name} ${username} :Self`;
+    throwIfConditionSilently(message, condition);
+}
+
 async function asyncThrowAndLogError(event, obj) {
     const e = await errorLogger.asyncThrowAndLogError(event, obj);
     throw e;
@@ -319,6 +325,7 @@ module.exports = {
     throwIfConditionReply: throwIfConditionReply,
     throwIfConditionBanned: throwIfConditionBanned,
     throwIfConditionRefused: throwIfConditionRefused,
+    throwIfConditionSelf: throwIfConditionSelf,
     asyncThrowAndLogError: asyncThrowAndLogError,
     commandReply: commandReply,
     commandReplyByCondition: commandReplyByCondition,

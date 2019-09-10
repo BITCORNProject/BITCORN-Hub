@@ -44,6 +44,8 @@ module.exports = Object.create({
             const twitchId = cmdHelper.twitch.id(event.user);
             const receiverName = cmdHelper.clean.atLower(receiverArg);
             const tipcornAmount = cmdHelper.clean.amount(amountArg);
+            
+            cmdHelper.throwIfConditionSelf(event, receiverName === cmdHelper.twitch.username(event.user));
 
             cmdHelper.throwIfConditionReply(event, tipcornAmount <= 0, {
                 method: cmdHelper.message.nonegitive,
