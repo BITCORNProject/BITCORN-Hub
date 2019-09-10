@@ -82,7 +82,6 @@ module.exports = Object.create({
             const recipients = items.map(x => ({ id: x.id, amount: amount }));
 
             const rain_result = await databaseAPI.rainRequest(recipients, twitchId);
-
             cmdHelper.throwIfConditionBanned(event, rain_result.status && rain_result.status === 423);
 
             cmdHelper.throwIfConditionRefused(event, rain_result.status && rain_result.status === 503);
@@ -102,9 +101,9 @@ module.exports = Object.create({
 
             switch (rain_result.senderResponse.code) {
                 case databaseAPI.paymentCode.NoRecipients: {
-                    if (recipientResponses.length > 0) {
+                    if (rain_result.recipientResponses.length > 0) {
                         // missed out on rain
-                        const failureNamesArray = recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
+                        const failureNamesArray = rain_result.recipientResponses.filter(x => x.code === databaseAPI.paymentCode.QueryFailure).map(x => {
                             return items.filter(m => m.id === x.platformUserId)[0].username;
                         });
                         const failureNames = failureNamesArray.join(' ');
