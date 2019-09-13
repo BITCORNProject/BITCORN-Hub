@@ -185,11 +185,6 @@ module.exports = Object.create({
                     tmi.botSay(event.target, allMsg);
                     tmi.botWhisper(event.user.username, `Thank you for spreading ${totalRainedAmount} BITCORN by makin it rain on dem.. ${successNames} ..hoes?  Your BITCORN balance remaining is: ${rain_result.senderResponse.userBalance}`);
 
-                    /*const reply = cmdHelper.commandReplies(event, [
-                        {reply: cmdHelper.reply.chatnomention, message: cmdHelper.message.rain.tochat, params:{senderName: event.user['display-name']}},
-                        {reply: cmdHelper.reply.whisper, message: cmdHelper.message.rain.sender, params:{totalRainedAmount, successNames, userBalance: rain_result.senderResponse.userBalance}},
-                    ]);*/
-
                     const reply = `User: ${event.user.username} rain ${totalRainedAmount} CORN on ${totalRainedUsers} users`;
                     return pending.complete(event, reply);
 

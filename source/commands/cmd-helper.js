@@ -211,9 +211,10 @@ const messageStrings = new JsonFile('./settings/strings.json', {
         tochat: `cttvCorn @%s just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn`,
         sender: `You tipped %s %d BITCORN! Your BITCORN balance remaining is: %d`
     },
-    rain: {
-        tochat: () => ``,
-        sender: () => `Thank you for spreading %d BITCORN by makin it rain on dem.. %s ..hoes?  Your BITCORN balance remaining is: %d`
+    blacklist: {
+        success: `User %s was added to the blacklist`,
+        alreadybanned: `You are trying to ban an already banned %s`,
+        badname: `The user %s does not have a Twitch account`
     }
 });
 
@@ -257,7 +258,7 @@ module.exports = {
         usebitcorn: () => util.format(strings().usebitcorn),
         notnumber: (obj) => util.format(strings().notnumber, obj.configs.example),
         success: {
-            withdraw: (obj) => util.format(strings().success.withdraw, obj.txid),
+            withdraw: (obj) => util.format(strings().success.withdraw, obj.txid)
         },
         insufficientfunds: {
             rain: (obj) => util.format(strings().insufficientfunds.rain),
@@ -297,20 +298,10 @@ module.exports = {
             tochat: (obj) => util.format(strings().tipcorn.tochat, obj.senderName, obj.recipientName, obj.totalTippedAmount),
             sender: (obj) => util.format(strings().tipcorn.sender, obj.twitchUsername, obj.totalTippedAmount, obj.userBalance)
         },
-        rain: {
-            tochat: (obj) => {
-                /*
-                const successMessage = `FeelsRainMan %s, you all just received a glorious CORN shower of %d BITCORN rained on you by %s! FeelsRainMan`;
-                const failedMessage = ` // PepeWhy %s type $bitcorn to register an account PepeWhy`;
-
-                const successMessage = util.format(strings().rain.tochat.success, `FeelsRainMan ${obj.successNames}, you all just received a glorious CORN shower of ${obj.singleRainedAmount} BITCORN rained on you by ${obj.twitchUsername}! FeelsRainMan`;
-                const failedMessage = ` // PepeWhy ${obj.failureNames} type $bitcorn to register an account PepeWhy`;
-
-                const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
-                */
-                return 'allMsg';
-            },
-            sender: (obj) => util.format(strings().rain.sender, obj.totalRainedAmount, obj.successNames, obj.userBalance)
+        blacklist: {
+            success: (obj) => util.format(strings().blacklist.success, obj.userBanned),
+            alreadybanned: (obj) => util.format(strings().blacklist.alreadybanned, obj.userBanned),
+            badname: (obj) => util.format(strings().blacklist.badname, obj.receiverName)
         }
     },
     reply: {

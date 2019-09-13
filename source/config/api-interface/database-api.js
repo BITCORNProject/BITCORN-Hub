@@ -28,7 +28,8 @@ function DatabaseEndpoint() {
         tipcorn: '/tipcorn',
         withdraw: '/withdraw',
         token: '/token',
-        errorlog: '/boterror'
+        errorlog: '/boterror',
+        blacklist: '/banuser'
     });
 
     this.paymentCode = {
@@ -40,7 +41,7 @@ function DatabaseEndpoint() {
         InsufficientFunds: -2,
         QueryFailure: -1,
         Success: 1
-    }
+    };
 
     this.walletCode = {
         TransactionTooLarge: -5,
@@ -49,7 +50,14 @@ function DatabaseEndpoint() {
         InternalServerError: -2,
         WalletError: -1,
         Success: 1
-    }
+    };
+
+    this.banResultCode = {
+        Invalid: -2,
+        Unauthorized: -1,
+        Success: 1,
+        AlreadyBanned: 2
+    };
 }
 
 DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
@@ -76,14 +84,6 @@ DatabaseEndpoint.prototype.makeRequestTest = async function (endpoint, data) {
 
 DatabaseEndpoint.prototype.criticalRequestTest = async function (endpoint, twitchId, data) {
     return this.criticalRequestBase(rooturl.getValues().test, endpoint, twitchId, data);
-}
-
-// Change to critical
-DatabaseEndpoint.prototype.getuserRequest = async function (twitchId, twitchUsername) {
-    return this.makeRequest(`${this.db_endpoints.getValues().getuser}`, {
-        twitchId, // change to id needed
-        twitchUsername //remove
-    });
 }
 
 DatabaseEndpoint.prototype.tokenRequest = async function (token, twitchId, twitchUsername) {
@@ -166,10 +166,17 @@ DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitch
 }
 
 /*
+Expect code: this.banResultCode
+*/
+DatabaseEndpoint.prototype.blacklistRequest = async function (senderId, receiverTwitchId) {
+    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().blacklist}`, senderId, { senderId, receiverTwitchId });
+}
+
+/*
 Expect id: generated from database insert
 */
 DatabaseEndpoint.prototype.errorlogRequest = async function (sendData) {
-    return this.makeRequest(`${this.db_endpoints.getValues().errorlog}`, sendData); 
+    return this.makeRequest(`${this.db_endpoints.getValues().errorlog}`, sendData);
 }
 
 module.exports = new DatabaseEndpoint();
