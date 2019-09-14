@@ -183,6 +183,10 @@ const messageStrings = new JsonFile('./settings/strings.json', {
         tipcorn: `Invalid amount, your balance! (%d CORN)`,
         withdraw: `You failed to withdraw: invalid payment amount`
     },
+    databasesavefailure: {
+        rain: `Please retry the $rain command`,
+        tipcorn: `Please retry the $tipcorn command`
+    },
     queryfailure: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`,
         tipcorn: {
@@ -269,6 +273,10 @@ module.exports = {
             rain: (obj) => util.format(strings().invalidpaymentamount.rain, obj.balance),
             tipcorn: (obj) => util.format(strings().insufficientfunds.tipcorn, obj.balance),
             withdraw: () => util.format(strings().insufficientfunds.withdraw)
+        },
+        databasesavefailure: {
+            rain: () => util.format(strings().databasesavefailure.rain),
+            tipcorn: () => util.format(strings().databasesavefailure.tipcorn)
         },
         queryfailure: {
             rain: () => util.format(strings().queryfailure.rain),

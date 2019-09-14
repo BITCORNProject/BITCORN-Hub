@@ -132,6 +132,15 @@ module.exports = Object.create({
                         params: {}
                     });
                     return pending.complete(event, reply);
+                } case databaseAPI.paymentCode.DatabaseSaveFailure: {
+                    const reply = cmdHelper.commandReply(event, {
+                        methods: {
+                            message: cmdHelper.message.databasesavefailure.tipcorn,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: {}
+                    });
+                    return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.Success: {
 
                     const recipientResponse = tipcorn_result.recipientResponses[0];

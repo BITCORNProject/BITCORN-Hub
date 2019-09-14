@@ -148,6 +148,15 @@ module.exports = Object.create({
                         params: {}
                     });
                     return pending.complete(event, reply);
+                } case databaseAPI.paymentCode.DatabaseSaveFailure: {
+                    const reply = cmdHelper.commandReply(event, {
+                        methods: {
+                            message: cmdHelper.message.databasesavefailure.rain,
+                            reply: cmdHelper.reply.whisper
+                        },
+                        params: {}
+                    });
+                    return pending.complete(event, reply);
                 } case databaseAPI.paymentCode.Success: {
                     const totalRainedAmount = Math.abs(rain_result.senderResponse.balanceChange);
                     let singleRainedAmount = 0;
