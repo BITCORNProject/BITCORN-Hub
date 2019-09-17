@@ -13,10 +13,12 @@ const _ = require('./test-dependencies');
         const timer = new _.Timer();
         timer.start();
         
-        
-        const filtered = [].filter(x => x.name === '')[0];
 
-        console.log(filtered);
+        const timeInMinutes = (60 * 1000) * 13;
+
+        const time_ = new _.Time(timeInMinutes);
+
+        console.log(time_.toString());
 
 
         const time = timer.stop();

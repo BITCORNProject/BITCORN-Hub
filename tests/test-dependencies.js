@@ -7,6 +7,7 @@
 const { Queue } = require('../public/js/server/queue');
 const { Ticker } = require('../public/js/server/ticker');
 const { Timer } = require('../public/js/server/timer');
+const Time = require('../source/utils/time');
 
 function chunk(array, size) {
     const chunked_arr = [];
@@ -33,5 +34,6 @@ module.exports = {
     tmiCommands: require('../source/tmi-commands'),
     Ticker: Ticker,
     Timer: Timer,
-    Queue: Queue
+    Queue: Queue,
+    Time: Time
 };

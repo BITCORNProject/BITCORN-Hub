@@ -193,18 +193,18 @@ const messageStrings = new JsonFile('./settings/strings.json', {
             sender: `cttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! cttvMOONMAN`,
             recipient: `%s needs to register before they can be tipped!`
         },
-        withdraw: `You failed to withdraw: you need to register with the $bitcorn command to use withdraw`
+        withdraw: `You failed to withdraw: you need to register by visiting the sync site https://bitcornsync.com/ to use withdraw`
     },
     norecipients: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. No registered users in chat to make it rain! DogePls SourPls`,
-        tipcorn: `cttvMOONMAN Here's a tip for you: Not a registered user. cttvMOONMAN`
+        tipcorn: `cttvMOONMAN Here's a tip for you: Not a registered user. cttvMOONMAN @%s you have %s to claim by visiting the sync site https://bitcornsync.com/ to register`
     },
     transactiontoolarge: {
         withdraw: `Withdraw transaction too large`
     },
     token: {
         success: `Your Token is '%s' (no ' ' quotes) - Use this to login here: https://dashboard.bitcornproject.com/ - If you use $token again you will receive a new token your old token will be deleted.`,
-        failed: `You need to register with the $bitcorn command to request a token`
+        failed: `You need to register by visiting the sync site https://bitcornsync.com/ to request a token`
     },
     bitcorn: {
         isnewuser: `Hey! You are not registered please visit the sync site https://bitcornsync.com/`,
@@ -288,7 +288,7 @@ module.exports = {
         },
         norecipients: {
             rain: () => util.format(strings().norecipients.rain),
-            tipcorn: () => util.format(strings().norecipients.tipcorn)
+            tipcorn: (obj) => util.format(strings().norecipients.tipcorn, obj.receiverName, obj.timeToClaim)
         },
         transactiontoolarge: {
             withdraw: () => util.format(strings().transactiontoolarge.withdraw)

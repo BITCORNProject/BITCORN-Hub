@@ -9,6 +9,7 @@ const helix = require('../../config/authorize/helix');
 const databaseAPI = require('../../config/api-interface/database-api');
 const cmdHelper = require('../cmd-helper');
 const serverSettings = require('../../../settings/server-settings');
+const Time = require('../../utils/time');
 const Pending = require('../../utils/pending');
 
 const pending = new Pending();
@@ -104,12 +105,18 @@ module.exports = Object.create({
                     if(tipcorn_result.recipientResponses[0].code === databaseAPI.paymentCode.Banned) {
                         cmdHelper.throwIfConditionBanned(event, true);
                     } else {
+                        const timeMs = (60 * 1000) * tipcorn_result.minutesToClaim;
+                        const time = new Time(timeMs)
+
                         const reply = cmdHelper.commandReply(event, {
                             methods: {
                                 message: cmdHelper.message.norecipients.tipcorn,
                                 reply: cmdHelper.reply.chat
                             },
-                            params: {}
+                            params: {
+                                receiverName: receiverName,
+                                timeToClaim: time.toString()
+                            }
                         });
                         return pending.complete(event, `${reply} - ${tipcorn_result.senderResponse.code}`);
                     }
