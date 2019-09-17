@@ -217,6 +217,25 @@ function onMessageHandler(target, user, msg, self) {
     asyncOnMessage('chat', target, user, msg, self);
 }
 
+function onCheer(channel, userstate, message) {
+
+}
+
+function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
+    let senderCount = ~~userstate["msg-param-sender-count"];
+}
+
+function onSubscription(channel, username, method, message, userstate) {
+    switch (userstate ) {
+        case 'value':
+            
+            break;
+    
+        default:
+            break;
+    }
+}
+
 function onConnectedChatHandler(addr, port) {
     console.log({ success: true, message: `TMI connected to chat ${addr}:${port}` });
 }
@@ -374,7 +393,11 @@ async function init() {
     clients[BOT_CHAT].on('names', onNamesHandler);
     clients[BOT_CHAT].on('join', onJoinHandler);
     clients[BOT_CHAT].on('part', onPartHandler);
-
+    
+    clients[BOT_CHAT].on("cheer", onCheer);
+    clients[BOT_CHAT].on("subgift", onSubGift);
+    clients[BOT_CHAT].on("subscription", onSubscription);
+    
     clients[BOT_WHISPER].on('connected', onConnectedWhisperHandler);
     clients[BOT_WHISPER].on('whisper', onWhisperHandler);
 
