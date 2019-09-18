@@ -13,24 +13,7 @@ const _ = require('./test-dependencies');
         const timer = new _.Timer();
         timer.start();
         
-        
-
-        /*const command = _.tmiCommands.getCommand('$', 'tipcorn');
-
-        const event = Object.create({
-            type: 'chat',
-            target: 'callowcreation',
-            msg: '$tipcorn @naivebot 100',
-            args: ['', ''],
-            user: {},
-            configs: command.configs,
-            isDevelopment: _.main.isDevelopment,
-            isProduction: _.main.isProduction
-        });
-
-        const result = await command.execute(event);
-
-        console.log(result);*/
+        _.tmi.sendRewardTests();
 
         const time = timer.stop();
         console.log('Execution time: ' + time);
