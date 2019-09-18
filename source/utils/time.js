@@ -12,6 +12,11 @@ function Time(milliseconds) {
     this.seconds = this.date.getUTCSeconds();
     this.milliseconds = this.date.getUTCMilliseconds();
 
+    if(this.days === 1 && this.hours === 0) {
+        this.days = 0;
+        this.hours = 24;
+    }
+
     this.format = {
         days: (this.days < 10 ? ('0' + this.days) : this.days),
         hours: (this.hours < 10 ? ('0' + this.hours) : this.hours),

@@ -106,7 +106,7 @@ module.exports = Object.create({
                         cmdHelper.throwIfConditionBanned(event, true);
                     } else {
                         const timeMs = (60 * 1000) * tipcorn_result.minutesToClaim;
-                        const time = new Time(timeMs)
+                        const time = new Time(timeMs);
 
                         const reply = cmdHelper.commandReply(event, {
                             methods: {
