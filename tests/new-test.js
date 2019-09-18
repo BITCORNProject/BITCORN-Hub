@@ -13,13 +13,7 @@ const _ = require('./test-dependencies');
         const timer = new _.Timer();
         timer.start();
         
-
-        const timeInMinutes = (60 * 1000) * 13;
-
-        const time_ = new _.Time(timeInMinutes);
-
-        console.log(time_.toString());
-
+        _.tmi.sendRewardTests();
 
         const time = timer.stop();
         console.log('Execution time: ' + time);

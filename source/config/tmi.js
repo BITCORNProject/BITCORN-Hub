@@ -12,6 +12,9 @@ const tmiCommands = require('../tmi-commands');
 const { Queue } = require('../../public/js/server/queue');
 const { Timer } = require('../../public/js/server/timer');
 const math = require('../../source/utils/math');
+const helix = require('../config/authorize/helix');
+const databaseAPI = require('../config/api-interface/database-api');
+const cmdHelper = require('../commands/cmd-helper');
 
 const JsonFile = require('../utils/json-file');
 
@@ -27,6 +30,11 @@ const whisperQueue = {
     isBusy: false
 };
 
+const tipRewardQueue = {
+    items: new Queue(),
+    isBusy: false
+};
+
 const BOT_CHAT = 'bot-chat';
 const BOT_WHISPER = 'bot-whisper';
 
@@ -35,6 +43,26 @@ const clients = {};
 
 const cooldowns = {};
 const global_cooldowns = {};
+
+const cheerAmountMultiplier = 10;
+
+const amounts = {
+    cheer: {
+        '0000': 10
+    },
+    subgift: {
+        'Prime': 420,
+        '1000': 420,
+        '2000': 125,
+        '3000': 4200
+    },
+    subscription: {
+        'Prime': 420,
+        '1000': 420,
+        '2000': 4200,
+        '3000': 42000
+    }
+}
 
 async function asyncSendChatMessages() {
 
@@ -104,6 +132,118 @@ async function asyncSendWhisperMessages() {
             whisperQueue.isBusy = false;
             asyncSendWhisperMessages();
         })
+}
+
+async function sendTipRewardToApi() {
+    if (tipRewardQueue.items.size() == 0) return;
+
+    if (tipRewardQueue.isBusy === true) return;
+
+    tipRewardQueue.isBusy = true;
+
+    const tipRewardItem = tipRewardQueue.items.peek();
+
+    try {
+
+        if (tipRewardItem.cheer) {
+
+            const username = tipRewardItem.cheer.userstate.username;
+            const tipcornAmount = tipRewardItem.cheer.userstate.bits * amounts.cheer['0000'];
+
+            const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
+            const { id: receiverId } = await helix.getUserLogin(username);
+
+            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
+
+            handleApiResponse(tipRewardItem.cheer.channel, tipcorn_result);
+
+        } else if (tipRewardItem.subgift) {
+
+            const username = tipRewardItem.subgift.username;
+            const methods = tipRewardItem.subgift.methods;
+            const tipcornAmount = amounts.subgift[methods];
+
+            const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
+            const { id: receiverId } = await helix.getUserLogin(username);
+
+            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
+
+            handleApiResponse(tipRewardItem.subgift.channel, tipcorn_result);
+
+        } else if (tipRewardItem.subscription) {
+
+            const username = tipRewardItem.subscription.username;
+            const methods = tipRewardItem.subscription.methods;
+            const tipcornAmount = amounts.subscription[methods];
+
+            const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
+            const { id: receiverId } = await helix.getUserLogin(username);
+
+            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
+
+            handleApiResponse(tipRewardItem.subscription.channel, tipcorn_result);
+
+        } else {
+            throw new Error(`Tip Rewards Queue has type error: ${JSON.stringify(tipRewardItem)}`);
+        }
+
+        tipRewardQueue.items.dequeue();
+    } catch (error) {
+        console.error(error);
+        tipRewardQueue.items.dequeue();
+    }
+}
+
+function handleApiResponse(channel, tipcorn_result) {
+    let success = true;
+    if (tipcorn_result.status && tipcorn_result.status === 423) success = false; // banned Ignore
+    if (tipcorn_result.status && tipcorn_result.status === 503) success = false; // refused Adds event to queue
+    if (tipcorn_result.status && tipcorn_result.status !== 200) success = false; // failed?? Log to file
+    if (success === true) {
+        switch (tipcorn_result.senderResponse.code) {
+            case databaseAPI.paymentCode.NoRecipients: {
+                // unregistered
+                // send message to register
+                const msg = cmdHelper.message.norecipients.tipcorn();
+                botSay(channel, msg);
+                break;
+            }
+            case databaseAPI.paymentCode.Success: {
+                const recipientResponse = tipcorn_result.recipientResponses[0];
+                switch (recipientResponse.code) {
+                    case databaseAPI.paymentCode.Success: {
+                        break;
+                    }
+                    case databaseAPI.paymentCode.QueryFailure: {
+                        break;
+                    }
+                    case databaseAPI.paymentCode.InsufficientFunds: {
+                        break;
+                    }
+                    case databaseAPI.paymentCode.InvalidPaymentAmount: {
+                        break;
+                    }
+                    default: {
+                        //cmdHelper.throwIfConditionReply();
+                break;
+                    }
+                }
+            }
+            case databaseAPI.paymentCode.InsufficientFunds: {
+                //
+                // ERROR :) log to file bot is out of corn ring the alarm
+                break;
+            }
+            case databaseAPI.paymentCode.DatabaseSaveFailure: {
+                //
+                break;
+            }
+            default: {
+                //await cmdHelper.asyncThrowAndLogError();
+                break;
+            }
+        }
+    }
 }
 
 async function asyncOnMessage(type, target, user, msg, self) {
@@ -215,6 +355,21 @@ function onMessageHandler(target, user, msg, self) {
     if (self) return { success: false, message: `self` };
 
     asyncOnMessage('chat', target, user, msg, self);
+}
+
+function onCheer(channel, userstate, message) {
+    tipRewardQueue.items.enqueue({ cheer: { channel, userstate, message } });
+    sendTipRewardToApi();
+}
+
+function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
+    tipRewardQueue.items.enqueue({ subgift: { channel, username, streakMonths, recipient, methods, userstate } });
+    sendTipRewardToApi();
+}
+
+function onSubscription(channel, username, methods, message, userstate) {
+    tipRewardQueue.items.enqueue({ subscription: { channel, username, methods, message, userstate } });
+    sendTipRewardToApi();
 }
 
 function onConnectedChatHandler(addr, port) {
@@ -375,6 +530,10 @@ async function init() {
     clients[BOT_CHAT].on('join', onJoinHandler);
     clients[BOT_CHAT].on('part', onPartHandler);
 
+    clients[BOT_CHAT].on("cheer", onCheer);
+    clients[BOT_CHAT].on("subgift", onSubGift);
+    clients[BOT_CHAT].on("subscription", onSubscription);
+
     clients[BOT_WHISPER].on('connected', onConnectedWhisperHandler);
     clients[BOT_WHISPER].on('whisper', onWhisperHandler);
 
@@ -391,7 +550,7 @@ async function asyncJoinChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].join(channel);
         addChannel(data[0]);
-        
+
         setChannels(Object.keys(chatUsers));
         return { success: true, channel: cleanChannel(data[0]) };
     } catch (error) {
@@ -404,7 +563,7 @@ async function asyncPartChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].part(channel);
         removeChannel(data[0]);
-        
+
         setChannels(Object.keys(chatUsers));
         return { success: true, channel: cleanChannel(data[0]) };
     } catch (error) {
@@ -437,3 +596,19 @@ exports.asyncJoinChannel = asyncJoinChannel;
 exports.asyncPartChannel = asyncPartChannel;
 exports.addMessageCallback = addMessageCallback;
 exports.removeMessageCallback = removeMessageCallback;
+exports.sendRewardTests = () => {
+    
+
+    const channel = 'callowcreation';
+    const userstate = { username: '3412q', bits: 5 };
+    const message = 'Cool you are live';
+    const streakMonths = 0;
+    const recipient = 'naivebot';
+    const methods = '1000';
+    const username = 'wollac';
+
+    onCheer(channel, userstate, message);
+    //onSubGift(channel, username, streakMonths, recipient, methods, userstate);
+    //onSubscription(channel, username, methods, message, userstate);
+
+}

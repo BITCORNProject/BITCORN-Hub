@@ -25,6 +25,7 @@ module.exports = {
     fetch: require('node-fetch'),
     main: require('../main'),
     math: require('../source/utils/math'),
+    tmi: require('../source/config/tmi'),
     kraken: require('../source/config/authorize/kraken'),
     helix: require('../source/config/authorize/helix'),
     rooturl: require('../source/config/api-interface/rooturl'),
