@@ -12,6 +12,8 @@ const tmiCommands = require('../tmi-commands');
 const { Queue } = require('../../public/js/server/queue');
 const { Timer } = require('../../public/js/server/timer');
 const math = require('../../source/utils/math');
+const helix = require('../config/authorize/helix');
+const databaseAPI = require('../config/api-interface/database-api');
 
 const JsonFile = require('../utils/json-file');
 
@@ -218,21 +220,62 @@ function onMessageHandler(target, user, msg, self) {
 }
 
 function onCheer(channel, userstate, message) {
-
+    //userstate.bits amount of bits sent in cheer
 }
 
 function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
     let senderCount = ~~userstate["msg-param-sender-count"];
-}
-
-function onSubscription(channel, username, method, message, userstate) {
-    switch (userstate ) {
-        case 'value':
-            
+    switch (methods) {
+        case 'Prime':
             break;
-    
+        case '1000':
+            break;
+        case '2000':
+            break;
+        case '3000':
+            break;
         default:
             break;
+    }
+}
+
+function onSubscription(channel, username, methods, message, userstate) {
+    const amounts = {
+        'Prime': 420,
+        '1000': 420,
+        '2000': 4200,
+        '3000': 42000
+    };
+    const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
+    const { id: receiverId } = await helix.getUserLogin(username);
+    const tipcornAmount = amounts[methods];
+    
+    const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
+    
+    if(tipcorn_result.status && tipcorn_result.status === 423); // banned 
+    if(tipcorn_result.status && tipcorn_result.status === 503); // refused
+    if(tipcorn_result.status && tipcorn_result.status !== 200); // failed??
+
+    switch (tipcorn_result.senderResponse.code) {
+        case databaseAPI.paymentCode.NoRecipients: {
+            // unregistered
+        } case databaseAPI.paymentCode.InsufficientFunds: {
+            //
+        } case databaseAPI.paymentCode.DatabaseSaveFailure: {
+            //
+        } case databaseAPI.paymentCode.Success: {
+            switch (recipientResponse.code) {
+                case databaseAPI.paymentCode.Success: {
+                } case databaseAPI.paymentCode.QueryFailure: {
+                } case databaseAPI.paymentCode.InsufficientFunds: {
+                } case databaseAPI.paymentCode.InvalidPaymentAmount: {
+                } default: {
+                    //cmdHelper.throwIfConditionReply();
+                }
+            }
+        } default: {
+            //await cmdHelper.asyncThrowAndLogError();
+        }
     }
 }
 
@@ -393,11 +436,11 @@ async function init() {
     clients[BOT_CHAT].on('names', onNamesHandler);
     clients[BOT_CHAT].on('join', onJoinHandler);
     clients[BOT_CHAT].on('part', onPartHandler);
-    
+
     clients[BOT_CHAT].on("cheer", onCheer);
     clients[BOT_CHAT].on("subgift", onSubGift);
     clients[BOT_CHAT].on("subscription", onSubscription);
-    
+
     clients[BOT_WHISPER].on('connected', onConnectedWhisperHandler);
     clients[BOT_WHISPER].on('whisper', onWhisperHandler);
 
@@ -414,7 +457,7 @@ async function asyncJoinChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].join(channel);
         addChannel(data[0]);
-        
+
         setChannels(Object.keys(chatUsers));
         return { success: true, channel: cleanChannel(data[0]) };
     } catch (error) {
@@ -427,7 +470,7 @@ async function asyncPartChannel(channel) {
     try {
         const data = await clients[BOT_CHAT].part(channel);
         removeChannel(data[0]);
-        
+
         setChannels(Object.keys(chatUsers));
         return { success: true, channel: cleanChannel(data[0]) };
     } catch (error) {

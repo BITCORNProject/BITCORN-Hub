@@ -14,10 +14,23 @@ const _ = require('./test-dependencies');
         timer.start();
         
         
-        const filtered = [].filter(x => x.name === '')[0];
 
-        console.log(filtered);
+        /*const command = _.tmiCommands.getCommand('$', 'tipcorn');
 
+        const event = Object.create({
+            type: 'chat',
+            target: 'callowcreation',
+            msg: '$tipcorn @naivebot 100',
+            args: ['', ''],
+            user: {},
+            configs: command.configs,
+            isDevelopment: _.main.isDevelopment,
+            isProduction: _.main.isProduction
+        });
+
+        const result = await command.execute(event);
+
+        console.log(result);*/
 
         const time = timer.stop();
         console.log('Execution time: ' + time);
