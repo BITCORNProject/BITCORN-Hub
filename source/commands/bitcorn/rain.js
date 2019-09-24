@@ -107,8 +107,8 @@ module.exports = Object.create({
                             return items.filter(m => m.id === x.platformUserId)[0].username;
                         });
                         const failureNames = failureNamesArray.join(' ');
-                        const reply = `PepeWhy ${failureNames} please visit the sync site https://bitcornfarms.com/ to register an account PepeWhy`;
-
+                        const reply = `${failureNames} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+                    
                         tmi.botSay(event.target, reply);
                         return pending.complete(event, reply);
                     } else {
@@ -187,8 +187,7 @@ module.exports = Object.create({
                     }).join(' ');
 
                     const successMessage = `FeelsRainMan ${successNames}, you all just received a glorious CORN shower of ${singleRainedAmount} BITCORN rained on you by ${event.user['display-name']}! FeelsRainMan`;
-                    const failedMessage = ` // PepeWhy ${failureNames} please visit the sync site https://bitcornfarms.com/ to register an account PepeWhy`;
-
+                    const failedMessage = ` // ${failureNames} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
                     const allMsg = `${successMessage}${(failureNamesArray.length > 0 ? failedMessage : '')}`;
 
                     tmi.botSay(event.target, allMsg);
