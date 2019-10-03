@@ -12,6 +12,7 @@ const tmiCommands = require('../tmi-commands');
 const { Queue } = require('../../public/js/server/queue');
 const { Timer } = require('../../public/js/server/timer');
 const math = require('../../source/utils/math');
+const Time = require('../../source/utils/time');
 const helix = require('../config/authorize/helix');
 const databaseAPI = require('../config/api-interface/database-api');
 const cmdHelper = require('../commands/cmd-helper');
@@ -147,6 +148,7 @@ async function sendTipRewardToApi() {
 
         if (tipRewardItem.cheer) {
 
+            const channel = tipRewardItem.cheer.channel;
             const username = tipRewardItem.cheer.userstate.username;
             const tipcornAmount = tipRewardItem.cheer.userstate.bits * amounts.cheer['0000'];
 
@@ -155,10 +157,14 @@ async function sendTipRewardToApi() {
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
 
-            handleApiResponse(tipRewardItem.cheer.channel, tipcorn_result);
+            handleApiResponse({
+                channel,
+                receiverName: username,
+            }, tipcorn_result);
 
         } else if (tipRewardItem.subgift) {
 
+            const channel = tipRewardItem.subgift.channel;
             const username = tipRewardItem.subgift.username;
             const methods = tipRewardItem.subgift.methods;
             const tipcornAmount = amounts.subgift[methods];
@@ -168,10 +174,14 @@ async function sendTipRewardToApi() {
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
 
-            handleApiResponse(tipRewardItem.subgift.channel, tipcorn_result);
+            handleApiResponse({
+                channel,
+                receiverName: username
+            }, tipcorn_result);
 
         } else if (tipRewardItem.subscription) {
 
+            const channel = tipRewardItem.subscription.channel;
             const username = tipRewardItem.subscription.username;
             const methods = tipRewardItem.subscription.methods;
             const tipcornAmount = amounts.subscription[methods];
@@ -181,20 +191,26 @@ async function sendTipRewardToApi() {
 
             const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
 
-            handleApiResponse(tipRewardItem.subscription.channel, tipcorn_result);
+            handleApiResponse({
+                channel,
+                receiverName: username
+            }, tipcorn_result);
 
         } else {
             throw new Error(`Tip Rewards Queue has type error: ${JSON.stringify(tipRewardItem)}`);
         }
-
-        tipRewardQueue.items.dequeue();
     } catch (error) {
         console.error(error);
-        tipRewardQueue.items.dequeue();
+    }
+    tipRewardQueue.items.dequeue();
+    tipRewardQueue.isBusy = false;
+
+    if(tipRewardQueue.items.size() > 0) {
+        sendTipRewardToApi();
     }
 }
 
-function handleApiResponse(channel, tipcorn_result) {
+function handleApiResponse(item, tipcorn_result) {
     let success = true;
     if (tipcorn_result.status && tipcorn_result.status === 423) success = false; // banned Ignore
     if (tipcorn_result.status && tipcorn_result.status === 503) success = false; // refused Adds event to queue
@@ -202,32 +218,16 @@ function handleApiResponse(channel, tipcorn_result) {
     if (success === true) {
         switch (tipcorn_result.senderResponse.code) {
             case databaseAPI.paymentCode.NoRecipients: {
-                // unregistered
-                // send message to register
-                const msg = cmdHelper.message.norecipients.tipcorn();
-                botSay(channel, msg);
+
+                const timeMs = (60 * 1000) * tipcorn_result.minutesToClaim;
+                const time = new Time(timeMs);
+
+                const msg = cmdHelper.message.norecipients.tipcorn({
+                                receiverName: item.receiverName,
+                                timeToClaim: time.toString()
+                            });
+                botSay(item.channel, msg);
                 break;
-            }
-            case databaseAPI.paymentCode.Success: {
-                const recipientResponse = tipcorn_result.recipientResponses[0];
-                switch (recipientResponse.code) {
-                    case databaseAPI.paymentCode.Success: {
-                        break;
-                    }
-                    case databaseAPI.paymentCode.QueryFailure: {
-                        break;
-                    }
-                    case databaseAPI.paymentCode.InsufficientFunds: {
-                        break;
-                    }
-                    case databaseAPI.paymentCode.InvalidPaymentAmount: {
-                        break;
-                    }
-                    default: {
-                        //cmdHelper.throwIfConditionReply();
-                break;
-                    }
-                }
             }
             case databaseAPI.paymentCode.InsufficientFunds: {
                 //
@@ -239,7 +239,7 @@ function handleApiResponse(channel, tipcorn_result) {
                 break;
             }
             default: {
-                //await cmdHelper.asyncThrowAndLogError();
+                console.log({success: true, item: item, tipcorn_result});
                 break;
             }
         }
