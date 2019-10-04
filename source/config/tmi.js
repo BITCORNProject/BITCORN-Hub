@@ -45,8 +45,6 @@ const clients = {};
 const cooldowns = {};
 const global_cooldowns = {};
 
-const cheerAmountMultiplier = 10;
-
 const amounts = {
     cheer: {
         '0000': 10
@@ -58,6 +56,12 @@ const amounts = {
         '3000': 4200
     },
     subscription: {
+        'Prime': 420,
+        '1000': 420,
+        '2000': 4200,
+        '3000': 42000
+    },
+    resub: {
         'Prime': 420,
         '1000': 420,
         '2000': 4200,
@@ -152,62 +156,64 @@ async function sendTipRewardToApi() {
             const username = tipRewardItem.cheer.userstate.username;
             const tipcornAmount = tipRewardItem.cheer.userstate.bits * amounts.cheer['0000'];
 
-            const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
-            const { id: receiverId } = await helix.getUserLogin(username);
-
-            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
-
-            handleApiResponse({
-                channel,
-                receiverName: username,
-            }, tipcorn_result);
+            await handleTipRewards('Cheering', channel, username, tipcornAmount);
 
         } else if (tipRewardItem.subgift) {
+            const methods = tipRewardItem.subgift.methods;
 
             const channel = tipRewardItem.subgift.channel;
             const username = tipRewardItem.subgift.username;
-            const methods = tipRewardItem.subgift.methods;
-            const tipcornAmount = amounts.subgift[methods];
+            const tipcornAmount = amounts.subgift[methods.plan];
 
-            const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
-            const { id: receiverId } = await helix.getUserLogin(username);
-
-            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
-
-            handleApiResponse({
-                channel,
-                receiverName: username
-            }, tipcorn_result);
+            await handleTipRewards('Sub Gifting', channel, username, tipcornAmount);
 
         } else if (tipRewardItem.subscription) {
+            const methods = tipRewardItem.subscription.methods;
 
             const channel = tipRewardItem.subscription.channel;
             const username = tipRewardItem.subscription.username;
-            const methods = tipRewardItem.subscription.methods;
-            const tipcornAmount = amounts.subscription[methods];
+            const tipcornAmount = amounts.subscription[methods.plan];
 
-            const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
-            const { id: receiverId } = await helix.getUserLogin(username);
+            await handleTipRewards('Subscribing', channel, username, tipcornAmount);
 
-            const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
+        } else if (tipRewardItem.resub) {
+            const methods = tipRewardItem.resub.methods;
 
-            handleApiResponse({
-                channel,
-                receiverName: username
-            }, tipcorn_result);
+            const channel = tipRewardItem.resub.channel;
+            const username = tipRewardItem.resub.username;
+            const tipcornAmount = amounts.resub[methods.plan];
 
+            await handleTipRewards('Resubing', channel, username, tipcornAmount);
         } else {
             throw new Error(`Tip Rewards Queue has type error: ${JSON.stringify(tipRewardItem)}`);
         }
     } catch (error) {
         console.error(error);
     }
-    tipRewardQueue.items.dequeue();
-    tipRewardQueue.isBusy = false;
 
-    if(tipRewardQueue.items.size() > 0) {
-        sendTipRewardToApi();
-    }
+    tipRewardQueue.items.dequeue();
+
+    (new Promise((resolve) => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS)))
+        .then(() => {
+            tipRewardQueue.isBusy = false;
+            if (tipRewardQueue.items.size() > 0) {
+                sendTipRewardToApi();
+            }
+        })
+}
+
+async function handleTipRewards(reason, channel, username, tipcornAmount) {
+    const { id: twitchId } = await helix.getUserLogin(auth.data.BOT_USERNAME.toLowerCase());
+    const { id: receiverId } = await helix.getUserLogin(username);
+
+    const tipcorn_result = await databaseAPI.tipcornRequest(twitchId, receiverId, tipcornAmount);
+
+    handleApiResponse({
+        reason,
+        channel,
+        receiverName: username,
+        tipcornAmount
+    }, tipcorn_result);
 }
 
 function handleApiResponse(item, tipcorn_result) {
@@ -217,15 +223,29 @@ function handleApiResponse(item, tipcorn_result) {
     if (tipcorn_result.status && tipcorn_result.status !== 200) success = false; // failed?? Log to file
     if (success === true) {
         switch (tipcorn_result.senderResponse.code) {
+            case databaseAPI.paymentCode.Success: {
+                const msg = cmdHelper.message.success.tipcorn({
+                    receiverName: item.receiverName,
+                    amount: item.tipcornAmount
+                });
+
+                /*const msg = cmdHelper.message.tipcorn.tochat({
+                    totalTippedAmount: item.tipcornAmount,
+                    senderName: auth.data.BOT_USERNAME,
+                    recipientName: item.receiverName
+                });*/
+                botSay(item.channel, msg);
+                break;
+            }
             case databaseAPI.paymentCode.NoRecipients: {
 
                 const timeMs = (60 * 1000) * tipcorn_result.minutesToClaim;
                 const time = new Time(timeMs);
 
                 const msg = cmdHelper.message.norecipients.tipcorn({
-                                receiverName: item.receiverName,
-                                timeToClaim: time.toString()
-                            });
+                    receiverName: item.receiverName,
+                    timeToClaim: time.toString()
+                });
                 botSay(item.channel, msg);
                 break;
             }
@@ -239,7 +259,7 @@ function handleApiResponse(item, tipcorn_result) {
                 break;
             }
             default: {
-                console.log({success: true, item: item, tipcorn_result});
+                console.log({ success: true, item: item, tipcorn_result });
                 break;
             }
         }
@@ -369,6 +389,11 @@ function onSubGift(channel, username, streakMonths, recipient, methods, userstat
 
 function onSubscription(channel, username, methods, message, userstate) {
     tipRewardQueue.items.enqueue({ subscription: { channel, username, methods, message, userstate } });
+    sendTipRewardToApi();
+}
+
+function onResub(channel, username, months, message, userstate, methods) {
+    tipRewardQueue.items.enqueue({ resub: { channel, username, months, message, userstate, methods } });
     sendTipRewardToApi();
 }
 
@@ -533,6 +558,7 @@ async function init() {
     clients[BOT_CHAT].on("cheer", onCheer);
     clients[BOT_CHAT].on("subgift", onSubGift);
     clients[BOT_CHAT].on("subscription", onSubscription);
+    clients[BOT_CHAT].on("resub", onResub);
 
     clients[BOT_WHISPER].on('connected', onConnectedWhisperHandler);
     clients[BOT_WHISPER].on('whisper', onWhisperHandler);
@@ -596,19 +622,3 @@ exports.asyncJoinChannel = asyncJoinChannel;
 exports.asyncPartChannel = asyncPartChannel;
 exports.addMessageCallback = addMessageCallback;
 exports.removeMessageCallback = removeMessageCallback;
-exports.sendRewardTests = () => {
-    
-
-    const channel = 'callowcreation';
-    const userstate = { username: '3412q', bits: 5 };
-    const message = 'Cool you are live';
-    const streakMonths = 0;
-    const recipient = 'naivebot';
-    const methods = '1000';
-    const username = 'wollac';
-
-    onCheer(channel, userstate, message);
-    //onSubGift(channel, username, streakMonths, recipient, methods, userstate);
-    //onSubscription(channel, username, methods, message, userstate);
-
-}

@@ -13,8 +13,6 @@ const _ = require('./test-dependencies');
         const timer = new _.Timer();
         timer.start();
         
-        _.tmi.sendRewardTests();
-
         const time = timer.stop();
         console.log('Execution time: ' + time);
 

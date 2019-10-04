@@ -171,7 +171,8 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     usebitcorn: `Use $bitcorn to register and see your balance`,
     notnumber: `Here is an example of the command - %s`,
     success: {
-        withdraw: `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`
+        withdraw: `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`,
+        tipcorn: `cttvCorn Just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn`
     },
     insufficientfunds: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`,
@@ -262,7 +263,8 @@ module.exports = {
         usebitcorn: () => util.format(strings().usebitcorn),
         notnumber: (obj) => util.format(strings().notnumber, obj.configs.example),
         success: {
-            withdraw: (obj) => util.format(strings().success.withdraw, obj.txid)
+            withdraw: (obj) => util.format(strings().success.withdraw, obj.txid),
+            tipcorn: (obj) => util.format(strings().success.tipcorn, obj.receiverName, obj.amount)
         },
         insufficientfunds: {
             rain: (obj) => util.format(strings().insufficientfunds.rain),
