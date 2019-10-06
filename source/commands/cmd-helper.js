@@ -198,7 +198,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     },
     norecipients: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. No registered users in chat to make it rain! DogePls SourPls`,
-        tipcorn: `Howdy @s%!  You have %s to claim by visiting the sync site https://bitcornfarms.com/ to register a BITCORN Address`
+        tipcorn: `Howdy @%s!  You have %s to claim by visiting the sync site https://bitcornfarms.com/ to register a BITCORN Address`
     },
     transactiontoolarge: {
         withdraw: `Withdraw transaction too large`
