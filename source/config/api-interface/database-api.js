@@ -61,12 +61,12 @@ function DatabaseEndpoint() {
 }
 
 DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
-    const { access_token } = await apiRequest.fetchToken(this.sql_db_auth.getValues());
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth.getValues());
     return apiRequest.makeRequest(`${baseUrl}${endpoint}`, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestBase = async function (baseUrl, endpoint, twitchId, data) {
-    const { access_token } = await apiRequest.fetchToken(this.sql_db_auth.getValues());
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth.getValues());
     return apiRequest.criticalRequest(`${baseUrl}${endpoint}`, twitchId, access_token, data);
 }
 
