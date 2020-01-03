@@ -22,7 +22,7 @@ const sub_tier_award_ticker_name = 'sub-tier-awawd-ticker';
 const MINUTE_AWARD_MULTIPLIER = serverSettings.getValues().MINUTE_AWARD_MULTIPLIER;
 
 const sub_plans_bitcorn = {
-    '1000': math.fixed8(0.25 * MINUTE_AWARD_MULTIPLIER),
+    '1000': math.fixed8(0.1 * MINUTE_AWARD_MULTIPLIER),
     '2000': math.fixed8(0.50 * MINUTE_AWARD_MULTIPLIER),
     '3000': math.fixed8(1.00 * MINUTE_AWARD_MULTIPLIER)
 };
