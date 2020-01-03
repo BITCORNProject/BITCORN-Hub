@@ -57,7 +57,10 @@ async function _request(url, twitchId, access_token, data) {
         body: JSON.stringify(data)
     };
 
-    if (twitchId) options.headers.twitchId = twitchId;
+	if (twitchId) {
+		options.headers.platform = 'twitch';
+		options.headers.id = twitchId;
+	}
 
     return fetch(url, options)
         .then(res => {

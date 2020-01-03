@@ -8,18 +8,23 @@
 const _ = require('./test-dependencies');
 
 (async () => {
-    try {
+	try {
 
-        const result = await _.fetch('https://bitcorn-role-sync.azurewebsites.net/tx', { 
-            method: 'POST', 
-            body:  new URLSearchParams({id: 726377745, name: 'bitcornhub', comment: 'Testing endpoint'})
-        });
-        
-        console.log(await result.text());
+		const twitchId = (await _.helix.getUserLogin('callowcreation')).id;
+		const recipients = [
+			{
+				id: (await _.helix.getUserLogin('naivebot')).id,
+				amount: 100
+			},
+		];
 
-        console.log(result);
-        _.assert(result);
-    } catch (error) {
-        console.error(error);
-    }
+		const result = await _.databaseApi.rainRequest(recipients, twitchId);
+
+		console.log(recipients);
+
+		console.log(result);
+		_.assert(result);
+	} catch (error) {
+		console.error(error);
+	}
 })();

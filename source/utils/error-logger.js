@@ -30,7 +30,12 @@ async function asyncLogError(sendData, errorcode, message, botData) {
 
     sendData.errorcode = errorcode;
     sendData.errorMessage = error.message;
-    sendData.stacktrace = error.stack;
+	sendData.stacktrace = error.stack;
+	
+	/*
+	sendData.timestamp = Date().now;
+	sendData.application = 'bitcornhub-twitch'; // save as .env variable
+	*/
 
     sendData.botData = botData;
 

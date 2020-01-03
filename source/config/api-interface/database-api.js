@@ -30,8 +30,8 @@ function DatabaseEndpoint() {
         token: '/token',
         errorlog: '/boterror',
         blacklist: '/banuser'
-    });
-
+	});
+	
     this.paymentCode = {
         Banned: -7,
         InternalServerError: -6,
@@ -58,6 +58,10 @@ function DatabaseEndpoint() {
         Success: 1,
         AlreadyBanned: 2
     };
+}
+
+DatabaseEndpoint.prototype.rooturl = function() {
+	return rooturl.getValues();
 }
 
 DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
