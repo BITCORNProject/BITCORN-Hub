@@ -21,7 +21,7 @@ function onChatMessage(target, user, msg, self) {
 
 const omit_usernames = [
     "nightbot",
-    "cttvbotcorn",
+    "mttvbotcorn",
     "bitcornhub",
     "stay_hydrated_bot",
     "fakecornfakecorn"

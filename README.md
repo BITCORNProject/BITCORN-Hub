@@ -1,6 +1,6 @@
 # BITCORNhub
 
-BITCORNhub is a Twitch bot Used by [CryptoTradersTV](https://www.twitch.tv/cryptotraderstv) (CTTV).
+BITCORNhub is a Twitch bot Used by [MarketTradersTv](https://www.twitch.tv/markettraderstv) (MTTV).
 The bot allows users to conduct cryptocurrency transactions on the BITCORN blockchain via Twitch chat. 
 
 ## Prerequisites
