@@ -32,6 +32,7 @@ module.exports = {
     apiRequest: require('../source/config/api-interface/api-request'),
     databaseApi: require('../source/config/api-interface/database-api'),
     JsonFile: require('../source/utils/json-file'),
+    errorLogger: require('../source/utils/error-logger'),
 	tmiCommands: require('../source/tmi-commands'),
 	cmdHelper: require('../source/commands/cmd-helper'),
 	WebSocket: require('ws'),

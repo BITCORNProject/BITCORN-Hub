@@ -74,12 +74,7 @@ async function asyncTickBitCornSub(limit = 100) {
         const lookupsub = subscriptions.filter(x => x.user.name === viewers[i]);
         if (lookupsub.length === 0) continue;
 
-        const subscription = lookupsub[0];
-
-        recipients.push({
-            id: subscription.user._id,
-            amount: math.fixed8((+sub_plans_bitcorn[subscription.sub_plan]))
-        });
+        recipients.push(lookupsub[0].user._id);
     }
 
     timers.tval = timers.get_chat_subs.stop();

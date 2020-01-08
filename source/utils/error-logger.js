@@ -31,11 +31,6 @@ async function asyncLogError(sendData, errorcode, message, botData) {
     sendData.errorcode = errorcode;
     sendData.errorMessage = error.message;
 	sendData.stacktrace = error.stack;
-	
-	/*
-	sendData.timestamp = Date().now;
-	sendData.application = 'bitcornhub-twitch'; // save as .env variable
-	*/
 
     sendData.botData = botData;
 
@@ -47,7 +42,31 @@ async function asyncLogError(sendData, errorcode, message, botData) {
     return error;
 }
 
+// v3
+/*
+
+	
+	sendData.timestamp = Date().now;
+	sendData.application = 'bitcornhub-twitch'; // save as .env variable
+	sendData.message = error.message;
+	sendData.stacktrace = error.stack;
+	
+
+*/
+async function asyncErrorLogger(error, errorcode) {
+	const sendData = {
+		timestamp: Date.now(),
+		application: 'bitcornhub-twitch', // save as .env variable
+		message: error.message,
+		stacktrace: error.stack,
+		code: errorcode,
+		id: 0
+	};
+    return databaseAPI.makeErrorRequest(sendData);
+}
+
 module.exports = {
+    asyncErrorLogger: asyncErrorLogger, // v3
     asyncLogError: asyncLogError,
     asyncThrowAndLogError: asyncThrowAndLogError
 };

@@ -13,30 +13,35 @@ const _ = require('./test-dependencies');
 		const timer = new _.Timer();
 		timer.start();
 
-		const url = _.databaseApi.db_endpoints.getValues().rain;
 		const user = await _.helix.getUserLogin('naivebot');
 		const recipients = [
 			`twitch|75987197`,
 			`twitch|${user.id}`
 		];
 		const amount = 41 / recipients.length;
+
 		const body = {
 			from: `twitch|120524051`,
 			to: recipients,
 			platform: 'twitch',
 			amount: amount,
-			columns: ['balance', 'twitchusername']
+			columns: ['balance', 'twitchusername', 'isbanned']
 		};
 
-		const result = await _.databaseApi._criticalArbitraryRequest(url, '120524051', body);
 
-		console.log(result);
+		//const result = await _.databaseApi.request1('120524051', body).rain();
+
+		console.log(JSON.stringify(body));
 
 		const time = timer.stop();
 		console.log('Execution time: ' + time);
 
 		_.assert(time);
 	} catch (error) {
-		console.error(error);
+		console.log(error);
+
+		/*const result = await _.errorLogger.asyncErrorLogger(error, 0);
+
+		console.log(result.status ? result.status : result);*/
 	}
 })();
