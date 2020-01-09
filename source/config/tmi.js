@@ -363,60 +363,60 @@ async function asyncOnMessage(type, target, user, msg, self) {
     }
 }
 
-function onWhisperHandler(target, user, msg, self) {
+function onWhisperHandler(target, user, msg, self) { // <----
 
     if (user.username.toLowerCase() === auth.data.BOT_USERNAME.toLowerCase()) return { success: false, message: `self` };
 
     asyncOnMessage('whisper', target, user, msg, self);
 }
 
-function onMessageHandler(target, user, msg, self) {
+function onMessageHandler(target, user, msg, self) { // <----
 
     if (self) return { success: false, message: `self` };
 
     asyncOnMessage('chat', target, user, msg, self);
 }
 
-function onCheer(channel, userstate, message) {
+function onCheer(channel, userstate, message) { // <----
     tipRewardQueue.items.enqueue({ cheer: { channel, userstate, message } });
     sendTipRewardToApi();
 }
 
-function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
+function onSubGift(channel, username, streakMonths, recipient, methods, userstate) { // <----
     tipRewardQueue.items.enqueue({ subgift: { channel, username, streakMonths, recipient, methods, userstate } });
     sendTipRewardToApi();
 }
 
-function onSubscription(channel, username, methods, message, userstate) {
+function onSubscription(channel, username, methods, message, userstate) { // <----
     tipRewardQueue.items.enqueue({ subscription: { channel, username, methods, message, userstate } });
     sendTipRewardToApi();
 }
 
-function onResub(channel, username, months, message, userstate, methods) {
+function onResub(channel, username, months, message, userstate, methods) { // <----
     tipRewardQueue.items.enqueue({ resub: { channel, username, months, message, userstate, methods } });
     sendTipRewardToApi();
 }
 
-function onConnectedChatHandler(addr, port) {
+function onConnectedChatHandler(addr, port) { // <----
     console.log({ success: true, message: `TMI connected to chat ${addr}:${port}` });
 }
 
-function onConnectedWhisperHandler(addr, port) {
+function onConnectedWhisperHandler(addr, port) { // <----
     console.log({ success: true, message: `TMI connected to whisper channel ${addr}:${port}` });
 }
 
-function onNamesHandler(channel, usernames) {
+function onNamesHandler(channel, usernames) { // <----
     for (let i = 0; i < usernames.length; i++) {
         const username = usernames[i];
         addChatUser(channel, username);
     }
 }
 
-function onJoinHandler(channel, username) {
+function onJoinHandler(channel, username) { // <----
     addChatUser(channel, username);
 }
 
-function onPartHandler(channel, username) {
+function onPartHandler(channel, username) { // <----
     removeChatUser(channel, username);
 }
 
