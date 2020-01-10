@@ -4,6 +4,15 @@
 const tmi = require('tmi.js');
 const auth = require('../../settings/auth');
 
+const moduleloader = require('../utils/moduleloader');
+const commandsPath = '../commands';
+const commands = moduleloader(commandsPath);
+
+const commandsMap = createCommandsMap(commands);
+
+const cooldowns = {};
+const global_cooldowns = {};
+
 const channels = ['callowcreation'];
 
 const clients = {
@@ -37,24 +46,33 @@ function onConnectedChatHandler(addr, port) {
 }
 
 async function onMessageHandler(target, user, msg, self) {
-	return { success: true, msg };
-}
 
-function beforeInit() {
-	/*clients.chat.on('connected', onConnectedChatHandler);
-	clients.chat.on('chat', onMessageHandler);
+	if (self) return { success: false, msg, message: 'Message from self' };
 
-	clients.chat.on('names', onNamesHandler);
-	clients.chat.on('join', onJoinHandler);
-	clients.chat.on('part', onPartHandler);
+	const args = messageAsCommand(msg);
 
-	clients.chat.on("cheer", onCheer);
-	clients.chat.on("subgift", onSubGift);
-	clients.chat.on("subscription", onSubscription);
-	clients.chat.on("resub", onResub);
+	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message' };
 
-	clients.whisper.on('connected', onConnectedWhisperHandler);
-	clients.whisper.on('whisper', onWhisperHandler);*/
+	const command = commandsMap.get(args.name);
+
+	if (!command) return { success: false, msg, message: 'Command not found' };
+
+	const twitchId = user['user-id'];
+
+	if (checkCooldown(command.configs, twitchId, cooldowns) === false) {
+		return { success: false, msg, message: 'Cooldown pending' };
+	}
+
+	const event = {
+		twitchId
+	};
+
+	const result = await command.execute(event);
+
+	const data = result;
+	data.msg = msg;
+
+	return data;
 }
 
 async function connectToChat() {
@@ -73,6 +91,44 @@ async function partChannel(channel) {
 	return clients.chat.part(channel);
 }
 
+function createCommandsMap(commands) {
+	const commandsMap = new Map();
+	for (let i = 0; i < commands.length; i++) {
+		const command = commands[i];
+		if (commandsMap.has(command.configs.name)) continue;
+		commandsMap.set(command.configs.name, command);
+	}
+	return commandsMap;
+}
+
+function messageAsCommand(msg) {
+
+	const splits = msg.split(' ');
+	const name = splits.shift();
+	const params = splits;
+
+	return { prefix: msg[0], name: name.substr(1, name.length - 1), params };
+}
+
+function checkCooldown(configs, twitchId, cooldowns) {
+	let success = false;
+
+	if (configs.global_cooldown === false) {
+		if (twitchId in cooldowns) {
+			const cooldownTime = +(cooldowns[twitchId][configs.name]);
+			const time = (new Date()).getTime();
+			success = time > cooldownTime;
+		} else {
+			cooldowns[twitchId] = {};
+			success = true;
+		}
+		
+		cooldowns[twitchId][configs.name] = (new Date()).getTime() + (+configs.cooldown);
+	}
+
+	return success;
+}
+
 module.exports = {
 	connectToChat,
 	connectToWhisper,
@@ -83,4 +139,11 @@ module.exports = {
 
 	onConnectedChatHandler,
 	onMessageHandler,
+
+	commands,
+	createCommandsMap,
+
+	messageAsCommand,
+
+	checkCooldown
 };

@@ -29,9 +29,9 @@ const _ = require('./test-dependencies');
 		};
 
 
-		//const result = await _.databaseApi.request1('120524051', body).rain();
+		const result = await _.databaseApi.request('120524051', null).bitcorn();
 
-		console.log(JSON.stringify(body));
+		console.log(result);
 
 		const time = timer.stop();
 		console.log('Execution time: ' + time);
