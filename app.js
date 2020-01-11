@@ -12,17 +12,31 @@ app.get('/', (req, res) => {
 
 if (module === require.main) {
 
-	new Promise(resolve => {
-		const server = app.listen(auth.data.PORT, () => {
-			resolve(server);
-		});
-	}).then(server => {
+	(async () => {
+
+		const tmi = require('./src/configs/tmi');
 		
-        io = require('socket.io')(server);
+		tmi.registerEvents();
+
+		const results = await Promise.all([
+			tmi.connectToChat()
+		]);
+
+		console.log(results);
+
+		const server = await new Promise(resolve => {
+			const server = app.listen(auth.data.PORT, () => {
+				resolve(server);
+			});
+		});
+
+		
+		io = require('socket.io')(server);
 
 		const port = server.address().port;
 		console.log(`App listening on port ${port}`);
-	});
+
+	})();
 
 }
 

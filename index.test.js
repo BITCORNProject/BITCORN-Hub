@@ -10,7 +10,7 @@ function log(...value) {
 }
 
 describe('#mocha promises', function () {
-	const isMock = true;
+	const isMock = false;
 
 	let tmi = null;
 	let databaseAPI = null;
@@ -59,21 +59,24 @@ describe('#mocha promises', function () {
 		return assert.isRejected(tmi.partChannel(channel));
 	});
 
+	
 	it('should confirm message received from channel', (done) => {
+		let timeoutVar = null;
 		tmi.chatClient.on('message', (target, user, msg, self) => {
 			tmi.onMessageHandler(target, user, msg, self)
 				.then(obj => {
 					expect(obj.success).to.be.equal(false);
-					expect(obj.msg).to.be.equal('Terra applicant');
+					if(timeoutVar) {
+						clearTimeout(timeoutVar);
+					}
 					done();
 				});
 		});
-		setTimeout(() => {
+		timeoutVar = setTimeout(() => {
 			tmi.chatClient.say('#callowcreation', 'Terra applicant');
 		}, 1000);
 	});
-
-
+	
 
 	it('should get api response for bitcorn status 500', () => {
 		const twitchId = '123';
@@ -195,7 +198,7 @@ describe('#mocha promises', function () {
 
 	});
 
-	it('should twitchId pass global cooldown time', (done) => {
+	it('should twitchId cause global cooldown block', (done) => {
 		const configs = {
 			name: 'bitcorn',
 			cooldown: 1000 * 1,
@@ -206,22 +209,30 @@ describe('#mocha promises', function () {
 		};
 
 		const twitchId = '120524051';
-		const cooldowns = {
-			[twitchId]: {
-				[configs.name]: (new Date()).getTime() + (+configs.cooldown)
-			}
+		const global_cooldown = {
+			[configs.name]: (new Date()).getTime() + (+configs.cooldown)
 		};
 
 		setTimeout(() => {
-			const passed = tmi.checkCooldown(configs, twitchId, cooldowns);
+			let passed = true;
+
+			// assign 'passed' on first request and it passes
+			// because global cooldown has just started
+			passed = tmi.checkCooldown(configs, twitchId, global_cooldown);
+			
+			// assign 'passed' on second request and it fails 
+			// because global cooldown was not reached
+			tmi.checkCooldown(configs, twitchId, global_cooldown);
+
 			expect(passed).to.be.equal(true);
 			done();
 		}, +configs.cooldown + 500);
 
+
 	});
 
 	// Integration test only ?? !! ??
-	/*it('should execute $bitcorn successfully', () => {
+	it('should execute $bitcorn successfully', () => {
 
 		const target = '#callowcreation';
 		const user = { 'user-id': '120524051' };
@@ -232,5 +243,5 @@ describe('#mocha promises', function () {
 			.then(obj => {
 				expect(obj.success).to.be.equal(true);
 			});
-	});*/
+	});
 });

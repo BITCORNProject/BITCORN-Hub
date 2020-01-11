@@ -41,6 +41,10 @@ const clients = {
 	})
 };
 
+function registerEvents() {
+	clients.chat.on('message', onMessageHandler);
+}
+
 function onConnectedChatHandler(addr, port) {
 	return { addr, port };
 }
@@ -115,21 +119,33 @@ function checkCooldown(configs, twitchId, cooldowns) {
 
 	if (configs.global_cooldown === false) {
 		if (twitchId in cooldowns) {
-			const cooldownTime = +(cooldowns[twitchId][configs.name]);
-			const time = (new Date()).getTime();
-			success = time > cooldownTime;
+			success = calculateCooldownSuccess(cooldowns[twitchId][configs.name]);
 		} else {
 			cooldowns[twitchId] = {};
 			success = true;
 		}
 		
 		cooldowns[twitchId][configs.name] = (new Date()).getTime() + (+configs.cooldown);
+		
+	} else {
+		if(configs.name in cooldowns) {
+			success = calculateCooldownSuccess(cooldowns[configs.name]);
+		} else {
+			success = true;
+		}
+		cooldowns[configs.name] = (new Date()).getTime() + (+configs.cooldown);
 	}
 
 	return success;
 }
 
+function calculateCooldownSuccess(cooldownTime) {
+	return (new Date()).getTime() > +cooldownTime;
+}
+
 module.exports = {
+	registerEvents,
+
 	connectToChat,
 	connectToWhisper,
 	joinChannel,
