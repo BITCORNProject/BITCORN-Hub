@@ -9,11 +9,11 @@ const util = require('util');
 
 module.exports = {
 	configs: {
-		name: 'bitcorn',
+		name: 'tipcorn',
 		cooldown: 1000 * 30,
 		global_cooldown: false,
-		description: 'View your BITCORN balance and get a BITCORN wallet address if you are not registered',
-		example: '$bitcorn',
+		description: 'Tips a user with bitcorn',
+		example: '$tipcorn <username> <amount>',
 		enabled: true
 	},
 	async execute(event) {
@@ -21,16 +21,21 @@ module.exports = {
 		let success = false;
 		let message = 'Command failed';
 
-		const result = await databaseAPI.request(event.twitchId, null).bitcorn();
+		const twitchUsername = event.args.params[0];
+		const amount = event.args.params[1];
 
-		if (result.status) {
+		const result = await databaseAPI.request(twitchId, body).tipcorn();
+
+		if(result.status && result.status === 500) {
 			// NOTE needs to be logged to the locally as an error
 			message = `${message}: ${result.status} ${result.statusText}`;
+		} else if(result.status && result.status === 420) {
+			message = `API access locked for ${twitchId}`;
 		} else {
 			success = true;
-			message = util.format(`Howdy BITCORN Farmer!  You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.twitchUsername)
+			message = util.format('cttvCorn Just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn', twitchUsername, amount);
 		}
-		
+
 		return { success: success, message: message, configs: this.configs };
 	}
 };

@@ -13,6 +13,27 @@ const commandsMap = createCommandsMap(commands);
 const cooldowns = {};
 const global_cooldowns = {};
 
+const expectedCommandsConfigs = {
+	name: '',
+	cooldown: 0,
+	global_cooldown: false,
+	description: '',
+	example: '',
+	enabled: false
+};
+
+const expectedEventFields = {
+	twitchId: '',
+	args: []
+};
+
+const expectedOutProperties = {
+	success: false,
+	msg: '',
+	message: '',
+	configs: {}
+};
+
 const channels = ['callowcreation'];
 
 const clients = {
@@ -51,25 +72,26 @@ function onConnectedChatHandler(addr, port) {
 
 async function onMessageHandler(target, user, msg, self) {
 
-	if (self) return { success: false, msg, message: 'Message from self' };
+	if (self) return { success: false, msg, message: 'Message from self', configs: expectedOutProperties.configs };
 
 	const args = messageAsCommand(msg);
-
-	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message' };
+	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message', configs: expectedOutProperties.configs };
 
 	const command = commandsMap.get(args.name);
+	if (!command) return { success: false, msg, message: 'Command not found', configs: expectedOutProperties.configs };
 
-	if (!command) return { success: false, msg, message: 'Command not found' };
-
-	const twitchId = user['user-id'];
-
-	if (checkCooldown(command.configs, twitchId, cooldowns) === false) {
-		return { success: false, msg, message: 'Cooldown pending' };
+	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
+	if (checkCooldown(command.configs, user['user-id'], selectCooldowns) === false) {
+		return { success: false, msg, message: 'Cooldown pending', configs: expectedOutProperties.configs };
 	}
 
 	const event = {
-		twitchId
+		twitchId: user['user-id']
 	};
+
+	if(validatedEventParameters(event) === false) {
+		return { success: false, msg, message: 'Event paramaters missing', configs: expectedOutProperties.configs };
+	}
 
 	const result = await command.execute(event);
 
@@ -77,6 +99,15 @@ async function onMessageHandler(target, user, msg, self) {
 	data.msg = msg;
 
 	return data;
+}
+
+const _ = require('lodash');
+function validatedEventParameters(event) {
+	return _.reject(Object.keys(expectedEventFields), (key) => _.has(event, key)).length === 0;
+	
+	//return _.size(_.intersection(_.keys(event), expectedEventFields)) > 0
+
+	//return Object.keys(expectedEventFields).filter(x => !event.hasOwnProperty(x)).length === 0;
 }
 
 async function connectToChat() {
@@ -144,6 +175,13 @@ function calculateCooldownSuccess(cooldownTime) {
 }
 
 module.exports = {
+
+	expectedCommandsConfigs, 
+	expectedEventFields,
+	expectedOutProperties,
+
+	validatedEventParameters,
+
 	registerEvents,
 
 	connectToChat,
