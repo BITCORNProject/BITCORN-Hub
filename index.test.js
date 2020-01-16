@@ -27,11 +27,17 @@ describe('#mocha promises', function () {
 			}
 		} : require('./source/config/api-interface/database-api');
 
-		return tmi.connectToChat();
+		return Promise.all([
+			tmi.connectToChat(),
+			tmi.connectToWhisper()
+		]);
 	});
 
 	after(() => {
-		return tmi.chatClient.disconnect();
+		return Promise.all([
+			tmi.chatClient.disconnect(),
+			tmi.whisperClient.disconnect()
+		]);
 	});
 
 	it('should have connectToChat property', () => {
@@ -47,7 +53,7 @@ describe('#mocha promises', function () {
 		return tmi.joinChannel(channel)
 			.then(data => {
 				expect(data[0]).to.be.equal(channel);
-			});
+			}).should.eventually.be.fulfilled;
 	});
 
 	it('should handle tmi join errors', () => {
@@ -61,7 +67,7 @@ describe('#mocha promises', function () {
 	});
 
 
-	it('should confirm message received from channel', (done) => {
+	it.skip('should confirm message received from channel', (done) => {
 		let timeoutVar = null;
 		tmi.chatClient.on('message', (target, user, msg, self) => {
 			tmi.onMessageHandler(target, user, msg, self)
@@ -98,14 +104,14 @@ describe('#mocha promises', function () {
 		}
 	});
 
-	it('should have out porperties on commands', () => {
+	it('should have out properties on commands', () => {
 		const callbackPromises = [];
 
 		for (let i = 0; i < tmi.commands.length; i++) {
 			const command = tmi.commands[i];
 
 			const target = '#callowcreation';
-			const user = { 'user-id': '120524051' };
+			const user = { 'user-id': '120524051', username: 'naivebot' };
 			const msg = command.configs.example;
 			const self = false;
 
@@ -119,7 +125,7 @@ describe('#mocha promises', function () {
 						expect(Object.keys(values[i])).to.include(key);
 					}
 				}
-			});
+			}).should.eventually.be.fulfilled;
 	});
 
 	it('should tmi has commands', () => {
@@ -129,7 +135,7 @@ describe('#mocha promises', function () {
 	it('should create commands map from commands array', () => {
 		const commands = tmi.commands;
 		const commandsMap = tmi.createCommandsMap(commands);
-		expect(commandsMap).to.have.all.keys('bitcorn', 'tipcorn');
+		expect(commandsMap).to.have.all.keys('bitcorn', 'tipcorn', 'withdraw');
 	});
 
 	it('should have a $ prefix', () => {
@@ -198,7 +204,7 @@ describe('#mocha promises', function () {
 
 	});
 
-	it('should twitchId cause global cooldown block', (done) => {
+	it('should channel name cause global cooldown block', (done) => {
 		const configs = {
 			name: 'bitcorn',
 			cooldown: 1000 * 1,
@@ -208,7 +214,7 @@ describe('#mocha promises', function () {
 			enabled: true
 		};
 
-		const twitchId = '120524051';
+		const channelName = '#callowcreation';
 		const global_cooldown = {
 			[configs.name]: (new Date()).getTime() + (+configs.cooldown)
 		};
@@ -218,11 +224,11 @@ describe('#mocha promises', function () {
 
 			// assign 'passed' on first request and it passes
 			// because global cooldown has just started
-			passed = tmi.checkCooldown(configs, twitchId, global_cooldown);
+			passed = tmi.checkCooldown(configs, channelName, global_cooldown);
 
 			// assign 'passed' on second request and it fails 
 			// because global cooldown was not reached
-			tmi.checkCooldown(configs, twitchId, global_cooldown);
+			tmi.checkCooldown(configs, channelName, global_cooldown);
 
 			expect(passed).to.be.equal(true);
 			done();
@@ -235,6 +241,8 @@ describe('#mocha promises', function () {
 		const event = {
 			args: [],
 			twitchId: '120524051',
+			irc_target: 'callowcreation',
+			channel: '#callowcreation'
 		};
 		expect(tmi.validatedEventParameters(event)).to.be.equal(true);
 	});
@@ -281,12 +289,12 @@ describe('#mocha promises', function () {
 				expect(result.success).to.be.not.equal(false);
 			});
 	});
-	/*
+
 	// Integration test only ?? !! ??
-	it('should execute $bitcorn successfully with message handler', () => {
+	it.skip('should execute $bitcorn successfully with message handler', () => {
 
 		const target = '#callowcreation';
-		const user = { 'user-id': '120614707' };
+		const user = { 'user-id': '120614707', username: 'naivebot' };
 		const msg = '$bitcorn';
 		const self = false;
 
@@ -295,7 +303,7 @@ describe('#mocha promises', function () {
 				expect(obj.success).to.be.equal(true);
 				expect(obj.configs.name).to.be.equal('bitcorn');
 			});
-	});*/
+	});
 
 
 	/*
@@ -335,52 +343,212 @@ describe('#mocha promises', function () {
 			});
 	});
 
-	it('should get api response for tipcorn username to be callowcreation', () => {
+	it.skip('should get api response for tipcorn username to be callowcreation', () => {
 		const twitchId = '75987197';
 		const body = {
-			from: `twitch|75987197`,
+			from: `twitch75987197`,
 			to: `twitch|120524051`,
 			platform: 'twitch',
 			amount: 1,
 			columns: ['balance', 'twitchusername']
 		};
 		return databaseAPI.request(twitchId, body).tipcorn()
+			.should.be.fulfilled
 			.then(results => {
-				for (let i = 0; i < results.length; i++) {
-					const result = results[i];
-					expect(result.from.twitchusername).to.be.equal('callowcreation');
-				}
+				expect(results.from.twitchusername).to.be.equal('callowcreation');
 			});
 	});
 
-	it('should get $tipcorn response from invoking execute', () => {
+	it.skip('should get $tipcorn response from invoking execute', (done) => {
 		const command = isMock ? {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/tipcorn');
-		const event = { twitchId: '75987197' };
-		return command.execute(event)
+		const event = { twitchId: '75987197', args: { name: 'tipcorn', prefix: '$', params: ['naivebot', 10] } };
+		command.execute(event)
 			.then(results => {
-				for (let i = 0; i < results.length; i++) {
+				if (results.success === false) {
 					const result = results[i];
-					expect(result.success).to.be.not.equal(false);
+					if (result.success === false) {
+						log('tipcorn Output =>>>>>>>>>> ', result);
+					}
+					expect(result.success).to.be.equal(true);
+					done();
 				}
 			});
 	});
-	/*
-	// Integration test only ?? !! ??
-	it('should execute $tipcorn successfully with message handler', () => {
 
+	// Integration test only ?? !! ??
+	it.skip('should execute $tipcorn successfully with message handler', (done) => {
+
+		setTimeout(() => {
+			const target = '#callowcreation';
+			const user = { 'user-id': '120524051', username: 'naivebot' };
+			const msg = '$tipcorn @naivebot 1';
+			const self = false;
+
+			tmi.onMessageHandler(target, user, msg, self)
+				.then(obj => {
+
+					if (obj.success === false) {
+						log('Command Output =>>>>>>>>>> ', obj);
+					}
+
+					expect(obj.success).to.be.equal(true);
+					expect(obj.configs.name).to.be.equal('tipcorn');
+					done();
+				}).catch(e => e);
+		}, 100);
+	});
+
+
+	it('should get $withdraw response from invoking execute', () => {
+		const command = isMock ? {
+			execute(event) {
+				return Promise.resolve({ success: true });
+			}
+		} : require('./src/commands/withdraw');
+		const event = { twitchId: '75987197', args: { name: 'withdraw', prefix: '$', params: [1, 'CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g'] } };
+		return command.execute(event)
+			.then(results => {
+				log('withdraw Output =------------> ', results);
+				expect(results.success).to.be.not.equal(false);
+			});
+	});
+
+	// Chat message and whisper handler merge into one method
+	it.skip('should process whispers and chat messages - chat', () => {
+		return new Promise(resolve => {
+
+			const type = require('./src/utils/message-type').irc_chat;
+			const target = '#callowcreation';
+			const user = { 'user-id': '120524051', username: 'naivebot' };
+			const msg = '$tipcorn @callowcreation 1';
+			const self = false;
+
+			setTimeout(() => {
+				tmi.asyncOnMessageReceived(type, target, user, msg, self)
+					.then(obj => {
+						expect(obj.success).to.be.equal(true);
+						resolve();
+					}).catch(e => e);
+			}, 50);
+		});
+	});
+
+	it.skip('should process whispers and chat messages - whisper', (done) => {
+
+		const type = require('./src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
-		const user = { 'user-id': '75987197' };
-		const msg = '$tipcorn @clayman666 100';
+		const user = { 'user-id': '120524051', username: 'naivebot' };
+		const msg = '$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g';
 		const self = false;
 
-		return tmi.onMessageHandler(target, user, msg, self)
+		setTimeout(() => {
+			tmi.asyncOnMessageReceived(type, target, user, msg, self)
+				.then(obj => {
+					expect(obj.success).to.be.equal(true);
+					done();
+				}).catch(e => e);
+		}, 50);
+	});
+
+
+	// chat and whisper queue
+	it('should add items to chat queue', () => {
+		tmi.chatQueue.enqueue({ test_item: 'No name' });
+		expect(tmi.chatQueue.size()).to.be.equal(1);
+	});
+
+	it('should remove items from chat queue', () => {
+		tmi.chatQueue.dequeue();
+		expect(tmi.chatQueue.size()).to.be.equal(0);
+	});
+
+	it('should not enqueue MESSAGE_TYPE whisper self', () => {
+
+		const MESSAGE_TYPE = require('./src/utils/message-type');
+		const auth = require('./settings/auth');
+
+		let target = auth.data.BOT_USERNAME;
+		let message = 'We can see the thing';
+		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
+		const targetName = tmi.whisperQueue.peek();
+
+		expect(targetName.target).to.be.not.equal(target);
+	});
+
+	it('should queue messages to send by MESSAGE_TYPE', () => {
+
+		const MESSAGE_TYPE = require('./src/utils/message-type');
+
+		while(tmi.whisperQueue.size() > 0) tmi.whisperQueue.dequeue();
+		while(tmi.chatQueue.size() > 0) tmi.chatQueue.dequeue();
+
+		let target = 'callowcreation';
+		let message = 'We can see the thing';
+		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+		expect(tmi.chatQueue.size()).to.be.equal(1);
+		expect(tmi.whisperQueue.size()).to.be.equal(0);
+
+		target = 'callowcreation';
+		message = 'Is this for you';
+		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
+		expect(tmi.chatQueue.size()).to.be.equal(1);
+		expect(tmi.whisperQueue.size()).to.be.equal(1);
+	});
+
+	it('should confirm messages in chat and whisper queue', () => {
+		const item = tmi.chatQueue.peek();
+		expect(item.message).to.be.equal('We can see the thing');
+	});
+
+	it.skip('should send chat message from queue', () => {
+		const MESSAGE_TYPE = require('./src/utils/message-type');
+
+		let target = '#callowcreation';
+		let message = 'should send chat message from queue ' + Date.now();
+		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+
+		return tmi.joinChannel(target)
+			.then(() => {
+				return tmi.sendQueuedChatMessages()
+					.then(obj => {
+						expect(obj.success).to.be.equal(true);
+					}).should.eventually.be.fulfilled
+			});
+	});
+
+	it('should send many message from chat queue', () => {
+		const MESSAGE_TYPE = require('./src/utils/message-type');
+
+		let target = '#callowcreation';
+		let message = 'should send many message from chat queue ' + Date.now();
+		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+
+		message = 'Seen ' + Date.now();
+		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+
+		return tmi.joinChannel(target)
+			.then(() => {
+				return tmi.sendQueuedChatMessages()
+					.then(obj => {
+						expect(obj.success).to.be.equal(true);
+					}).should.eventually.be.fulfilled;
+			});
+	});
+
+	it('should send whisper message from whisper queue', () => {
+		const MESSAGE_TYPE = require('./src/utils/message-type');
+
+		let target = '#callowcreation';
+		let message = 'should send whisper message from whisper queue ' + Date.now();
+		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
+
+		return tmi.sendQueuedWhisperMessages()
 			.then(obj => {
 				expect(obj.success).to.be.equal(true);
-				expect(obj.configs.name).to.be.equal('tipcorn');
-			});
-	});*/
+			}).should.eventually.be.fulfilled
+	});
 });

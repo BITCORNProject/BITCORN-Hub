@@ -25,12 +25,11 @@ if (module === require.main) {
 		console.log(results);
 
 		const server = await new Promise(resolve => {
-			const server = app.listen(auth.data.PORT, () => {
+			const server = app.listen(auth.getValues().PORT, () => {
 				resolve(server);
 			});
 		});
 
-		
 		io = require('socket.io')(server);
 
 		const port = server.address().port;

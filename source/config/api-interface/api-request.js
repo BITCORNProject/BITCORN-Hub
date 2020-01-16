@@ -7,11 +7,13 @@
 
 const fetch = require('node-fetch');
 
-const cached = {
-	access_token: null,
-	expires_in: 0,
-	expires_time: 0
+function Cached() {
+	this.access_token = null;
+	this.expires_in = 0;
+	this.expires_time = 0;
 };
+
+const cached = new Cached();
 
 async function getCachedToken(client_credentials) {
 	const d = new Date();

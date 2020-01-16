@@ -25,11 +25,11 @@ const _ = require('./test-dependencies');
 			to: recipients,
 			platform: 'twitch',
 			amount: amount,
-			columns: ['balance', 'twitchusername', 'isbanned']
+			columns: ['balance', 'twitchusername', 'cornaddy']
 		};
 
 
-		const result = await _.databaseApi.request('120524051', null).bitcorn();
+		const result = await _.databaseApi.request(user.id, null).bitcorn();
 
 		console.log(result);
 
