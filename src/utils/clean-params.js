@@ -1,10 +1,12 @@
 'use strict';
 
 function brackets(value) {
+	if(isNumber(value)) return value;
     return value ? value.replace('<', '').replace('>', '') : ''
 }
 
 function at(value) {
+	if(isNumber(value)) return value;
     return brackets(value).replace('@', '');
 }
 

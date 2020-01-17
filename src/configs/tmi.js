@@ -110,7 +110,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
 	const selectedCooldownId = command.configs.global_cooldown === true ? target : user['user-id'];
 	if (checkCooldown(command.configs, selectedCooldownId, selectCooldowns) === false) {
-		return { success: false, msg, message: 'Cooldown pending', irc_target: target, configs: expectedOutProperties.configs };
+		return { success: false, msg, message: `Cooldown pending global=${command.configs.global_cooldown}`, irc_target: target, configs: expectedOutProperties.configs };
 	}
 
 	const event = {
@@ -132,6 +132,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
 	
+	//sendQueuedMessagesByType(type);
 	return data;
 }
 
@@ -154,6 +155,15 @@ function validatedEventParameters(event) {
 	//return _.size(_.intersection(_.keys(event), expectedEventFields)) > 0
 
 	//return Object.keys(expectedEventFields).filter(x => !event.hasOwnProperty(x)).length === 0;
+}
+
+async function validateAndExecute(event, command) {
+
+	if (validatedEventParameters(event) === false) {
+		return { success: false, msg: event.args.msg, message: 'Event paramaters missing', irc_target: event.irc_target, configs: expectedOutProperties.configs };
+	}
+
+	return command.execute(event);
 }
 
 async function connectToChat() {
@@ -188,7 +198,7 @@ function messageAsCommand(msg) {
 	const name = splits.shift();
 	const params = splits;
 
-	return { prefix: msg[0], name: name.substr(1, name.length - 1), params };
+	return { prefix: msg[0], msg, name: name.substr(1, name.length - 1), params };
 }
 
 function checkCooldown(configs, twitchId, cooldowns) {
@@ -196,6 +206,11 @@ function checkCooldown(configs, twitchId, cooldowns) {
 
 	if (configs.global_cooldown === false) {
 		if (twitchId in cooldowns) {
+			if(!cooldowns[twitchId][configs.name]) {
+				cooldowns[twitchId][configs.name] = 0;
+			}
+	//console.log(' ---------- cooldown -------------- ', +cooldowns[twitchId][configs.name], cooldowns[twitchId][configs.name]);
+
 			success = calculateCooldownSuccess(cooldowns[twitchId][configs.name]);
 		} else {
 			cooldowns[twitchId] = {};
@@ -206,13 +221,15 @@ function checkCooldown(configs, twitchId, cooldowns) {
 
 	} else {
 		if (configs.name in cooldowns) {
+
+	//console.log(' ---------- global_cooldown -------------- ', +cooldowns[configs.name], cooldowns[configs.name]);
+
 			success = calculateCooldownSuccess(cooldowns[configs.name]);
 		} else {
 			success = true;
 		}
 		cooldowns[configs.name] = (new Date()).getTime() + (+configs.cooldown);
 	}
-
 	return success;
 }
 
@@ -234,12 +251,21 @@ function enqueueMessageByType(type, target, message) {
 	}
 }
 
-async function sendQueuedMessages(type) {
+async function sendQueuedMessagesByType(type) {
+
 
 	let success = false;
 	let error = null;
 
 	const queue = type === MESSAGE_TYPE.irc_chat ? chatQueue : whisperQueue;
+
+	/*console.log(' ----------------- queue ----------------- ', {
+		type,
+		isBusy: queue.isBusy,
+		attempts: queue.attempts,
+		size: queue.size(),
+		peek: queue.peek()
+	});*/
 
 	if (queue.size() === 0) return { success, message: `${type} queue is empty`, error };
 
@@ -275,18 +301,21 @@ async function sendQueuedMessages(type) {
 			}
 			const outMessage = error ? `Failed to send message type ${type} on ${queue.attempts} attempts` : `Sent message: ${item.message}`;
 
+			/*console.log(' ----------------- outMessage ----------------- ', {
+				success, message: outMessage, error
+			});*/
+			sendQueuedMessagesByType(type);
 			resolve({ success, message: outMessage, error });
-			sendQueuedMessages(type);
 		}, serverSettings.data.IRC_DELAY_MS);
 	});
 }
 
 async function sendQueuedChatMessages() {
-	return sendQueuedMessages(MESSAGE_TYPE.irc_chat);
+	return sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 }
 
 async function sendQueuedWhisperMessages() {
-	return sendQueuedMessages(MESSAGE_TYPE.irc_whisper);
+	return sendQueuedMessagesByType(MESSAGE_TYPE.irc_whisper);
 }
 
 module.exports = {
@@ -296,6 +325,7 @@ module.exports = {
 	expectedOutProperties,
 
 	validatedEventParameters,
+	validateAndExecute,
 
 	registerEvents,
 

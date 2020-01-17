@@ -4,7 +4,7 @@
     "description": "Chatbot IRC and Twitch API wrapper for channel CryptoTradersTV",
     "main": "app.js",
     "scripts": {
-        "test": "mocha index.test.js --exit"
+        "test": "mocha index.test.js --exit --timeout=5000"
     },
     "author": "Jones S. Cropper",
     "license": "ISC",

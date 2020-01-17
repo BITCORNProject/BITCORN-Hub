@@ -3,9 +3,11 @@
 */
 
 "use strict";
+const util = require('util');
 
 const databaseAPI = require('../../source/config/api-interface/database-api');
-const util = require('util');
+const cleanParams = require('../utils/clean-params');
+
 const MESSAGE_TYPE = require('../utils/message-type');
 
 module.exports = {
@@ -25,7 +27,8 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		const amount = event.args.params[0];
+		const amount = cleanParams.amount(event.args.params[0]);
+		//IMPORTANT: Do not .toLowerCase() the address is case sensitive
 		const cornaddy = event.args.params[1];
 
 		const body = {
@@ -36,7 +39,7 @@ module.exports = {
 		};
 
 		const result = await databaseAPI.request(event.twitchId, body).withdraw();
-		
+
 
 		if (result.status && result.status === 500) {
 			// NOTE needs to be logged to the locally as an error
@@ -46,11 +49,13 @@ module.exports = {
 		} else if (result.status) {
 			message = `${message}: ${result.status} ${result.statusText}`;
 		} else {
-			success = true;
-			message = util.format(`You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`, result.txid);
-
+			if (result.txid) {
+				success = true;
+				message = util.format(`You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`, result.txid);
+			} else {
+				message = 'You failed to withdraw: invalid payment amount';
+			}
 		}
-
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };
 	}
 };

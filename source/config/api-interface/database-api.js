@@ -235,6 +235,7 @@ const body = {
 	amount: amount,
 	columns: ['balance', 'twitchusername']
 };
+const res = [ { from: {userid, ...columns}, to: {userid, ...columns}, txId: 1780 } ]
 
 // bitcorn 
 const body = null;

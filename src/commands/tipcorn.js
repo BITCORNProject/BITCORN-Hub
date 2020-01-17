@@ -32,7 +32,7 @@ module.exports = {
 		let irc_target = event.irc_target;
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
-		const amount = event.args.params[1];
+		const amount = cleanParams.amount(event.args.params[1]);
 		
 		const {id: toUserId} = await fetch(`http://localhost:${auth.getValues().PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
@@ -44,7 +44,7 @@ module.exports = {
 				amount: amount,
 				columns: ['balance', 'twitchusername']
 			};
-	
+
 			const result = await databaseAPI.request(event.twitchId, body).tipcorn();
 
 			if(result.status && result.status === 500) {
