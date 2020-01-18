@@ -15,8 +15,11 @@ if (module === require.main) {
 	(async () => {
 
 		const tmi = require('./src/configs/tmi');
+		const messenger = require('./src/configs/messenger');
 		
 		tmi.registerEvents();
+		
+		messenger.assignClients(tmi.chatClient, tmi.whisperClient);
 
 		const results = await Promise.all([
 			tmi.connectToChat()

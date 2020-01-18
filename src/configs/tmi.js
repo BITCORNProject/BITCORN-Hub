@@ -1,9 +1,7 @@
 
-"use strict";
-
 const tmi = require('tmi.js');
+const messenger = require('./messenger');
 const auth = require('../../settings/auth');
-const serverSettings = require('../../settings/server-settings');
 
 const MESSAGE_TYPE = require('../utils/message-type');
 
@@ -12,22 +10,6 @@ const commandsPath = '../commands';
 const commands = moduleloader(commandsPath);
 
 const commandsMap = createCommandsMap(commands);
-
-const { Queue } = require('../../public/js/server/queue');
-
-function _Queue() {
-	this.items = new Queue();
-	this.isBusy = false;
-	this.attempts = 0;
-
-	this.size = function () { return this.items.size(); }
-	this.peek = function () { return this.items.peek(); }
-	this.enqueue = function (item) { return this.items.enqueue(item); }
-	this.dequeue = function () { return this.items.dequeue(); }
-}
-
-const chatQueue = new _Queue();
-const whisperQueue = new _Queue();
 
 const cooldowns = {};
 const global_cooldowns = {};
@@ -116,7 +98,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	const event = {
 		twitchId: user['user-id'],
 		args: args,
-		irc_target: user.username,
+		irc_target: command.configs.irc_out == MESSAGE_TYPE.irc_chat ? target : user.username,
 		channel: target
 	};
 
@@ -126,13 +108,15 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const result = await command.execute(event);
 
+	//console.log(result);
 	const data = result;
 	data.msg = msg;
 
+	if(data.success === true) {
+		messenger.enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
+		data.result = await messenger.sendQueuedMessagesByType(type);
+	}
 
-	enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
-	
-	//sendQueuedMessagesByType(type);
 	return data;
 }
 
@@ -209,8 +193,7 @@ function checkCooldown(configs, twitchId, cooldowns) {
 			if(!cooldowns[twitchId][configs.name]) {
 				cooldowns[twitchId][configs.name] = 0;
 			}
-	//console.log(' ---------- cooldown -------------- ', +cooldowns[twitchId][configs.name], cooldowns[twitchId][configs.name]);
-
+			
 			success = calculateCooldownSuccess(cooldowns[twitchId][configs.name]);
 		} else {
 			cooldowns[twitchId] = {};
@@ -221,8 +204,6 @@ function checkCooldown(configs, twitchId, cooldowns) {
 
 	} else {
 		if (configs.name in cooldowns) {
-
-	//console.log(' ---------- global_cooldown -------------- ', +cooldowns[configs.name], cooldowns[configs.name]);
 
 			success = calculateCooldownSuccess(cooldowns[configs.name]);
 		} else {
@@ -235,87 +216,6 @@ function checkCooldown(configs, twitchId, cooldowns) {
 
 function calculateCooldownSuccess(cooldownTime) {
 	return (new Date()).getTime() > +cooldownTime;
-}
-
-function enqueueMessageByType(type, target, message) {
-	if (type === MESSAGE_TYPE.irc_chat) {
-		chatQueue.enqueue({ target, message });
-	} else if (type === MESSAGE_TYPE.irc_whisper) {
-		if (target.toLowerCase() !== auth.getValues().BOT_USERNAME.toLowerCase()) {
-			whisperQueue.enqueue({ target, message });
-		} else {
-			console.error(`Bot ${auth.getValues().BOT_USERNAME} attempt to whisper self`);
-		}
-	} else {
-		throw new Error(`${type} ${target} ${message}`);
-	}
-}
-
-async function sendQueuedMessagesByType(type) {
-
-
-	let success = false;
-	let error = null;
-
-	const queue = type === MESSAGE_TYPE.irc_chat ? chatQueue : whisperQueue;
-
-	/*console.log(' ----------------- queue ----------------- ', {
-		type,
-		isBusy: queue.isBusy,
-		attempts: queue.attempts,
-		size: queue.size(),
-		peek: queue.peek()
-	});*/
-
-	if (queue.size() === 0) return { success, message: `${type} queue is empty`, error };
-
-	if (queue.isBusy === true) return { success, message: `${type} queue is busy with size: ${queue.size()}`, error };
-
-	queue.isBusy = true;
-
-	const item = queue.peek();
-
-	try {
-
-		if(type === MESSAGE_TYPE.irc_chat) {
-			await clients.chat.say(item.target, item.message);
-		} else if(type === MESSAGE_TYPE.irc_whisper) {
-			await clients.whisper.whisper(item.target, item.message);
-		} else {
-			throw new Error(`Send queue item ${type} ${item.target} ${item.message}`);
-		}
-
-		queue.dequeue();
-		success = true;
-	} catch (err) {
-		error = err;
-	}
-
-	return new Promise(resolve => {
-		setTimeout(() => {
-			queue.isBusy = false;			
-			if (error) {
-				queue.attempts++;
-			} else {
-				queue.attempts = 0;
-			}
-			const outMessage = error ? `Failed to send message type ${type} on ${queue.attempts} attempts` : `Sent message: ${item.message}`;
-
-			/*console.log(' ----------------- outMessage ----------------- ', {
-				success, message: outMessage, error
-			});*/
-			sendQueuedMessagesByType(type);
-			resolve({ success, message: outMessage, error });
-		}, serverSettings.data.IRC_DELAY_MS);
-	});
-}
-
-async function sendQueuedChatMessages() {
-	return sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
-}
-
-async function sendQueuedWhisperMessages() {
-	return sendQueuedMessagesByType(MESSAGE_TYPE.irc_whisper);
 }
 
 module.exports = {
@@ -349,10 +249,9 @@ module.exports = {
 
 	checkCooldown,
 
-	chatQueue,
-	whisperQueue,
+	chatQueue: messenger.chatQueue,
+	whisperQueue: messenger.whisperQueue,
 
-	enqueueMessageByType,
-	sendQueuedChatMessages,
-	sendQueuedWhisperMessages
+	enqueueMessageByType: messenger.enqueueMessageByType,
+	sendQueuedMessagesByType: messenger.sendQueuedMessagesByType
 };

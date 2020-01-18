@@ -9,10 +9,27 @@ function log(...value) {
 	console.log(value);
 }
 
+function _error(obj) {
+	if (obj.error) {
+		log(obj);
+	}
+}
+
+function _message(obj) {
+	if (obj.success && obj.success === false && obj.message) {
+		log(obj);
+	}
+}
+
+async function _wait(ms) {
+	return await new Promise(resulve => setTimeout(resulve, ms));
+}
+
 describe('#mocha promises', function () {
 	const isMock = false;
 
 	let tmi = null;
+	let messenger = null;
 	let databaseAPI = null;
 
 	function mockEvent(msg, twitchId, channel, irc_target) {
@@ -26,7 +43,8 @@ describe('#mocha promises', function () {
 
 	before(() => {
 		tmi = require('./src/configs/tmi');
-
+		messenger = require('./src/configs/messenger');
+		messenger.assignClients(tmi.chatClient, tmi.whisperClient);
 		databaseAPI = isMock ? {
 			request(twitchId, body) {
 				return {
@@ -57,12 +75,10 @@ describe('#mocha promises', function () {
 		expect(tmi).to.be.ownProperty('connectToWhisper');
 	});
 
-	it('should have tmi join channel', () => {
+	it('should have tmi join channel', async () => {
 		const channel = '#callowcreation';
-		return tmi.joinChannel(channel)
-			.then(data => {
-				expect(data[0]).to.be.equal(channel);
-			}).should.eventually.be.fulfilled;
+		const data = await tmi.joinChannel(channel);
+		expect(data[0]).to.be.equal(channel);
 	});
 
 	it('should handle tmi join errors', () => {
@@ -77,19 +93,16 @@ describe('#mocha promises', function () {
 
 
 	it('should confirm message received from channel', () => {
-		let timeoutVar = null;
-		tmi.chatClient.on('message', (target, user, msg, self) => {
-			tmi.onMessageHandler(target, user, msg, self)
-				.then(obj => {
-					expect(obj.success).to.be.equal(false);
-					if (timeoutVar) {
-						clearTimeout(timeoutVar);
-					}
-				});
-		});
-		timeoutVar = setTimeout(() => {
+		return new Promise((resolve, reject) => {
+			tmi.chatClient.on('message', (target, user, msg, self) => {
+				tmi.onMessageHandler(target, user, msg, self)
+					.then(obj => {
+						expect(obj.msg).to.be.equal('Terra native');
+						resolve();
+					}).catch(e => reject(e));
+			});
 			tmi.chatClient.say('#callowcreation', 'Terra native');
-		}, 1000);
+		}).should.eventually.fulfilled;
 	});
 
 	it('should load commands from file system', () => {
@@ -112,7 +125,7 @@ describe('#mocha promises', function () {
 		}
 	});
 
-	it('should have out properties on commands', () => {
+	it('should have out properties on commands', async () => {
 		const callbackPromises = [];
 
 		for (let i = 0; i < tmi.commands.length; i++) {
@@ -126,14 +139,13 @@ describe('#mocha promises', function () {
 			callbackPromises.push(tmi.onMessageHandler(target, user, msg, self));
 		}
 
-		return Promise.all(callbackPromises)
-			.then(values => {
-				for (let i = 0; i < values.length; i++) {
-					for (const key in tmi.expectedOutProperties) {
-						expect(Object.keys(values[i])).to.include(key);
-					}
-				}
-			}).should.eventually.be.fulfilled;
+		const values = await Promise.all(callbackPromises);
+
+		for (let i = 0; i < values.length; i++) {
+			for (const key in tmi.expectedOutProperties) {
+				expect(Object.keys(values[i])).to.include(key);
+			}
+		}
 	});
 
 	it('should tmi has commands', () => {
@@ -274,34 +286,28 @@ describe('#mocha promises', function () {
 	/*
 	$bitcorn tests
 	*/
-	it('should get api response for bitcorn status 500', () => {
+	it('should get api response for bitcorn status 500', async () => {
 		const twitchId = '123';
 		const body = null;
-		return databaseAPI.request(twitchId, body).bitcorn()
-			.then(result => {
-				expect(result.status).to.be.equal(500);
-			});
+		const result = await databaseAPI.request(twitchId, body).bitcorn();
+		expect(result.status).to.be.equal(500);
 	});
 
-	it('should get api response for bitcorn twitchUsername:', () => {
+	it('should get api response for bitcorn twitchUsername:', async () => {
 		const twitchId = '120524051';
 		const body = null;
-		return databaseAPI.request(twitchId, body).bitcorn()
-			.then(result => {
-				expect(result).to.be.ownProperty('twitchUsername');
-			});
+		const result = await databaseAPI.request(twitchId, body).bitcorn();
+		expect(result).to.be.ownProperty('twitchUsername');
 	});
 
-	it('should get api response for bitcorn username to be clayman666', () => {
+	it('should get api response for bitcorn username to be clayman666', async () => {
 		const twitchId = '120524051';
 		const body = null;
-		return databaseAPI.request(twitchId, body).bitcorn()
-			.then(result => {
-				expect(result.twitchUsername).to.be.equal('clayman666');
-			});
+		const result = await databaseAPI.request(twitchId, body).bitcorn();
+		expect(result.twitchUsername).to.be.equal('clayman666');
 	});
 
-	it('should get $bitcorn response from invoking execute', () => {
+	it('should get $bitcorn response from invoking execute', async () => {
 		const command = isMock ? {
 			execute(event) {
 				return Promise.resolve({ success: true });
@@ -310,32 +316,28 @@ describe('#mocha promises', function () {
 
 		const event = mockEvent('$bitcorn', '120524051', 'callowcreation', '#callowcreation');
 
-		return tmi.validateAndExecute(event, command)
-			.then(result => {
-				expect(result.success).to.be.not.equal(false);
-			});
+		const result = await tmi.validateAndExecute(event, command);
+		expect(result.success).to.be.not.equal(false);
 	});
 
 	// Integration test only ?? !! ??
-	it('should execute $bitcorn successfully with message handler', () => {
+	it('should execute $bitcorn successfully with message handler', async () => {
 
 		const target = '#callowcreation';
 		const user = { 'user-id': '120614707', username: 'naivebot' };
 		const msg = '$bitcorn';
 		const self = false;
 
-		return tmi.onMessageHandler(target, user, msg, self)
-			.then(obj => {
-				expect(obj.success).to.be.equal(true);
-				expect(obj.configs.name).to.be.equal('bitcorn');
-			});
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.success).to.be.equal(true);
+		expect(obj.configs.name).to.be.equal('bitcorn');
 	});
 
 
 	/*
 	$tipcorn tests
 	*/
-	it('should get api response for tipcorn status 500', () => {
+	it('should get api response for tipcorn status 500', async () => {
 		const twitchId = '75987197';
 		const body = {
 			from: `${twitchId}`,
@@ -344,13 +346,11 @@ describe('#mocha promises', function () {
 			amount: 1,
 			columns: ['balance', 'tipped']
 		};
-		return databaseAPI.request(twitchId, body).tipcorn()
-			.then(result => {
-				expect(result.status).to.be.equal(500);
-			});
+		const result = await databaseAPI.request(twitchId, body).tipcorn();
+		expect(result.status).to.be.equal(500);
 	});
 
-	it('should get api response for tipcorn tipped:', () => {
+	it('should get api response for tipcorn tipped:', async () => {
 		const twitchId = '75987197';
 		const body = {
 			from: `twitch|75987197`,
@@ -359,17 +359,15 @@ describe('#mocha promises', function () {
 			amount: 1,
 			columns: ['balance', 'tipped']
 		};
-		return databaseAPI.request(twitchId, body).tipcorn()
-			.then(results => {
-				for (let i = 0; i < results.length; i++) {
-					const result = results[i];
-					expect(result.from).to.be.ownProperty('tipped');
-					expect(result.to).to.be.ownProperty('tipped');
-				}
-			});
+		const results = await databaseAPI.request(twitchId, body).tipcorn();
+		for (let i = 0; i < results.length; i++) {
+			const result = results[i];
+			expect(result.from).to.be.ownProperty('tipped');
+			expect(result.to).to.be.ownProperty('tipped');
+		}
 	});
 
-	it('should get api response for tipcorn username to be callowcreation', () => {
+	it('should get api response for tipcorn username to be callowcreation', async () => {
 		const twitchId = '75987197';
 		const body = {
 			from: `twitch|75987197`,
@@ -379,65 +377,58 @@ describe('#mocha promises', function () {
 			columns: ['balance', 'twitchusername']
 		};
 
-		return databaseAPI.request(twitchId, body).tipcorn()
-			.then(results => {
-				if (results.status) {
-					log(results.status);
-				}
-				for (let i = 0; i < results.length; i++) {
-					const result = results[i];
-					expect(result.from.twitchusername).to.be.equal('callowcreation');
-				}
-			}).should.be.fulfilled;
+		const results = await databaseAPI.request(twitchId, body).tipcorn();
+
+		if (results.status) {
+			log(results.status);
+		}
+		for (let i = 0; i < results.length; i++) {
+			const result = results[i];
+			expect(result.from.twitchusername).to.be.equal('callowcreation');
+		}
 	});
 
-	it('should get $tipcorn response from invoking execute', () => {
+	it('should get $tipcorn response from invoking execute', async () => {
 		const command = isMock ? {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/tipcorn');
-		const event = { twitchId: '75987197', args: { name: 'tipcorn', prefix: '$', params: ['naivebot', 10] } };
-		return tmi.validateAndExecute(event, command)
-			.then(results => {
-				if (results.status) {
-					log(results.status);
-				}
-				for (let i = 0; i < results.length; i++) {
-					const result = results[i];
-					if (result.success === false) {
-						log('tipcorn Output =>>>>>>>>>> ', result);
-					}
-					expect(result.success).to.be.equal(true);
-				}
-			}).should.eventually.fulfilled;
+		const event = mockEvent('$tipcorn naivebot 10', '75987197', '#callowcreation', '#callowcreation');
+
+		const results = await tmi.validateAndExecute(event, command);
+
+		expect(results.success).to.be.equal(true);
+		if (results.status) {
+			log(results.status);
+		}
+		for (let i = 0; i < results.length; i++) {
+			const result = results[i];
+			if (result.success === false) {
+				log('tipcorn Output =>>>>>>>>>> ', result);
+			}
+			expect(result.success).to.be.equal(true);
+		}
 	});
 
 	// Integration test only ?? !! ??
-	it('should execute $tipcorn successfully with message handler', (done) => {
+	it('should execute $tipcorn successfully with message handler', async () => {
+		const target = '#callowcreation';
+		const user = { 'user-id': '120524051', username: 'wollac' };
+		const msg = '$tipcorn @wollac 1';
+		const self = false;
 
-		setTimeout(() => {
-			const target = '#callowcreation';
-			const user = { 'user-id': '120524051', username: 'naivebot' };
-			const msg = '$tipcorn @naivebot 1';
-			const self = false;
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
 
-			tmi.onMessageHandler(target, user, msg, self)
-				.then(obj => {
+		if (obj.success === false) {
+			log('Command Output =>>>>>>>>>> ', obj);
+		}
 
-					if (obj.success === false) {
-						log('Command Output =>>>>>>>>>> ', obj);
-					}
-
-					expect(obj.success).to.be.equal(true);
-					expect(obj.configs.name).to.be.equal('tipcorn');
-					done();
-				}).catch(e => e);
-		}, 100);
+		expect(obj.success).to.be.equal(true);
+		expect(obj.configs.name).to.be.equal('tipcorn');
 	});
 
-
-	it('should get $withdraw response from invoking execute', () => {
+	it('should get $withdraw response from invoking execute', async () => {
 		const command = isMock ? {
 			execute(event) {
 				return Promise.resolve({ success: true });
@@ -446,30 +437,22 @@ describe('#mocha promises', function () {
 
 		const event = mockEvent('$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g', '75987197', 'callowcreation', '#callowcreation');
 
-		return tmi.validateAndExecute(event, command)
-			.then(results => {
-				expect(results.success).to.be.not.equal(false);
-			});
+		const results = await tmi.validateAndExecute(event, command);
+		expect(results.success).to.be.not.equal(false);
 	});
 
 	// Chat message and whisper handler merge into one method
-	it('should process whispers and chat messages - chat', () => {
-		return new Promise(resolve => {
+	it('should process whispers and chat messages - chat', async () => {
+		_wait(50);
 
-			const type = require('./src/utils/message-type').irc_chat;
-			const target = '#callowcreation';
-			const user = { 'user-id': '120524051', username: 'naivebot' };
-			const msg = '$tipcorn @callowcreation 1';
-			const self = false;
+		const type = require('./src/utils/message-type').irc_chat;
+		const target = '#callowcreation';
+		const user = { 'user-id': '120524051', username: 'naivebot' };
+		const msg = '$tipcorn @callowcreation 1';
+		const self = false;
 
-			setTimeout(() => {
-				tmi.asyncOnMessageReceived(type, target, user, msg, self)
-					.then(obj => {
-						expect(obj.success).to.be.equal(true);
-						resolve();
-					}).catch(e => e);
-			}, 50);
-		});
+		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
+		expect(obj.success).to.be.equal(true);
 	});
 
 	it('should process whispers and chat messages - whisper', async () => {
@@ -485,7 +468,6 @@ describe('#mocha promises', function () {
 		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
 
 		expect(obj.success).to.be.equal(true);
-
 	});
 
 
@@ -506,12 +488,11 @@ describe('#mocha promises', function () {
 		const MESSAGE_TYPE = require('./src/utils/message-type');
 		const auth = require('./settings/auth');
 
-		let target = auth.data.BOT_USERNAME;
+		let target = 'naivebot';
 		let message = 'We can see the thing';
 		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
 		const targetName = tmi.whisperQueue.peek();
-
-		expect(targetName.target).to.be.not.equal(target);
+		expect(targetName.target).to.be.not.equal(auth.data.BOT_USERNAME);
 	});
 
 	it('should queue messages to send by MESSAGE_TYPE', () => {
@@ -539,20 +520,19 @@ describe('#mocha promises', function () {
 		expect(item.message).to.be.equal('We can see the thing');
 	});
 
-	it('should send chat message from queue', () => {
+	it('should send chat message from queue', async () => {
 		const MESSAGE_TYPE = require('./src/utils/message-type');
 
 		let target = '#callowcreation';
 		let message = 'should send chat message from queue ' + Date.now();
 		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
-		return tmi.joinChannel(target)
-			.then(() => {
-				return tmi.sendQueuedChatMessages()
-					.then(obj => {
-						expect(obj.success).to.be.equal(true);
-					}).should.eventually.be.fulfilled
-			});
+		await tmi.joinChannel(target);
+
+		const obj = await tmi.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
+		_error(obj);
+		_message(obj);
+		expect(obj.success).to.be.equal(true);
 	});
 
 	it('should send many message from chat queue', async () => {
@@ -569,20 +549,22 @@ describe('#mocha promises', function () {
 		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
 		await tmi.joinChannel(target);
-		const obj = await tmi.sendQueuedChatMessages();
+		const obj = await tmi.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
+		_error(obj);
+		_message(obj);
 		expect(obj.success).to.be.equal(true);
 	});
 
-	it('should send whisper message from whisper queue', () => {
+	it('should send whisper message from whisper queue', async () => {
 		const MESSAGE_TYPE = require('./src/utils/message-type');
 
 		let target = '#callowcreation';
 		let message = 'should send whisper message from whisper queue ' + Date.now();
 		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
 
-		return tmi.sendQueuedWhisperMessages()
-			.then(obj => {
-				expect(obj.success).to.be.equal(true);
-			}).should.eventually.be.fulfilled;
+		const obj = await tmi.sendQueuedMessagesByType(MESSAGE_TYPE.irc_whisper);
+		_error(obj);
+		_message(obj);
+		expect(obj.success).to.be.equal(true);
 	});
 });
