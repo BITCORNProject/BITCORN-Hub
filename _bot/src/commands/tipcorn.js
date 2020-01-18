@@ -7,11 +7,10 @@
 const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../settings/auth');
+const auth = require('../../../settings/auth');
 
-const databaseAPI = require('../../source/config/api-interface/database-api');
+const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
-
 const MESSAGE_TYPE = require('../utils/message-type');
 
 module.exports = {
@@ -34,12 +33,16 @@ module.exports = {
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
 		
-		const {id: toUserId} = await fetch(`http://localhost:${auth.getValues().PORT}/user?username=${twitchUsername}`).then(res => res.json());
-
-		if(toUserId) {
+		const user = await fetch(`http://localhost:${auth.getValues().PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		if(!user.success || user.error) {
+			message = JSON.stringify(user);
+			if(user.success === false) {
+				message = user.message;
+			}
+		} else {
 			const body = {
 				from: `twitch|${event.twitchId}`,
-				to: `twitch|${toUserId}`,
+				to: `twitch|${user.id}`,
 				platform: 'twitch',
 				amount: amount,
 				columns: ['balance', 'twitchusername']
@@ -54,12 +57,12 @@ module.exports = {
 				message = `API access locked for ${twitchId}`;
 			} else if (result.status) {
 				message = `${message}: ${result.status} ${result.statusText}`;
-			} else {
+			} else if(result.length > 0 && result[0].to) {
 				success = true;
 				message = util.format('cttvCorn Just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn', twitchUsername, amount);
+			} else {
+				message = util.format('Hmmmmm Bitcorn', twitchUsername, amount);
 			}
-		} else {
-			message = `Twitch user ${twitchUsername} not found`;
 		}
 
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };

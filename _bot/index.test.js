@@ -5,7 +5,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 
-function log(...value) {
+function log(value) {
 	console.log(value);
 }
 
@@ -42,9 +42,12 @@ describe('#mocha promises', function () {
 	}
 
 	before(() => {
-		tmi = require('./src/configs/tmi');
-		messenger = require('./src/configs/messenger');
-		messenger.assignClients(tmi.chatClient, tmi.whisperClient);
+		tmi = require('./src/tmi');
+		messenger = require('./src/messenger');
+		
+		messenger.chatQueue.client = tmi.chatClient;
+		messenger.whisperQueue.client = tmi.whisperClient;
+
 		databaseAPI = isMock ? {
 			request(twitchId, body) {
 				return {
@@ -52,7 +55,7 @@ describe('#mocha promises', function () {
 					tipcorn: () => Promise.resolve({ status: 500 })
 				}
 			}
-		} : require('./source/config/api-interface/database-api');
+		} : require('./src/api-interface/database-api');
 
 		return Promise.all([
 			tmi.connectToChat(),
@@ -397,7 +400,7 @@ describe('#mocha promises', function () {
 		const event = mockEvent('$tipcorn naivebot 10', '75987197', '#callowcreation', '#callowcreation');
 
 		const results = await tmi.validateAndExecute(event, command);
-
+		
 		expect(results.success).to.be.equal(true);
 		if (results.status) {
 			log(results.status);
@@ -486,7 +489,7 @@ describe('#mocha promises', function () {
 	it('should not enqueue MESSAGE_TYPE whisper self', () => {
 
 		const MESSAGE_TYPE = require('./src/utils/message-type');
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 
 		let target = 'naivebot';
 		let message = 'We can see the thing';

@@ -1,11 +1,12 @@
+"use strict";
 
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
 const auth = require('../../settings/auth');
 
-const MESSAGE_TYPE = require('../utils/message-type');
+const MESSAGE_TYPE = require('./utils/message-type');
 
-const moduleloader = require('../utils/moduleloader');
+const moduleloader = require('./utils/moduleloader');
 const commandsPath = '../commands';
 const commands = moduleloader(commandsPath);
 
@@ -114,7 +115,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	if(data.success === true) {
 		messenger.enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
-		data.result = await messenger.sendQueuedMessagesByType(type);
+		data.result = await messenger.sendQueuedMessagesByType(data.configs.irc_out);
 	}
 
 	return data;

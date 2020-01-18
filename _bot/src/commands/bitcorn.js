@@ -4,8 +4,8 @@
 
 "use strict";
 
-const databaseAPI = require('../../source/config/api-interface/database-api');
 const util = require('util');
+const databaseAPI = require('../api-interface/database-api');
 const MESSAGE_TYPE = require('../utils/message-type');
 
 module.exports = {

@@ -2,8 +2,8 @@
 
 const serverSettings = require('../../settings/server-settings');
 const auth = require('../../settings/auth');
-const { Queue } = require('../../public/js/server/queue');
-const MESSAGE_TYPE = require('../utils/message-type');
+const Queue = require('./utils/queue');
+const MESSAGE_TYPE = require('./utils/message-type');
 
 function _Queue() {
 	this.items = new Queue();
@@ -20,12 +20,12 @@ function _Queue() {
 const chatQueue = new _Queue();
 const whisperQueue = new _Queue();
 
-function enqueueMessageByType(type, target, message, client) {
+function enqueueMessageByType(type, target, message) {
 	if (type === MESSAGE_TYPE.irc_chat) {
-		chatQueue.enqueue({ target, message, client });
+		chatQueue.enqueue({ target, message });
 	} else if (type === MESSAGE_TYPE.irc_whisper) {
 		if (target.toLowerCase() !== auth.getValues().BOT_USERNAME.toLowerCase()) {
-			whisperQueue.enqueue({ target, message, client });
+			whisperQueue.enqueue({ target, message });
 		} else {
 			console.error(`Bot ${auth.getValues().BOT_USERNAME} attempt to whisper self`);
 		}
@@ -35,6 +35,7 @@ function enqueueMessageByType(type, target, message, client) {
 }
 
 async function sendQueuedMessagesByType(type) {
+
 	await new Promise(resolve => setTimeout(resolve, 10));
 
 	let success = false;
@@ -60,17 +61,16 @@ async function sendQueuedMessagesByType(type) {
 
 	let result = 'No Result';
 	try {
-
-		if(type === MESSAGE_TYPE.irc_chat) {
+		if (type === MESSAGE_TYPE.irc_chat) {
 			result = await queue.client.say(item.target, item.message)
-			.catch(e => {
-				throw new Error(`${type} channel [queue-size: ${queue.size()}]: ${e}`);
-			});
-		} else if(type === MESSAGE_TYPE.irc_whisper) {
+				.catch(e => {
+					throw new Error(`${type} channel [queue-size: ${queue.size()}]: ${e}`);
+				});
+		} else if (type === MESSAGE_TYPE.irc_whisper) {
 			result = await queue.client.whisper(item.target, item.message)
-			.catch(e => {
-				throw new Error(`${type} message [queue-size: ${queue.size()}]: ${e}`);
-			});
+				.catch(e => {
+					throw new Error(`${type} message [queue-size: ${queue.size()}]: ${e}`);
+				});
 		} else {
 			throw new Error(`Send queue item ${type} ${item.target} ${item.message}`);
 		}
@@ -82,10 +82,10 @@ async function sendQueuedMessagesByType(type) {
 
 	await new Promise(resolve => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS));
 
-	queue.isBusy = false;			
+	queue.isBusy = false;
 	if (error) {
 		queue.attempts++;
-		if(type === MESSAGE_TYPE.irc_whisper) {
+		if (type === MESSAGE_TYPE.irc_whisper) {
 			queue.dequeue();
 		}
 	} else {
@@ -105,10 +105,5 @@ module.exports = {
 	chatQueue,
 	whisperQueue,
 	enqueueMessageByType,
-	sendQueuedMessagesByType,
-	
-	assignClients(chatClient, whisperClient) {
-		chatQueue.client = chatClient;
-		whisperQueue.client = whisperClient;
-	}
+	sendQueuedMessagesByType
 };
