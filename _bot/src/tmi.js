@@ -28,6 +28,7 @@ const expectedCommandsConfigs = {
 
 const expectedEventFields = {
 	twitchId: '',
+	twitchUsername: '',
 	args: {},
 	irc_target: '', // who username/channel the chat/whisper should be sent to
 	channel: ''
@@ -69,16 +70,28 @@ const clients = {
 	})
 };
 
+function addMessageHandler(handler) {
+	clients.chat.on('message', handler);
+}
+
+function addWhisperHandler(handler) {
+	clients.whisper.on('whisper', handler);
+}
+
 function registerEvents() {
-	clients.chat.on('message', onMessageHandler);
-	clients.whisper.on('whisper', onWhisperHandler);
+	addMessageHandler(onMessageHandler);
+	addWhisperHandler(onWhisperHandler);
 }
 
 function onConnectedChatHandler(addr, port) {
 	return { addr, port };
 }
 
+const allowedUsers = require('./utils/allowed-users');
+
 async function asyncOnMessageReceived(type, target, user, msg) {
+
+	if (allowedUsers.isCommandTesters(user.username) === false) return { success: false, msg, message: 'User not allowed', irc_target: target, configs: expectedOutProperties.configs };
 
 	const args = messageAsCommand(msg);
 	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message', irc_target: target, configs: expectedOutProperties.configs };
@@ -98,6 +111,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const event = {
 		twitchId: user['user-id'],
+		twitchUsername: user.username,
 		args: args,
 		irc_target: command.configs.irc_out == MESSAGE_TYPE.irc_chat ? target : user.username,
 		channel: target
@@ -238,6 +252,8 @@ module.exports = {
 	chatClient: clients.chat,
 	whisperClient: clients.whisper,
 
+	addMessageHandler,
+	
 	onConnectedChatHandler,
 	onMessageHandler,
 

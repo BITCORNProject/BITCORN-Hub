@@ -8,11 +8,14 @@ if (module === require.main) {
 
 		const tmi = require('./src/tmi');
 		const messenger = require('./src/messenger');
+		const activityTracker = require('./src/activity-tracker');
 		
 		tmi.registerEvents();
 		
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
+
+		tmi.addMessageHandler(activityTracker.onChatMessage);
 
 		const results = await Promise.all([
 			tmi.connectToChat(),
