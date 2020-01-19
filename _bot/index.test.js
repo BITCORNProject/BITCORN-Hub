@@ -22,15 +22,26 @@ function _message(obj) {
 }
 
 async function _wait(ms) {
-	return await new Promise(resulve => setTimeout(resulve, ms));
+	return new Promise(resulve => setTimeout(resulve, ms));
 }
 
 describe('#mocha promises', function () {
 	const isMock = false;
 
-	let tmi = null;
-	let messenger = null;
-	let databaseAPI = null;
+	//let tmi = null;
+	//let messenger = null;
+	//let databaseAPI = null;
+
+	const tmi = require('./src/tmi');
+	const messenger = require('./src/messenger');
+	const databaseAPI = isMock ? {
+		request(twitchId, body) {
+			return {
+				bitcorn: () => Promise.resolve({ status: 500, twitchUsername: 'clayman666' }),
+				tipcorn: () => Promise.resolve({ status: 500 })
+			}
+		}
+	} : require('./src/api-interface/database-api');
 
 	function mockEvent(msg, twitchId, channel, irc_target) {
 		return {
@@ -42,20 +53,10 @@ describe('#mocha promises', function () {
 	}
 
 	before(() => {
-		tmi = require('./src/tmi');
-		messenger = require('./src/messenger');
 		
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
-		databaseAPI = isMock ? {
-			request(twitchId, body) {
-				return {
-					bitcorn: () => Promise.resolve({ status: 500, twitchUsername: 'clayman666' }),
-					tipcorn: () => Promise.resolve({ status: 500 })
-				}
-			}
-		} : require('./src/api-interface/database-api');
 
 		return Promise.all([
 			tmi.connectToChat(),
@@ -202,10 +203,10 @@ describe('#mocha promises', function () {
 		expect(args.name).to.be.equal('tipcorn');
 	});
 
-	it('should twitchId pass cooldown time', (done) => {
+	it('should twitchId pass cooldown time', async () => {
 		const configs = {
 			name: 'bitcorn',
-			cooldown: 1000 * 1,
+			cooldown: 100 * 1,
 			global_cooldown: false,
 			description: 'View your BITCORN balance and get a BITCORN wallet address if you are not registered',
 			example: '$bitcorn',
@@ -219,15 +220,14 @@ describe('#mocha promises', function () {
 			}
 		};
 
-		setTimeout(() => {
-			const passed = tmi.checkCooldown(configs, twitchId, cooldowns);
-			expect(passed).to.be.equal(true);
-			done();
-		}, +configs.cooldown + 500);
+		await _wait(+configs.cooldown + 50);
+
+		const passed = tmi.checkCooldown(configs, twitchId, cooldowns);
+		expect(passed).to.be.equal(true);
 
 	});
 
-	it('should channel name cause global cooldown block', (done) => {
+	it('should channel name cause global cooldown block', async () => {
 		const configs = {
 			name: 'bitcorn',
 			cooldown: 1000 * 1,
@@ -242,22 +242,19 @@ describe('#mocha promises', function () {
 			[configs.name]: (new Date()).getTime() + (+configs.cooldown)
 		};
 
-		setTimeout(() => {
-			let passed = true;
+		let passed = true;
 
-			// assign 'passed' on first request and it passes
-			// because global cooldown has just started
-			passed = tmi.checkCooldown(configs, channelName, global_cooldown);
+		await _wait(+configs.cooldown + 500);
 
-			// assign 'passed' on second request and it fails 
-			// because global cooldown was not reached
-			tmi.checkCooldown(configs, channelName, global_cooldown);
+		passed = tmi.checkCooldown(configs, channelName, global_cooldown);
 
-			expect(passed).to.be.equal(true);
-			done();
-		}, +configs.cooldown + 500);
+		expect(passed).to.be.equal(true);
 
+		await _wait(10);
 
+		passed = tmi.checkCooldown(configs, channelName, global_cooldown);
+
+		expect(passed).to.be.equal(false);
 	});
 
 	it('should have all event parameters to execute command', () => {
@@ -446,7 +443,7 @@ describe('#mocha promises', function () {
 
 	// Chat message and whisper handler merge into one method
 	it('should process whispers and chat messages - chat', async () => {
-		_wait(50);
+		await _wait(50);
 
 		const type = require('./src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
@@ -569,5 +566,18 @@ describe('#mocha promises', function () {
 		_error(obj);
 		_message(obj);
 		expect(obj.success).to.be.equal(true);
+	});
+
+	// Integration test only ?? !! ??
+	it.only('should incoke help with message handler', async () => {
+
+		const target = '#callowcreation';
+		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const msg = '$help';
+		const self = false;
+
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.success).to.be.equal(true);
+		expect(obj.configs.name).to.be.equal('help');
 	});
 });
