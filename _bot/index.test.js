@@ -645,4 +645,15 @@ describe('#mocha promises', function () {
 		expect(obj.success).to.be.equal(true);
 		expect(obj.configs.name).to.be.equal('rain');
 	});
+
+	it.only('should get $blacklist response from invoking execute', async () => {
+		const command = isMock ? {
+			execute(event) {
+				return Promise.resolve({ success: true });
+			}
+		} : require('./src/commands/blacklist');
+		const event = await mockEvent('$blacklist @wollac', 'wollac', '#callowcreation', '#callowcreation');
+		const result = await tmi.validateAndExecute(event, command);
+		expect(result.success).to.be.not.equal(false);
+	});
 });
