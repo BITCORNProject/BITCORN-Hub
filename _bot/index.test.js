@@ -3,8 +3,10 @@ const { expect, assert } = chai;
 const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
+const fetch = require('node-fetch');
 
-function log(value) {
+
+function log(...value) {
 	console.log(value);
 }
 
@@ -25,7 +27,7 @@ async function _wait(ms) {
 }
 
 describe('#mocha promises', function () {
-	const isMock = true;
+	const isMock = false;
 
 	//let tmi = null;
 	//let messenger = null;
@@ -34,6 +36,8 @@ describe('#mocha promises', function () {
 	const tmi = require('./src/tmi');
 	const messenger = require('./src/messenger');
 	const math = require('./src/utils/math');
+
+	const serverSettings = require('../settings/server-settings');
 
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
@@ -49,10 +53,13 @@ describe('#mocha promises', function () {
 	const activityTracker = require('./src/activity-tracker');
 	const allowedUsers = require('./src/utils/allowed-users');
 
-	function mockEvent(msg, twitchId, twitchUsername, channel, irc_target) {
+	async function mockEvent(msg, twitchUsername, channel, irc_target) {
+
+		const auth = require('../settings/auth');
+		const user = await fetch(`http://localhost:${auth.data.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		return {
-			twitchId: twitchId,
-			twitchUsername: twitchUsername,
+			twitchId: user.id,
+			twitchUsername: user.login,
 			args: tmi.messageAsCommand(msg),
 			irc_target: irc_target,
 			channel: channel
@@ -60,7 +67,7 @@ describe('#mocha promises', function () {
 	}
 
 	before(() => {
-		
+
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
@@ -263,16 +270,16 @@ describe('#mocha promises', function () {
 		expect(passed).to.be.equal(false);
 	});
 
-	it('should have all event parameters to execute command', () => {
+	it('should have all event parameters to execute command', async () => {
 
-		const event = mockEvent('$bitcorn', '120524051', 'naivebot', 'callowcreation', '#callowcreation');
+		const event = await mockEvent('$bitcorn', 'naivebot', 'callowcreation', '#callowcreation');
 
 		expect(tmi.validatedEventParameters(event)).to.be.equal(true);
 	});
 
 	it('should validate and execute command', async () => {
 
-		const event = mockEvent('$bitcorn', '120524051', 'naivebot', 'callowcreation', '#callowcreation');
+		const event = await mockEvent('$bitcorn', 'naivebot', 'callowcreation', '#callowcreation');
 
 		const command = isMock ? {
 			execute(event) {
@@ -318,14 +325,14 @@ describe('#mocha promises', function () {
 			}
 		} : require('./src/commands/bitcorn');
 
-		const event = mockEvent('$bitcorn', '120524051', 'naivebot', 'callowcreation', '#callowcreation');
+		const event = await mockEvent('$bitcorn', 'naivebot', 'callowcreation', '#callowcreation');
 
 		const result = await tmi.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
 	});
 
 	// Integration test only ?? !! ??
-	it.skip('should execute $bitcorn successfully with message handler', async () => {
+	it('should execute $bitcorn successfully with message handler', async () => {
 
 		const target = '#callowcreation';
 		const user = { 'user-id': '120614707', username: 'naivebot' };
@@ -398,14 +405,15 @@ describe('#mocha promises', function () {
 				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/tipcorn');
-		const event = mockEvent('$tipcorn naivebot 10', '75987197', 'callowcreation', '#callowcreation', '#callowcreation');
+		const event = await mockEvent('$tipcorn naivebot 100', 'callowcreation', '#callowcreation', '#callowcreation');
 
 		const results = await tmi.validateAndExecute(event, command);
-		
-		expect(results.success).to.be.equal(true);
+
 		if (results.status) {
 			log(results.status);
 		}
+		expect(results.success).to.be.equal(true);
+
 		for (let i = 0; i < results.length; i++) {
 			const result = results[i];
 			if (result.success === false) {
@@ -416,9 +424,9 @@ describe('#mocha promises', function () {
 	});
 
 	// Integration test only ?? !! ??
-	it.skip('should execute $tipcorn successfully with message handler', async () => {
+	it('should execute $tipcorn successfully with message handler', async () => {
 		const target = '#callowcreation';
-		const user = { 'user-id': '120524051', username: 'wollac' };
+		const user = { 'user-id': '120524051', username: 'naivebot' };
 		const msg = '$tipcorn @wollac 1';
 		const self = false;
 
@@ -439,14 +447,14 @@ describe('#mocha promises', function () {
 			}
 		} : require('./src/commands/withdraw');
 
-		const event = mockEvent('$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g', '75987197', 'callowcreation', 'callowcreation', '#callowcreation');
+		const event = await mockEvent('$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g', 'callowcreation', 'callowcreation', '#callowcreation');
 
 		const results = await tmi.validateAndExecute(event, command);
 		expect(results.success).to.be.not.equal(false);
 	});
 
 	// Chat message and whisper handler merge into one method
-	it.skip('should process whispers and chat messages - chat', async () => {
+	it('should process whispers and chat messages - chat', async () => {
 		await _wait(50);
 
 		const type = require('./src/utils/message-type').irc_chat;
@@ -459,7 +467,7 @@ describe('#mocha promises', function () {
 		expect(obj.success).to.be.equal(true);
 	});
 
-	it.skip('should process whispers and chat messages - whisper', async () => {
+	it('should process whispers and chat messages - whisper', async () => {
 
 		await new Promise(resulve => setTimeout(resulve, 50));
 
@@ -588,7 +596,7 @@ describe('#mocha promises', function () {
 		let username = 'bitcornhub';
 		let allowed = allowedUsers.isCommandTesters(username);
 		expect(allowed).to.be.equal(false);
-		
+
 		username = 'biteastwood';
 		allowed = allowedUsers.isCommandTesters(username);
 		expect(allowed).to.be.equal(true);
@@ -604,42 +612,37 @@ describe('#mocha promises', function () {
 		expect(verified).to.be.equal(false);
 	});
 
-	it.only('should get $rain response from invoking execute', async () => {
-
-		const cleanParams = require('./src/utils/clean-params');
-
+	it('should get $rain response from invoking execute', async () => {
 		const command = isMock ? {
 			execute(event) {
-				let success = false;
-				let message = 'Command failed';
-				let irc_target = event.irc_target;
-		
-		
-				const rain_amount = cleanParams.amount(event.args.params[0]);
-				const user_count = cleanParams.amount(event.args.params[1]);
-				
-				const chatternamesArr = activityTracker.getChatterActivity(event.channel).filter(x => x.username !== event.twitchUsername);
-		
-				const items = chatternamesArr.slice(0, user_count);
-				const amount = math.fixed8(rain_amount / items.length);
-				const recipients = items.map(x => `twitch|${x.id}`);
-		
-				const body = {
-					from: `twitch|${event.twitchId}`,
-					to: recipients,
-					platform: 'twitch',
-					amount: amount,
-					columns: ['balance', 'twitchusername']
-				};
-
-				success = chatternamesArr.length > 0;
-				return Promise.resolve({ success: success, message: message, irc_target: irc_target, configs: this.configs });
+				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/rain');
-
-		const event = mockEvent('$rain 420 2', '120524051', 'naivebot', '#callowcreation', '#callowcreation');
-
+		const event = await mockEvent('$rain 24.999999999999999 5', 'wollac', '#callowcreation', '#callowcreation');
 		const result = await tmi.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
+	});
+
+	// Integration test only ?? !! ??
+	it.only('should execute $rain successfully with message handler', async () => {
+
+		const twitchUsername = 'naivebot';
+
+		const auth = require('../settings/auth');
+		const {id: user_id, login: user_login} = await fetch(`http://localhost:${auth.data.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+			
+		const target = '#callowcreation';
+		const user = { 'user-id': user_id, username: user_login };
+		const msg = '$rain 24.999999999999999 5';
+		const self = false;
+		
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
+
+		if (obj.success === false) {
+			log('Command Output =>>>>>>>>>> ', obj, obj.message);
+		}
+
+		expect(obj.success).to.be.equal(true);
+		expect(obj.configs.name).to.be.equal('rain');
 	});
 });

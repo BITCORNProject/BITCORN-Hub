@@ -91,13 +91,13 @@ const allowedUsers = require('./utils/allowed-users');
 
 async function asyncOnMessageReceived(type, target, user, msg) {
 
-	if (allowedUsers.isCommandTesters(user.username) === false) return { success: false, msg, message: 'User not allowed', irc_target: target, configs: expectedOutProperties.configs };
-
 	const args = messageAsCommand(msg);
 	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message', irc_target: target, configs: expectedOutProperties.configs };
 
 	const command = commandsMap.get(args.name);
 	if (!command) return { success: false, msg, message: 'Command not found', irc_target: target, configs: expectedOutProperties.configs };
+
+	if (allowedUsers.isCommandTesters(user.username) === false) return { success: false, msg, message: 'User not allowed', irc_target: target, configs: expectedOutProperties.configs };
 
 	if (command.configs.irc_in !== type) {
 		return { success: false, msg, message: `Wrong irc_in=${command.configs.irc_in} command=${command.configs.name} type=${type}`, irc_target: target, configs: expectedOutProperties.configs };

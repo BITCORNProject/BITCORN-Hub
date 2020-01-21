@@ -8,6 +8,7 @@ const fetch = require('node-fetch');
 const util = require('util');
 
 const auth = require('../../../settings/auth');
+const serverSettings = require('../../../settings/server-settings');
 
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
@@ -32,39 +33,47 @@ module.exports = {
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
-		
-		const user = await fetch(`http://localhost:${auth.getValues().PORT}/user?username=${twitchUsername}`).then(res => res.json());
-		if(!user.success || user.error) {
-			message = JSON.stringify(user);
-			if(user.success === false) {
-				message = user.message;
-			}
+
+		if (cleanParams.isNumber(amount) === false ||
+			amount < serverSettings.getValues().MIN_TIPCORN_AMOUNT ||
+			amount > databaseAPI.MAX_WALLET_AMOUNT) {
+
+			message = 'Invalid input';
 		} else {
-			const body = {
-				from: `twitch|${event.twitchId}`,
-				to: `twitch|${user.id}`,
-				platform: 'twitch',
-				amount: amount,
-				columns: ['balance', 'twitchusername']
-			};
 
-			const result = await databaseAPI.request(event.twitchId, body).tipcorn();
+			const user = await fetch(`http://localhost:${auth.getValues().PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
-			if(result.status && result.status === 500) {
-				// NOTE needs to be logged to the locally as an error
-				message = `${message}: ${result.status} ${result.statusText}`;
-			} else if(result.status && result.status === 420) {
-				message = `API access locked for ${twitchId}`;
-			} else if (result.status) {
-				message = `${message}: ${result.status} ${result.statusText}`;
-			} else if(result.length > 0 && result[0].to) {
-				success = true;
-				message = util.format('cttvCorn Just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn', twitchUsername, amount);
+			if (!user.success || user.error) {
+				message = JSON.stringify(user);
+				if (user.success === false) {
+					message = user.message;
+				}
 			} else {
-				message = util.format('Hmmmmm Bitcorn', twitchUsername, amount);
+				const body = {
+					from: `twitch|${event.twitchId}`,
+					to: `twitch|${user.id}`,
+					platform: 'twitch',
+					amount: amount,
+					columns: ['balance', 'twitchusername']
+				};
+
+				const result = await databaseAPI.request(event.twitchId, body).tipcorn();
+
+				if (result.status && result.status === 500) {
+					// NOTE needs to be logged to the locally as an error
+					message = `${message}: ${result.status} ${result.statusText}`;
+				} else if (result.status && result.status === 420) {
+					message = `API access locked for ${twitchId}`;
+				} else if (result.status) {
+					message = `${message}: ${result.status} ${result.statusText}`;
+				} else if (result.length > 0 && result[0].to) {
+					success = true;
+					message = util.format('cttvCorn Just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn', twitchUsername, amount);
+				} else {
+					message = util.format('Hmmmmm Bitcorn', twitchUsername, amount);
+				}
 			}
 		}
-
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };
 	}
 };
