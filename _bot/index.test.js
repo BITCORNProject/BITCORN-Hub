@@ -427,7 +427,7 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn successfully with message handler', async () => {
 		const target = '#callowcreation';
 		const user = { 'user-id': '120524051', username: 'naivebot' };
-		const msg = '$tipcorn @wollac 1';
+		const msg = '$tipcorn @wollac 101';
 		const self = false;
 
 		const obj = await tmi.onMessageHandler(target, user, msg, self);
@@ -460,7 +460,7 @@ describe('#mocha promises', function () {
 		const type = require('./src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
 		const user = { 'user-id': '120524051', username: 'naivebot' };
-		const msg = '$tipcorn @callowcreation 1';
+		const msg = '$tipcorn @callowcreation 102';
 		const self = false;
 
 		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
@@ -624,7 +624,7 @@ describe('#mocha promises', function () {
 	});
 
 	// Integration test only ?? !! ??
-	it.only('should execute $rain successfully with message handler', async () => {
+	it('should execute $rain successfully with message handler', async () => {
 
 		const twitchUsername = 'naivebot';
 

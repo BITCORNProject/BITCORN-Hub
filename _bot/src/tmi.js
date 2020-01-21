@@ -74,13 +74,8 @@ function addMessageHandler(handler) {
 	clients.chat.on('message', handler);
 }
 
-function addWhisperHandler(handler) {
-	clients.whisper.on('whisper', handler);
-}
-
 function registerEvents() {
 	addMessageHandler(onMessageHandler);
-	addWhisperHandler(onWhisperHandler);
 }
 
 function onConnectedChatHandler(addr, port) {
@@ -127,7 +122,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	const data = result;
 	data.msg = msg;
 
-	if(data.success === true) {
+	if (data.success === true) {
 		messenger.enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
 		data.result = await messenger.sendQueuedMessagesByType(data.configs.irc_out);
 	}
@@ -135,16 +130,16 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	return data;
 }
 
-async function onWhisperHandler(target, user, msg, self) {
-	if (user.username.toLowerCase() === auth.getValues().BOT_USERNAME.toLowerCase()) return { success: false, msg, message: `Whisper self`, configs: expectedOutProperties.configs };
-
-	return asyncOnMessageReceived(MESSAGE_TYPE.irc_whisper, target, user, msg);
-}
-
 async function onMessageHandler(target, user, msg, self) {
 	if (self) return { success: false, msg, message: 'Message from self', configs: expectedOutProperties.configs };
 
-	return asyncOnMessageReceived(MESSAGE_TYPE.irc_chat, target, user, msg);
+	const data = await asyncOnMessageReceived(user['message-type'] || MESSAGE_TYPE.irc_chat, target, user, msg);
+	/*if (data.success === true) {
+		console.log(data);
+	} else {
+		console.log(`FAILED:`, data);
+	}*/
+	return data;
 }
 
 const _ = require('lodash');
@@ -205,10 +200,10 @@ function checkCooldown(configs, twitchId, cooldowns) {
 
 	if (configs.global_cooldown === false) {
 		if (twitchId in cooldowns) {
-			if(!cooldowns[twitchId][configs.name]) {
+			if (!cooldowns[twitchId][configs.name]) {
 				cooldowns[twitchId][configs.name] = 0;
 			}
-			
+
 			success = calculateCooldownSuccess(cooldowns[twitchId][configs.name]);
 		} else {
 			cooldowns[twitchId] = {};
@@ -253,7 +248,7 @@ module.exports = {
 	whisperClient: clients.whisper,
 
 	addMessageHandler,
-	
+
 	onConnectedChatHandler,
 	onMessageHandler,
 
