@@ -152,27 +152,27 @@ function sendErrorMessage(error) {
 }
 
 const messageStrings = new JsonFile('./settings/strings.json', {
-    enabled: `%s%s down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 cttvPump cttvCorn`,
+    enabled: `%s%s down for MEGASUPERUPGRADES - INJECTING STEROIDS INTO SOIL 4 mttvPump mttvCorn`,
     example: `Here is an example of the command - %s`,
     nonegitive: `Can not %s zero or negative amount`,
     maxamount: `Can not %s an amount that large - %s`,
     minamount: `Can not %s an amount that small minimum amount %d CORN - %s`,
     numpeople: `Number of people you can %s to is 1 to %d`,
     noname: `You must %s someone - %s`,
-    badname: `cttvMOONMAN Here's a tip for you: %s who? cttvMOONMAN`,
-    nochatters: `There are no active chatters, let's make some noise cttvCarlos cttvGo cttv3`,
+    badname: `mttvMOONMAN Here's a tip for you: %s who? mttvMOONMAN`,
+    nochatters: `There are no active chatters, let's make some noise mttvCarlos mttvGo mttv3`,
     cornaddyneeded: `Can not withdraw without a cornaddy - $withdraw <amount> <address>`,
     apifailed: `Can not connect to server %s%s failed, please report this: status %d`,
     idmismatch: `Something unexpected happened %s%s failed, please report this: twitchId=%s twitchid=%s`,
     somethingwrong: `Something went wrong with the %s%s command, please report this: code %d`,
     pleasereport: `Something went wrong with the %s%s command, please report this to https://discord.gg/9j3mkCd CryptoTradersTV Discord bitcorn-support channel`,
     commanderror: `Command error in %s%s, please report this: %s`,
-    help: `cttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ cttvCorn`,
+    help: `mttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ mttvCorn`,
     usebitcorn: `Use $bitcorn to register and see your balance`,
     notnumber: `Here is an example of the command - %s`,
     success: {
         withdraw: `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`,
-        tipcorn: `cttvCorn Just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn`
+        tipcorn: `mttvCorn Just slipped @%s %d BITCORN with a FIRM handshake. mttvCorn`
     },
     insufficientfunds: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`,
@@ -191,7 +191,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     queryfailure: {
         rain: `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`,
         tipcorn: {
-            sender: `cttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! cttvMOONMAN`,
+            sender: `mttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! mttvMOONMAN`,
             recipient: `%s needs to register before they can be tipped!`
         },
         withdraw: `You failed to withdraw: you need to register by visiting the sync site https://bitcornfarms.com/ to use withdraw`
@@ -213,7 +213,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     },
     tipcorn: {
         recipient: `You received %d BITCORN from %s!`,
-        tochat: `cttvCorn @%s just slipped @%s %d BITCORN with a FIRM handshake. cttvCorn`,
+        tochat: `mttvCorn @%s just slipped @%s %d BITCORN with a FIRM handshake. mttvCorn`,
         sender: `You tipped %s %d BITCORN! Your BITCORN balance remaining is: %d`
     },
     blacklist: {

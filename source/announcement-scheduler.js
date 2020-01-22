@@ -14,7 +14,7 @@ async function init() {
     register_announcement_rule.minute = 20;
     
     const register_announcement_schedule = schedule.scheduleJob(register_announcement_rule, () => {
-        const message = `cttvGold CORN2MOON If you havent already registered a BITCORN ADDRESS with your Twitch username, type $reg in chat to get one!  And be sure to follow our bot's channel so you can get PM's from it regarding your BITCORN info at www.twitch.tv/BITCORNhub cttvCorn More info if you type !BITCORN in chat cttv420`;
+        const message = `mttvGold CORN2MOON If you havent already registered a BITCORN ADDRESS with your Twitch username, type $reg in chat to get one!  And be sure to follow our bot's channel so you can get PM's from it regarding your BITCORN info at www.twitch.tv/BITCORNhub mttvCorn More info if you type !BITCORN in chat mttv420`;
         tmi.botSay(tmi.mainChannel(), message);
     });
     
