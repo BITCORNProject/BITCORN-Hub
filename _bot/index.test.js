@@ -1,10 +1,11 @@
+"use strict";
+
 const chai = require('chai');
 const { expect, assert } = chai;
 const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
 const fetch = require('node-fetch');
-
 
 function log(...value) {
 	console.log(value);
@@ -35,6 +36,7 @@ describe('#mocha promises', function () {
 
 	const tmi = require('./src/tmi');
 	const messenger = require('./src/messenger');
+	const commander = require('./src/commander');
 	const math = require('./src/utils/math');
 
 	const serverSettings = require('../settings/server-settings');
@@ -60,7 +62,7 @@ describe('#mocha promises', function () {
 		return {
 			twitchId: user.id,
 			twitchUsername: user.login,
-			args: tmi.messageAsCommand(msg),
+			args: commander.messageAsCommand(msg),
 			irc_target: irc_target,
 			channel: channel
 		};
@@ -136,17 +138,17 @@ describe('#mocha promises', function () {
 
 		for (let i = 0; i < commands.length; i++) {
 			const configs = commands[i].configs;
-			for (const key in tmi.expectedConfigs) {
+			Object.entries(commander.expectedCommandsConfigs).forEach(entry => { 
+				let key = entry[0]; 
 				expect(Object.keys(configs)).to.include(key);
-			}
+			});
 		}
 	});
 
 	it('should have out properties on commands', async () => {
 		const callbackPromises = [];
-
-		for (let i = 0; i < tmi.commands.length; i++) {
-			const command = tmi.commands[i];
+		for (let i = 0; i < commander.commands.length; i++) {
+			const command = commander.commands[i];
 
 			const target = '#callowcreation';
 			const user = { 'user-id': '120524051', username: 'naivebot' };
@@ -159,30 +161,30 @@ describe('#mocha promises', function () {
 		const values = await Promise.all(callbackPromises);
 
 		for (let i = 0; i < values.length; i++) {
-			for (const key in tmi.expectedOutProperties) {
+			Object.entries(commander.expectedOutProperties).forEach(entry => { 
+				let key = entry[0]; 
 				expect(Object.keys(values[i])).to.include(key);
-			}
+			});
 		}
 	});
 
 	it('should tmi has commands', () => {
-		expect(tmi.commands.map(x => x.configs.name)).to.include('bitcorn');
+		expect(commander.commands.map(x => x.configs.name)).to.include('bitcorn');
 	});
 
 	it('should create commands map from commands array', () => {
-		const commands = tmi.commands;
-		const commandsMap = tmi.createCommandsMap(commands);
+		const commandsMap = commander.createCommandsMap();
 		expect(commandsMap).to.have.all.keys('bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist');
 	});
 
 	it('should have a $ prefix', () => {
-		const args = tmi.messageAsCommand('$tipcorn @naivebot 420');
+		const args = commander.messageAsCommand('$tipcorn @naivebot 420');
 		expect(args.prefix).to.be.equal('$');
 	});
 
 	it('should get command and params from chat message', () => {
 		const msg = '$tipcorn @naivebot 420';
-		const args = tmi.messageAsCommand(msg);
+		const args = commander.messageAsCommand(msg);
 		expect(args.params[0]).to.be.equal('@naivebot');
 	});
 
@@ -190,7 +192,7 @@ describe('#mocha promises', function () {
 		const cleanParams = require('./src/utils/clean-params');
 
 		const msg = '$tipcorn <@naivebot> 420';
-		const args = tmi.messageAsCommand(msg);
+		const args = commander.messageAsCommand(msg);
 
 		const twitchUsername = cleanParams.at(cleanParams.brackets(args.params[0]));
 
@@ -201,7 +203,7 @@ describe('#mocha promises', function () {
 		const { amount, isNumber } = require('./src/utils/clean-params');
 
 		const msg = '$tipcorn <@naivebot> <420>';
-		const args = tmi.messageAsCommand(msg);
+		const args = commander.messageAsCommand(msg);
 
 		const isNum = isNumber(amount(args.params[1]));
 
@@ -211,7 +213,7 @@ describe('#mocha promises', function () {
 	it('should have command name tipcorn', () => {
 
 		const msg = '$tipcorn <@naivebot> <420>';
-		const args = tmi.messageAsCommand(msg);
+		const args = commander.messageAsCommand(msg);
 
 		expect(args.name).to.be.equal('tipcorn');
 	});
@@ -235,7 +237,7 @@ describe('#mocha promises', function () {
 
 		await _wait(+configs.cooldown + 50);
 
-		const passed = tmi.checkCooldown(configs, twitchId, cooldowns);
+		const passed = commander.checkCooldown(configs, twitchId, cooldowns);
 		expect(passed).to.be.equal(true);
 
 	});
@@ -259,13 +261,13 @@ describe('#mocha promises', function () {
 
 		await _wait(+configs.cooldown + 500);
 
-		passed = tmi.checkCooldown(configs, channelName, global_cooldown);
+		passed = commander.checkCooldown(configs, channelName, global_cooldown);
 
 		expect(passed).to.be.equal(true);
 
 		await _wait(10);
 
-		passed = tmi.checkCooldown(configs, channelName, global_cooldown);
+		passed = commander.checkCooldown(configs, channelName, global_cooldown);
 
 		expect(passed).to.be.equal(false);
 	});
@@ -274,7 +276,7 @@ describe('#mocha promises', function () {
 
 		const event = await mockEvent('$bitcorn', 'naivebot', 'callowcreation', '#callowcreation');
 
-		expect(tmi.validatedEventParameters(event)).to.be.equal(true);
+		expect(commander.validatedEventParameters(event)).to.be.equal(true);
 	});
 
 	it('should validate and execute command', async () => {
@@ -287,7 +289,7 @@ describe('#mocha promises', function () {
 			}
 		} : require('./src/commands/bitcorn');
 
-		const obj = await tmi.validateAndExecute(event, command);
+		const obj = await commander.validateAndExecute(event, command);
 		if (obj.success === false) {
 			log(obj.message ? obj.message : `Status: ${obj.status}`);
 		}
@@ -297,11 +299,12 @@ describe('#mocha promises', function () {
 	/*
 	$bitcorn tests
 	*/
-	it('should get api response for bitcorn status 500', async () => {
+	it('should get api response for bitcorn status 404', async () => {
 		const twitchId = '123';
 		const body = null;
 		const result = await databaseAPI.request(twitchId, body).bitcorn();
-		expect(result.status).to.be.equal(500);
+
+		expect(result.status).to.be.equal(404);
 	});
 
 	it('should get api response for bitcorn twitchUsername:', async () => {
@@ -327,7 +330,7 @@ describe('#mocha promises', function () {
 
 		const event = await mockEvent('$bitcorn', 'naivebot', 'callowcreation', '#callowcreation');
 
-		const result = await tmi.validateAndExecute(event, command);
+		const result = await commander.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
 	});
 
@@ -407,7 +410,7 @@ describe('#mocha promises', function () {
 		} : require('./src/commands/tipcorn');
 		const event = await mockEvent('$tipcorn d4rkcide 100', 'callowcreation', '#callowcreation', '#callowcreation');
 
-		const results = await tmi.validateAndExecute(event, command);
+		const results = await commander.validateAndExecute(event, command);
 
 		if (results.status) {
 			log(results.status);
@@ -454,7 +457,7 @@ describe('#mocha promises', function () {
 
 		const event = await mockEvent('$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g', 'callowcreation', 'callowcreation', '#callowcreation');
 
-		const results = await tmi.validateAndExecute(event, command);
+		const results = await commander.validateAndExecute(event, command);
 		expect(results.success).to.be.not.equal(false);
 	});
 
@@ -500,14 +503,14 @@ describe('#mocha promises', function () {
 
 	// chat and whisper queue
 	it('should add items to chat queue', () => {
-		while (tmi.chatQueue.size() > 0) tmi.chatQueue.dequeue();
-		tmi.chatQueue.enqueue({ test_item: 'No name' });
-		expect(tmi.chatQueue.size()).to.be.equal(1);
+		while (messenger.chatQueue.size() > 0) messenger.chatQueue.dequeue();
+		messenger.chatQueue.enqueue({ test_item: 'No name' });
+		expect(messenger.chatQueue.size()).to.be.equal(1);
 	});
 
 	it('should remove items from chat queue', () => {
-		tmi.chatQueue.dequeue();
-		expect(tmi.chatQueue.size()).to.be.equal(0);
+		messenger.chatQueue.dequeue();
+		expect(messenger.chatQueue.size()).to.be.equal(0);
 	});
 
 	it('should not enqueue MESSAGE_TYPE whisper self', () => {
@@ -517,8 +520,8 @@ describe('#mocha promises', function () {
 
 		let target = 'naivebot';
 		let message = 'We can see the thing';
-		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
-		const targetName = tmi.whisperQueue.peek();
+		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
+		const targetName = messenger.whisperQueue.peek();
 		expect(targetName.target).to.be.not.equal(auth.data.BOT_USERNAME);
 	});
 
@@ -526,24 +529,24 @@ describe('#mocha promises', function () {
 
 		const MESSAGE_TYPE = require('./src/utils/message-type');
 
-		while (tmi.whisperQueue.size() > 0) tmi.whisperQueue.dequeue();
-		while (tmi.chatQueue.size() > 0) tmi.chatQueue.dequeue();
+		while (messenger.whisperQueue.size() > 0) messenger.whisperQueue.dequeue();
+		while (messenger.chatQueue.size() > 0) messenger.chatQueue.dequeue();
 
 		let target = 'callowcreation';
 		let message = 'We can see the thing';
-		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
-		expect(tmi.chatQueue.size()).to.be.equal(1);
-		expect(tmi.whisperQueue.size()).to.be.equal(0);
+		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+		expect(messenger.chatQueue.size()).to.be.equal(1);
+		expect(messenger.whisperQueue.size()).to.be.equal(0);
 
 		target = 'callowcreation';
 		message = 'Is this for you';
-		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
-		expect(tmi.chatQueue.size()).to.be.equal(1);
-		expect(tmi.whisperQueue.size()).to.be.equal(1);
+		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
+		expect(messenger.chatQueue.size()).to.be.equal(1);
+		expect(messenger.whisperQueue.size()).to.be.equal(1);
 	});
 
 	it('should confirm messages in chat and whisper queue', () => {
-		const item = tmi.chatQueue.peek();
+		const item = messenger.chatQueue.peek();
 		expect(item.message).to.be.equal('We can see the thing');
 	});
 
@@ -552,11 +555,11 @@ describe('#mocha promises', function () {
 
 		let target = '#callowcreation';
 		let message = 'should send chat message from queue ' + Date.now();
-		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
 		await tmi.joinChannel(target);
 
-		const obj = await tmi.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
+		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 		_error(obj);
 		_message(obj);
 		expect(obj.success).to.be.equal(true);
@@ -570,13 +573,13 @@ describe('#mocha promises', function () {
 
 		let target = '#callowcreation';
 		let message = 'should send many message from chat queue ' + Date.now();
-		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
 		message = 'Seen ' + Date.now();
-		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
+		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
 		await tmi.joinChannel(target);
-		const obj = await tmi.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
+		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 		_error(obj);
 		_message(obj);
 		expect(obj.success).to.be.equal(true);
@@ -587,9 +590,9 @@ describe('#mocha promises', function () {
 
 		let target = '#callowcreation';
 		let message = 'should send whisper message from whisper queue ' + Date.now();
-		tmi.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
+		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
 
-		const obj = await tmi.sendQueuedMessagesByType(MESSAGE_TYPE.irc_whisper);
+		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_whisper);
 		_error(obj);
 		_message(obj);
 		expect(obj.success).to.be.equal(true);
@@ -634,7 +637,7 @@ describe('#mocha promises', function () {
 			}
 		} : require('./src/commands/rain');
 		const event = await mockEvent('$rain 24.999999999999999 5', 'd4rkcide', '#callowcreation', '#callowcreation');
-		const result = await tmi.validateAndExecute(event, command);
+		const result = await commander.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
 	});
 
@@ -648,7 +651,7 @@ describe('#mocha promises', function () {
 			
 		const target = '#callowcreation';
 		const user = { 'user-id': user_id, username: user_login };
-		const msg = '$rain 24.999999999999999 5';
+		const msg = '$rain 24.999999999999999 10';
 		const self = false;
 		
 		const obj = await tmi.onMessageHandler(target, user, msg, self);
@@ -668,7 +671,7 @@ describe('#mocha promises', function () {
 			}
 		} : require('./src/commands/blacklist');
 		const event = await mockEvent('$blacklist @wollac', 'callowcreation', '#callowcreation', '#callowcreation');
-		const result = await tmi.validateAndExecute(event, command);
+		const result = await commander.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
 	});
 });

@@ -2,45 +2,17 @@
 
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
+const commander = require('./commander');
 const auth = require('../../settings/auth');
-
+const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
 
-const moduleloader = require('./utils/moduleloader');
-const commandsPath = '../commands';
-const commands = moduleloader(commandsPath);
+const commandsMap = commander.createCommandsMap();
 
-const commandsMap = createCommandsMap(commands);
+const outListenerCallbacks = [];
 
 const cooldowns = {};
 const global_cooldowns = {};
-
-const expectedCommandsConfigs = {
-	name: '',
-	cooldown: 0,
-	global_cooldown: false,
-	description: '',
-	example: '',
-	enabled: false,
-	irc_in: '',
-	irc_out: ''
-};
-
-const expectedEventFields = {
-	twitchId: '',
-	twitchUsername: '',
-	args: {},
-	irc_target: '', // who username/channel the chat/whisper should be sent to
-	channel: ''
-};
-
-const expectedOutProperties = {
-	success: false,
-	msg: '',
-	message: '',
-	irc_target: '', // who username/channel the chat/whisper should be sent to
-	configs: {}
-};
 
 const channels = ['callowcreation'];
 
@@ -70,38 +42,28 @@ const clients = {
 	})
 };
 
-function addMessageHandler(handler) {
-	clients.chat.on('message', handler);
+function addOutputListener(func) {
+	outListenerCallbacks.push(func);
 }
-
-function registerEvents() {
-	addMessageHandler(onMessageHandler);
-}
-
-function onConnectedChatHandler(addr, port) {
-	return { addr, port };
-}
-
-const allowedUsers = require('./utils/allowed-users');
 
 async function asyncOnMessageReceived(type, target, user, msg) {
 
-	const args = messageAsCommand(msg);
-	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message', irc_target: target, configs: expectedOutProperties.configs };
+	const args = commander.messageAsCommand(msg);
+	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message', irc_target: target, configs: commander.expectedCommandsConfigs };
 
 	const command = commandsMap.get(args.name);
-	if (!command) return { success: false, msg, message: 'Command not found', irc_target: target, configs: expectedOutProperties.configs };
+	if (!command) return { success: false, msg, message: 'Command not found', irc_target: target, configs: commander.expectedCommandsConfigs };
 
-	if (allowedUsers.isCommandTesters(user.username) === false) return { success: false, msg, message: 'User not allowed', irc_target: target, configs: expectedOutProperties.configs };
+	if (allowedUsers.isCommandTesters(user.username) === false) return { success: false, msg, message: 'User not allowed', irc_target: target, configs: commander.expectedCommandsConfigs };
 
 	if (command.configs.irc_in !== type) {
-		return { success: false, msg, message: `Wrong irc_in=${command.configs.irc_in} command=${command.configs.name} type=${type}`, irc_target: target, configs: expectedOutProperties.configs };
+		return { success: false, msg, message: `Wrong irc_in=${command.configs.irc_in} command=${command.configs.name} type=${type}`, irc_target: target, configs: commander.expectedCommandsConfigs };
 	}
 
 	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
 	const selectedCooldownId = command.configs.global_cooldown === true ? target : user['user-id'];
-	if (checkCooldown(command.configs, selectedCooldownId, selectCooldowns) === false) {
-		return { success: false, msg, message: `Cooldown pending global=${command.configs.global_cooldown}`, irc_target: target, configs: expectedOutProperties.configs };
+	if (commander.checkCooldown(command.configs, selectedCooldownId, selectCooldowns) === false) {
+		return { success: false, msg, message: `Cooldown pending global=${command.configs.global_cooldown}`, irc_target: target, configs: commander.expectedCommandsConfigs };
 	}
 
 	const event = {
@@ -112,8 +74,8 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 		channel: target
 	};
 
-	if (validatedEventParameters(event) === false) {
-		return { success: false, msg, message: 'Event paramaters missing', irc_target: target, configs: expectedOutProperties.configs };
+	if (commander.validatedEventParameters(event) === false) {
+		return { success: false, msg, message: 'Event paramaters missing', irc_target: target, configs: commander.expectedCommandsConfigs };
 	}
 
 	const result = await command.execute(event);
@@ -131,7 +93,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 }
 
 async function onMessageHandler(target, user, msg, self) {
-	if (self) return { success: false, msg, message: 'Message from self', configs: expectedOutProperties.configs };
+	if (self) return { success: false, msg, message: 'Message from self', configs: commander.expectedCommandsConfigs };
 
 	const data = await asyncOnMessageReceived(user['message-type'] || MESSAGE_TYPE.irc_chat, target, user, msg);
 	/*if (data.success === true) {
@@ -139,28 +101,10 @@ async function onMessageHandler(target, user, msg, self) {
 	} else {
 		console.log(`FAILED:`, data);
 	}*/
-	for (let i = 0; i < callbacks.length; i++) {
-		callbacks[i](data);
+	for (let i = 0; i < outListenerCallbacks.length; i++) {
+		outListenerCallbacks[i](data);
 	}
 	return data;
-}
-
-const _ = require('lodash');
-function validatedEventParameters(event) {
-	return _.reject(Object.keys(expectedEventFields), (key) => _.has(event, key)).length === 0;
-
-	//return _.size(_.intersection(_.keys(event), expectedEventFields)) > 0
-
-	//return Object.keys(expectedEventFields).filter(x => !event.hasOwnProperty(x)).length === 0;
-}
-
-async function validateAndExecute(event, command) {
-
-	if (validatedEventParameters(event) === false) {
-		return { success: false, msg: event.args.msg, message: 'Event paramaters missing', irc_target: event.irc_target, configs: expectedOutProperties.configs };
-	}
-
-	return command.execute(event);
 }
 
 async function connectToChat() {
@@ -179,71 +123,20 @@ async function partChannel(channel) {
 	return clients.chat.part(channel);
 }
 
-function createCommandsMap(commands) {
-	const commandsMap = new Map();
-	for (let i = 0; i < commands.length; i++) {
-		const command = commands[i];
-		if (commandsMap.has(command.configs.name)) continue;
-		commandsMap.set(command.configs.name, command);
-	}
-	return commandsMap;
+
+function addMessageHandler(handler) {
+	clients.chat.on('message', handler);
 }
 
-function messageAsCommand(msg) {
-
-	const splits = msg.split(' ');
-	const name = splits.shift();
-	const params = splits;
-
-	return { prefix: msg[0], msg, name: name.substr(1, name.length - 1), params };
+function registerEvents() {
+	addMessageHandler(onMessageHandler);
 }
 
-function checkCooldown(configs, twitchId, cooldowns) {
-	let success = false;
-
-	if (configs.global_cooldown === false) {
-		if (twitchId in cooldowns) {
-			if (!cooldowns[twitchId][configs.name]) {
-				cooldowns[twitchId][configs.name] = 0;
-			}
-
-			success = calculateCooldownSuccess(cooldowns[twitchId][configs.name]);
-		} else {
-			cooldowns[twitchId] = {};
-			success = true;
-		}
-
-		cooldowns[twitchId][configs.name] = (new Date()).getTime() + (+configs.cooldown);
-
-	} else {
-		if (configs.name in cooldowns) {
-
-			success = calculateCooldownSuccess(cooldowns[configs.name]);
-		} else {
-			success = true;
-		}
-		cooldowns[configs.name] = (new Date()).getTime() + (+configs.cooldown);
-	}
-	return success;
-}
-
-function calculateCooldownSuccess(cooldownTime) {
-	return (new Date()).getTime() > +cooldownTime;
-}
-
-const callbacks = [];
-function addOutputListener(func) {
-	callbacks.push(func);
+function onConnectedChatHandler(addr, port) {
+	return { addr, port };
 }
 
 module.exports = {
-
-	expectedCommandsConfigs,
-	expectedEventFields,
-	expectedOutProperties,
-
-	validatedEventParameters,
-	validateAndExecute,
 
 	registerEvents,
 
@@ -262,18 +155,6 @@ module.exports = {
 
 	asyncOnMessageReceived,
 
-	commands,
-	createCommandsMap,
-
-	messageAsCommand,
-
-	checkCooldown,
-
-	chatQueue: messenger.chatQueue,
-	whisperQueue: messenger.whisperQueue,
-
-	enqueueMessageByType: messenger.enqueueMessageByType,
-	sendQueuedMessagesByType: messenger.sendQueuedMessagesByType,
-
-	addOutputListener,
+	addOutputListener
+	
 };

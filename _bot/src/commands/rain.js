@@ -74,7 +74,9 @@ module.exports = {
 				message = `${message}: ${results.status} ${results.statusText}`;
 
 			} else if (results.length > 0 && results[0].from.isbanned === false) {
-				
+
+				success = true;
+
 				const successItems = results.filter(x => {
 					return x.to && x.txId && x.to.isbanned === false;
 				}).map(x => x.to.twitchusername);
@@ -83,12 +85,21 @@ module.exports = {
 					return x.to && !x.txId && x.to.isbanned === false;
 				}).map(x => x.to.twitchusername);
 
-				const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
-				const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
-				const allMsg = `${successMessage}${(failedItems.length > 0 ? failedMessage : '')}`;
+				if (successItems.length > 0 && failedItems.length > 0) {
+					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
+					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+					message = `${successMessage}${(failedItems.length > 0 ? failedMessage : '')}`;
+				} else if (successItems.length == 0 && failedItems.length > 0) {
+					const successMessage = `${event.twitchUsername} FeelsRainMan`;
+					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+					message = `${successMessage}${failedMessage}`;
+				} else if (successItems.length > 0 && failedItems.length == 0) {
+					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
+					message = successMessage;
+				} else if (successItems.length == 0 && failedItems.length == 0) {
+					message = `${event.twitchUsername} rained on noone`;
+				}
 
-				success = true;
-				message = allMsg;
 			} else {
 				message = util.format('Hmmmmm Rain Fail', event.twitchUsername, amount);
 			}
