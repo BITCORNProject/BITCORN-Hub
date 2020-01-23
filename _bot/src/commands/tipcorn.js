@@ -14,6 +14,8 @@ const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 
+const commandHelper = require('../shared-lib/command-helper');
+
 module.exports = {
 	configs: {
 		name: 'tipcorn',
@@ -59,31 +61,7 @@ module.exports = {
 
 				const result = await databaseAPI.request(event.twitchId, body).tipcorn();
 				
-				if (result.status && result.status === 500) {
-					// NOTE needs to be logged to the locally as an error
-					message = `${message}: ${result.status} ${result.statusText}`;
-
-				} else if (result.status && result.status === 420) {
-
-					message = `API access locked for ${event.twitchId}`;
-
-				} else if (result.status) {
-
-					message = `${message}: ${result.status} ${result.statusText}`;
-
-				} else if (result.length > 0 && result[0].from.isbanned === false) {
-
-					const resultUser = result[0].to;
-					if(resultUser && resultUser.isbanned === false) {
-						success = true;
-						message = util.format('mttvCorn @%s Just slipped @%s %d BITCORN with a FIRM handshake. mttvCorn', event.twitchUsername, resultUser.twitchusername, amount);
-					} else {
-						message = `User BANNED: ${resultUser.twitchusername}`;
-					}
-
-				} else {
-					message = util.format('Hmmmmm Bitcorn', twitchUsername, amount);
-				}
+				({ message, success } = commandHelper.handelTipResponse(result, event.twitchUsername, amount));
 			}
 		}
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };
