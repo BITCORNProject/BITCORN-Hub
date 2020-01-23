@@ -20,7 +20,7 @@ module.exports = {
 	async execute(event) {
 		return { 
 			success: true, 
-			message: `cttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ cttvCorn`, 
+			message: `mttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ mttvCorn`, 
 			irc_target: event.irc_target, 
 			configs: this.configs };
 	}

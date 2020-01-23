@@ -35,16 +35,16 @@ module.exports = {
 		const rain_amount = cleanParams.amount(event.args.params[0]);
 		const rain_user_count = cleanParams.amount(event.args.params[1]);
 
-		if (cleanParams.isNumber(rain_amount) === false || 
+		if (cleanParams.isNumber(rain_amount) === false ||
 			cleanParams.isNumber(rain_user_count) === false ||
 			rain_amount < serverSettings.getValues().MIN_RAIN_AMOUNT ||
-			rain_amount > databaseAPI.MAX_WALLET_AMOUNT ||
+			rain_amount >= databaseAPI.MAX_WALLET_AMOUNT ||
 			rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS) {
 
 			message = 'Invalid input';
 		} else {
-
-			const chatternamesArr = activityTracker.getChatterActivity(event.channel).filter(x => x.username !== event.twitchUsername);
+			const chatternamesArr = activityTracker.getChatterActivity(event.channel)
+				.filter(x => x.username !== event.twitchUsername && x.id);
 
 			const items = chatternamesArr.slice(0, rain_user_count);
 			const amount = math.fixed8(rain_amount / items.length);
@@ -55,24 +55,33 @@ module.exports = {
 				to: recipients,
 				platform: 'twitch',
 				amount: amount,
-				columns: ['balance', 'twitchusername']
+				columns: ['balance', 'twitchusername', 'isbanned', 'twitchid']
 			};
 
 			const results = await databaseAPI.request(event.twitchId, body).rain();
 
-			if(results.status && results.status === 500) {
+			if (results.status && results.status === 500) {
+
 				// NOTE needs to be logged to the locally as an error
 				message = `${message}: ${results.status} ${results.statusText}`;
-			} else if(results.status && results.status === 420) {
+
+			} else if (results.status && results.status === 420) {
+
 				message = `API access locked for ${event.twitchId}`;
+
 			} else if (results.status) {
+
 				message = `${message}: ${results.status} ${results.statusText}`;
-			} else if(results.length > 0) {
+
+			} else if (results.length > 0 && results[0].from.isbanned === false) {
 				
-				const success_names = results.filter(x => x.to).map(x => x.to.twitchusername);
-				
-				const failedItems = items.filter(x => !success_names.includes(x.username)).map(x => x.username);
-				const successItems = items.filter(x => success_names.includes(x.username)).map(x => x.username);
+				const successItems = results.filter(x => {
+					return x.to && x.txId && x.to.isbanned === false;
+				}).map(x => x.to.twitchusername);
+
+				const failedItems = results.filter(x => {
+					return x.to && !x.txId && x.to.isbanned === false;
+				}).map(x => x.to.twitchusername);
 
 				const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
 				const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
@@ -81,7 +90,7 @@ module.exports = {
 				success = true;
 				message = allMsg;
 			} else {
-				message = util.format('Hmmmmm Rain Fail', twitchUsername, amount);
+				message = util.format('Hmmmmm Rain Fail', event.twitchUsername, amount);
 			}
 		}
 

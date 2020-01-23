@@ -139,6 +139,9 @@ async function onMessageHandler(target, user, msg, self) {
 	} else {
 		console.log(`FAILED:`, data);
 	}*/
+	for (let i = 0; i < callbacks.length; i++) {
+		callbacks[i](data);
+	}
 	return data;
 }
 
@@ -228,6 +231,11 @@ function calculateCooldownSuccess(cooldownTime) {
 	return (new Date()).getTime() > +cooldownTime;
 }
 
+const callbacks = [];
+function addOutputListener(func) {
+	callbacks.push(func);
+}
+
 module.exports = {
 
 	expectedCommandsConfigs,
@@ -265,5 +273,7 @@ module.exports = {
 	whisperQueue: messenger.whisperQueue,
 
 	enqueueMessageByType: messenger.enqueueMessageByType,
-	sendQueuedMessagesByType: messenger.sendQueuedMessagesByType
+	sendQueuedMessagesByType: messenger.sendQueuedMessagesByType,
+
+	addOutputListener,
 };

@@ -22,6 +22,8 @@ if (module === require.main) {
 			tmi.connectToWhisper()
 		]);
 
+		tmi.addOutputListener(console.log);
+
 		console.log(results);
 
 		const result = await tmi.joinChannel(CHANNEL);

@@ -29,30 +29,41 @@ module.exports = {
 		const amount = cleanParams.amount(event.args.params[0]);
 		//IMPORTANT: Do not .toLowerCase() the address is case sensitive
 		const cornaddy = event.args.params[1];
+		if (cleanParams.isNumber(amount) === false ||
+			amount <= 0 ||
+			amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 
-		const body = {
-			id: `twitch|${event.twitchId}`,
-			cornaddy: cornaddy,
-			amount: amount,
-			columns: ['balance', 'tipped', 'twitchusername']
-		};
-
-		const result = await databaseAPI.request(event.twitchId, body).withdraw();
-
-
-		if (result.status && result.status === 500) {
-			// NOTE needs to be logged to the locally as an error
-			message = `${message}: ${result.status} ${result.statusText}`;
-		} else if (result.status && result.status === 420) {
-			message = `API access locked for ${twitchId}`;
-		} else if (result.status) {
-			message = `${message}: ${result.status} ${result.statusText}`;
+			message = 'Invalid input';
 		} else {
-			if (result.txid) {
-				success = true;
-				message = util.format(`You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://explorer.bitcornproject.com/tx/%s`, result.txid);
+			const body = {
+				id: `twitch|${event.twitchId}`,
+				cornaddy: cornaddy,
+				amount: amount,
+				columns: ['balance', 'tipped', 'twitchusername']
+			};
+
+			const result = await databaseAPI.request(event.twitchId, body).withdraw();
+
+			if (result.status && result.status === 500) {
+				// NOTE needs to be logged to the locally as an error
+				message = `${message}: ${result.status} ${result.statusText}`;
+			} else if (result.status && result.status === 420) {
+				message = `API access locked for ${event.twitchId}`;
+			} else if (result.status) {
+				message = `${message}: ${result.status} ${result.statusText}`;
 			} else {
-				message = 'You failed to withdraw: invalid payment amount';
+				if(result.walletavailable === false) {
+					success = true;
+					message = 'Wallet is down for maintenance';
+				} else if(result.usererror === true) {
+					success = true;
+					message = 'Invalid BITCORN address';
+				} else if (result.txid) {
+					success = true;
+					message = util.format(`You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://www.coinexplorer.net/CORN/transaction/%s`, result.txid);
+				} else {
+					message = 'You failed to withdraw: invalid payment action';
+				}
 			}
 		}
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };

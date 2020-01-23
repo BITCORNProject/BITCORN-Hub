@@ -172,7 +172,7 @@ describe('#mocha promises', function () {
 	it('should create commands map from commands array', () => {
 		const commands = tmi.commands;
 		const commandsMap = tmi.createCommandsMap(commands);
-		expect(commandsMap).to.have.all.keys('bitcorn', 'tipcorn', 'withdraw', 'help', 'rain');
+		expect(commandsMap).to.have.all.keys('bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist');
 	});
 
 	it('should have a $ prefix', () => {
@@ -405,7 +405,7 @@ describe('#mocha promises', function () {
 				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/tipcorn');
-		const event = await mockEvent('$tipcorn naivebot 100', 'callowcreation', '#callowcreation', '#callowcreation');
+		const event = await mockEvent('$tipcorn d4rkcide 100', 'callowcreation', '#callowcreation', '#callowcreation');
 
 		const results = await tmi.validateAndExecute(event, command);
 
@@ -425,9 +425,14 @@ describe('#mocha promises', function () {
 
 	// Integration test only ?? !! ??
 	it('should execute $tipcorn successfully with message handler', async () => {
+		
+		const twitchUsername = 'd4rkcide';		
+		const auth = require('../settings/auth');
+		const {id: user_id, login: user_login} = await fetch(`http://localhost:${auth.data.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = { 'user-id': user_id, username: user_login };
+		
 		const target = '#callowcreation';
-		const user = { 'user-id': '120524051', username: 'naivebot' };
-		const msg = '$tipcorn @wollac 101';
+		const msg = '$tipcorn @mattras007 101';
 		const self = false;
 
 		const obj = await tmi.onMessageHandler(target, user, msg, self);
@@ -459,8 +464,13 @@ describe('#mocha promises', function () {
 
 		const type = require('./src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
-		const user = { 'user-id': '120524051', username: 'naivebot' };
-		const msg = '$tipcorn @callowcreation 102';
+
+		const twitchUsername = 'd4rkcide';		
+		const auth = require('../settings/auth');
+		const {id: user_id, login: user_login} = await fetch(`http://localhost:${auth.data.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = { 'user-id': user_id, username: user_login };
+		
+		const msg = '$tipcorn @biteastwood 102';
 		const self = false;
 
 		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
@@ -473,7 +483,12 @@ describe('#mocha promises', function () {
 
 		const type = require('./src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
-		const user = { 'user-id': '120524051', username: 'callowcreation' };
+
+		const twitchUsername = 'd4rkcide';		
+		const auth = require('../settings/auth');
+		const {id: user_id, login: user_login} = await fetch(`http://localhost:${auth.data.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = { 'user-id': user_id, username: user_login };
+		
 		const msg = '$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g';
 		const self = false;
 
@@ -618,7 +633,7 @@ describe('#mocha promises', function () {
 				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/rain');
-		const event = await mockEvent('$rain 24.999999999999999 5', 'wollac', '#callowcreation', '#callowcreation');
+		const event = await mockEvent('$rain 24.999999999999999 5', 'd4rkcide', '#callowcreation', '#callowcreation');
 		const result = await tmi.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
 	});
@@ -626,7 +641,7 @@ describe('#mocha promises', function () {
 	// Integration test only ?? !! ??
 	it('should execute $rain successfully with message handler', async () => {
 
-		const twitchUsername = 'naivebot';
+		const twitchUsername = 'd4rkcide';
 
 		const auth = require('../settings/auth');
 		const {id: user_id, login: user_login} = await fetch(`http://localhost:${auth.data.PORT}/user?username=${twitchUsername}`).then(res => res.json());
@@ -646,13 +661,13 @@ describe('#mocha promises', function () {
 		expect(obj.configs.name).to.be.equal('rain');
 	});
 
-	it.only('should get $blacklist response from invoking execute', async () => {
+	it('should get $blacklist response from invoking execute', async () => {
 		const command = isMock ? {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/blacklist');
-		const event = await mockEvent('$blacklist @wollac', 'wollac', '#callowcreation', '#callowcreation');
+		const event = await mockEvent('$blacklist @wollac', 'callowcreation', '#callowcreation', '#callowcreation');
 		const result = await tmi.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
 	});

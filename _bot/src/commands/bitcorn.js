@@ -26,13 +26,28 @@ module.exports = {
 		let irc_target = event.irc_target;
 
 		const result = await databaseAPI.request(event.twitchId, null).bitcorn();
+		if (result.status && result.status === 500) {
 
-		if (result.status) {
 			// NOTE needs to be logged to the locally as an error
 			message = `${message}: ${result.status} ${result.statusText}`;
+
+		} else if(result.status && result.status === 204) {
+
+			success = true;
+			message = util.format('Hey!  @%s you are not registered please visit the sync site https://bitcornfarms.com/', event.twitchUsername);
+
+		} else if (result.status && result.status === 420) {
+
+			message = `API access locked for ${event.twitchId}`;
+
+		} else if (result.status) {
+
+			// NOTE needs to be logged to the locally as an error
+			message = `${message}: ${result.status} ${result.statusText}`;
+
 		} else {
 			success = true;
-			message = util.format(`Howdy BITCORN Farmer!  You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.twitchUsername);
+			message = util.format(`Howdy BITCORN Farmer! You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.twitchUsername);
 		}
 		
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };

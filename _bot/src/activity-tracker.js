@@ -22,7 +22,7 @@ const activityTracker = new JsonFile('./settings/activity-tracker.json', {});
 
 
 function addToActiveChatters(target, id, username) {
-    if (allowedUsers.activityTrackerOmitUsername(username) === false) return;
+    if (allowedUsers.activityTrackerOmitUsername(username) === true) return;
 
     if (activeChatters[target] === undefined) {
         activeChatters[target] = [];
@@ -68,7 +68,7 @@ function getChatterActivity(target) {
     //          Uncomment to use most recent
     //chatternamesArr.sort((a, b) => b.count - a.count);
 
-    chatternamesArr = chatternamesArr.map(x => ({ id: x.id, username: x.username }));
+    chatternamesArr = chatternamesArr.filter(x => x).map(x => ({ id: x.id, username: x.username }));
 
     return chatternamesArr;
 }

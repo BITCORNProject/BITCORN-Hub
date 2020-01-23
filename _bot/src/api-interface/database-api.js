@@ -28,7 +28,7 @@ function DatabaseEndpoint() {
         tipcorn: '/tipcorn', // tested
         withdraw: '/withdraw', // tested
         token: '/token',
-		blacklist: '/ban/twitch|' // tested
+		blacklist: '/ban' // tested
 	});
 	
     this.paymentCode = {
@@ -270,8 +270,8 @@ DatabaseEndpoint.prototype.requestPayout = function(body) {
 /*
 const body = null;
 */
-DatabaseEndpoint.prototype.requestBlacklist = async function (twitchId) {
-    return this.makeRequestUser(`${this.db_endpoints.getValues().blacklist}${twitchId}`, null);
+DatabaseEndpoint.prototype.requestBlacklist = async function (twitchId, banUserId) {
+    return this.makeRequestUser(`${this.db_endpoints.getValues().blacklist}`, {Sender: `twitch|${twitchId}`, BanUser: `twitch|${banUserId}`});
 }
 
 // v3
