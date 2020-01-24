@@ -9,12 +9,37 @@ const MESSAGE_TYPE = require('./utils/message-type');
 
 const commandsMap = commander.createCommandsMap();
 
-const outListenerCallbacks = [];
+const outMessageCallbacks = [];
+const outRerwardCallbacks = [];
 
 const cooldowns = {};
 const global_cooldowns = {};
 
 const channels = ['callowcreation'];
+
+const amounts = {
+	cheer: {
+		'0000': 10
+	},
+	subgift: {
+		'Prime': 420,
+		'1000': 420,
+		'2000': 4200,
+		'3000': 42000
+	},
+	subscription: {
+		'Prime': 420,
+		'1000': 420,
+		'2000': 4200,
+		'3000': 42000
+	},
+	resub: {
+		'Prime': 420,
+		'1000': 420,
+		'2000': 4200,
+		'3000': 42000
+	}
+};
 
 const clients = {
 	chat: new tmi.client({
@@ -42,8 +67,12 @@ const clients = {
 	})
 };
 
-function addOutputListener(func) {
-	outListenerCallbacks.push(func);
+function addMessageOutputListener(func) {
+	outMessageCallbacks.push(func);
+}
+
+function addRewardOutputListener(func) {
+	outRerwardCallbacks.push(func);
 }
 
 async function asyncOnMessageReceived(type, target, user, msg) {
@@ -101,10 +130,46 @@ async function onMessageHandler(target, user, msg, self) {
 	} else {
 		console.log(`FAILED:`, data);
 	}*/
-	for (let i = 0; i < outListenerCallbacks.length; i++) {
-		outListenerCallbacks[i](data);
+	for (let i = 0; i < outMessageCallbacks.length; i++) {
+		outMessageCallbacks[i](data);
 	}
 	return data;
+}
+
+/*
+
+Rewards
+
+*/
+async function onCheer(channel, userstate, message) {
+	const username = userstate.username;
+	const amount = userstate.bits * amounts.cheer['0000'];
+	return handleRewardEvent('cheer', channel, username, amount);
+}
+
+async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
+	const amount = amounts.subgift[methods.plan];
+	return handleRewardEvent('subgift', channel, username, amount);
+}
+
+async function onSubscription(channel, username, methods, message, userstate) {
+	const amount = amounts.subscription[methods.plan];
+	return handleRewardEvent('subscription', channel, username, amount);
+}
+
+async function onResub(channel, username, months, message, userstate, methods) {
+	const amount = amounts.resub[methods.plan];
+	return handleRewardEvent('resub', channel, username, amount);
+}
+
+async function handleRewardEvent(type, channel, username, amount) {
+	messenger.enqueueReward(type, channel, username, amount);
+	const result = await messenger.sendQueuedRewards();
+	
+	for (let i = 0; i < outRerwardCallbacks.length; i++) {
+		outRerwardCallbacks[i](result);
+	}
+	return result;
 }
 
 async function connectToChat() {
@@ -123,6 +188,12 @@ async function partChannel(channel) {
 	return clients.chat.part(channel);
 }
 
+function addRewardHandlers() {
+	clients.chat.on("cheer", onCheer);
+	clients.chat.on("subgift", onSubGift);
+	clients.chat.on("subscription", onSubscription);
+	clients.chat.on("resub", onResub);
+}
 
 function addMessageHandler(handler) {
 	clients.chat.on('message', handler);
@@ -152,9 +223,18 @@ module.exports = {
 
 	onConnectedChatHandler,
 	onMessageHandler,
+	addRewardHandlers,
 
 	asyncOnMessageReceived,
 
-	addOutputListener
-	
+	addMessageOutputListener,
+	addRewardOutputListener,
+
+	amounts,
+
+	onCheer,
+	onSubGift,
+	onSubscription,
+	onResub
+
 };

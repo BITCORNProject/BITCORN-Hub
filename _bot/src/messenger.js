@@ -6,30 +6,6 @@ const auth = require('../../settings/auth');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
 
-const amounts = {
-	cheer: {
-		'0000': 10
-	},
-	subgift: {
-		'Prime': 420,
-		'1000': 420,
-		'2000': 4200,
-		'3000': 42000
-	},
-	subscription: {
-		'Prime': 420,
-		'1000': 420,
-		'2000': 4200,
-		'3000': 42000
-	},
-	resub: {
-		'Prime': 420,
-		'1000': 420,
-		'2000': 4200,
-		'3000': 42000
-	}
-};
-
 function _Queue() {
 	this.items = new Queue();
 	this.isBusy = false;
@@ -42,39 +18,15 @@ function _Queue() {
 	this.dequeue = function () { return this.items.dequeue(); }
 }
 
+const MAX_QUEUE_RETRIES = 20;
+
 const chatQueue = new _Queue();
 const whisperQueue = new _Queue();
 
 const rewardQueue = new _Queue();
 
-/*
-
-Rewards
-
-*/
-async function onCheer(channel, userstate, message) { // <----
-	const username = userstate.username;
-	const amount = userstate.bits * amounts.cheer['0000'];
-	rewardQueue.enqueue({ type: 'cheer', channel, username, amount });
-	return sendQueuedRewards();
-}
-
-async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) { // <----
-	const amount = amounts.subgift[methods.plan];
-	rewardQueue.enqueue({ type: 'subgift', channel, username, amount });
-	return sendQueuedRewards();
-}
-
-async function onSubscription(channel, username, methods, message, userstate) { // <----
-	const amount = amounts.subscription[methods.plan];
-	rewardQueue.enqueue({ type: 'subscription', channel, username, amount });
-	return sendQueuedRewards();
-}
-
-async function onResub(channel, username, months, message, userstate, methods) { // <----
-	const amount = amounts.resub[methods.plan];
-	rewardQueue.enqueue({ type: 'subscription', channel, username, amount });
-	return sendQueuedRewards();
+function enqueueReward(type, channel, username, amount) {
+	rewardQueue.enqueue({type, channel, username, amount});
 }
 
 async function sendQueuedRewards() {
@@ -120,7 +72,12 @@ async function sendQueuedRewards() {
 	} else {
 		queue.attempts = 0;
 	}
-	const outMessage = error ? `Failed to send message type for reward on ${queue.attempts} attempts` : `Sent message: ${result.message}`;
+	let outMessage = error ? `Failed to send message type for reward on ${queue.attempts} attempts` : `Sent message: ${result.message}`;
+
+	if(queue.attempts >= MAX_QUEUE_RETRIES) {
+		queue.dequeue();
+		outMessage = `${outMessage} **** ${MAX_QUEUE_RETRIES} MAX_QUEUE_RETRIES ${JSON.stringify(item)}`;
+	}
 
 	/*console.log(' ----------------- outMessage ----------------- ', {
 		success, message: outMessage, error
@@ -148,7 +105,7 @@ async function handleTipRewards(type, channel, username, amount) {
 	};
 
 	const result = await databaseAPI.request(fromUser.id, body).tipcorn();
-	const { success, message } = commandHelper.handelTipResponse(result, fromUser.login, amount);
+	const { success, message } = commandHelper.handelTipResponse(result, fromUser.login, toUser.login, amount);
 
 	if (success === true) {
 		enqueueMessageByType(MESSAGE_TYPE.irc_chat, channel, message);
@@ -233,7 +190,12 @@ async function sendQueuedMessagesByType(type) {
 	} else {
 		queue.attempts = 0;
 	}
-	const outMessage = error ? `Failed to send message type ${type} on ${queue.attempts} attempts` : `Sent message: ${item.message}`;
+	let outMessage = error ? `Failed to send message type ${type} on ${queue.attempts} attempts` : `Sent message: ${item.message}`;
+	
+	if(queue.attempts >= MAX_QUEUE_RETRIES) {
+		queue.dequeue();
+		outMessage = `${outMessage} **** ${MAX_QUEUE_RETRIES} MAX_QUEUE_RETRIES ${JSON.stringify(item)}`;
+	}
 
 	/*console.log(' ----------------- outMessage ----------------- ', {
 		success, message: outMessage, error
@@ -246,15 +208,11 @@ async function sendQueuedMessagesByType(type) {
 module.exports = {
 	chatQueue,
 	whisperQueue,
+	rewardQueue,
 	enqueueMessageByType,
+	enqueueReward,
 	sendQueuedMessagesByType,
+	sendQueuedRewards,
 
-	handleTipRewards,
-
-	amounts,
-
-	onCheer,
-	onSubGift,
-	onSubscription,
-	onResub
+	handleTipRewards
 };

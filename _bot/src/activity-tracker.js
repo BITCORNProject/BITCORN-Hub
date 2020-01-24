@@ -18,8 +18,9 @@ function onChatMessage(target, user, msg, self) {
     addToActiveChatters(target, event.user['user-id'], event.user.username);
 }
 
-const activityTracker = new JsonFile('./settings/activity-tracker.json', {});
+const activityTracker = new JsonFile('../../settings/activity-tracker.json', {});
 
+console.log('MAX_RAIN_USER_CACHE_WITH_PADDING', activityTracker.data);
 
 function addToActiveChatters(target, id, username) {
     if (allowedUsers.activityTrackerOmitUsername(username) === true) return;
@@ -54,10 +55,6 @@ function addToActiveChatters(target, id, username) {
 
 function getChatterActivity(target) {
 
-	if(Object.keys(activeChatters).length === 0) {
-		activeChatters = activityTracker.getValues();
-	}
-
     if (activeChatters[target] === undefined) return [];
 
     let chatternamesArr = [];
@@ -73,7 +70,13 @@ function getChatterActivity(target) {
     return chatternamesArr;
 }
 
+function init() {
+	activeChatters = activityTracker.getValues();
+	return {success: true};
+}
+
 module.exports = {
+	init,
 	onChatMessage,
 	getChatterActivity
 };

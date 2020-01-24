@@ -73,6 +73,8 @@ describe('#mocha promises', function () {
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
+		activityTracker.init();
+
 		return Promise.all([
 			tmi.connectToChat(),
 			tmi.connectToWhisper()
@@ -446,6 +448,27 @@ describe('#mocha promises', function () {
 
 		expect(obj.success).to.be.equal(true);
 		expect(obj.configs.name).to.be.equal('tipcorn');
+	});	
+	
+	it('should execute $tipcorn success for unregistered users with message handler', async () => {
+
+		const twitchUsername = 'd4rkcide';
+		const auth = require('../settings/auth');
+		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.data.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = { 'user-id': user_id, username: user_login };
+
+		const target = '#callowcreation';
+		const msg = '$tipcorn @minsin56 103';
+		const self = false;
+
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
+
+		if (obj.success === false) {
+			log('Command Output =>>>>>>>>>> ', obj);
+		}
+
+		expect(obj.success).to.be.equal(true);
+		expect(obj.message).to.include('https://bitcornfarms.com/');
 	});
 
 	it('should get $withdraw response from invoking execute', async () => {
@@ -670,7 +693,7 @@ describe('#mocha promises', function () {
 				return Promise.resolve({ success: true });
 			}
 		} : require('./src/commands/blacklist');
-		const event = await mockEvent('$blacklist @wollac', 'callowcreation', '#callowcreation', '#callowcreation');
+		const event = await mockEvent('$blacklist @naivebot', 'callowcreation', '#callowcreation', '#callowcreation');
 		const result = await commander.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
 	});
@@ -681,7 +704,19 @@ describe('#mocha promises', function () {
 		const amount = 10;
 		const result = await messenger.handleTipRewards('Subscribing', channel, username, amount);
 		expect(result.success).to.be.equal(true);
-	})
+	});
+
+	it('should send message tyo chat from rewards queue', async () => {
+
+		const channel = '#callowcreation';
+		const username = 'callowcreation';
+		const amount = 10;
+		messenger.enqueueReward('cheer', channel, username, amount);
+
+		const result = await messenger.sendQueuedRewards();
+
+		expect(result.success).to.be.equal(true);
+	});
 
 	it('should handle rewards events', async () => {
 
@@ -700,25 +735,25 @@ describe('#mocha promises', function () {
 		methods = null;
 		channel = '#callowcreation';
 		username = 'callowcreation';
-		promises.push(messenger.onCheer(channel, userstate, message));
+		promises.push(tmi.onCheer(channel, userstate, message));
 
 		userstate = null;
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
-		promises.push(messenger.onSubGift(channel, username, streakMonths, recipient, methods, userstate));
+		promises.push(tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate));
 
 		userstate = null;
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
-		promises.push(messenger.onSubscription(channel, username, methods, message, userstate));
+		promises.push(tmi.onSubscription(channel, username, methods, message, userstate));
 
 		userstate = null;
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
-		promises.push(messenger.onResub(channel, username, months, message, userstate, methods));
+		promises.push(tmi.onResub(channel, username, months, message, userstate, methods));
 
 		const results = await Promise.all(promises);
 

@@ -85,6 +85,15 @@ module.exports = {
 					return x.to && !x.txId && x.to.isbanned === false;
 				}).map(x => x.to.twitchusername);
 
+				if(failedItems.length === 0) {
+					for (let i = 0; i < items.length; i++) {
+						const item = items[i];
+						if(successItems.includes(item.username)) continue;
+						if(results.find(x => x.to && x.to.twitchusername === item.username)) continue;
+						failedItems.push(item.username);
+					}
+				}
+
 				if (successItems.length > 0 && failedItems.length > 0) {
 					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
 					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;

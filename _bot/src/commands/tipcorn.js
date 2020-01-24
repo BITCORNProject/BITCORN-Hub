@@ -61,7 +61,7 @@ module.exports = {
 
 				const result = await databaseAPI.request(event.twitchId, body).tipcorn();
 				
-				({ message, success } = commandHelper.handelTipResponse(result, event.twitchUsername, amount));
+				({ message, success } = commandHelper.handelTipResponse(result, event.twitchUsername, twitchUsername, amount));
 			}
 		}
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };

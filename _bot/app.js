@@ -16,18 +16,22 @@ if (module === require.main) {
 		messenger.whisperQueue.client = tmi.whisperClient;
 
 		tmi.addMessageHandler(activityTracker.onChatMessage);
+		tmi.addRewardHandlers();
 
 		const results = await Promise.all([
 			tmi.connectToChat(),
 			tmi.connectToWhisper()
 		]);
 
-		tmi.addOutputListener(console.log);
+		tmi.addMessageOutputListener(console.log);
+		tmi.addRewardOutputListener(console.log);
 
 		console.log(results);
 
 		const result = await tmi.joinChannel(CHANNEL);
 		console.log(result);
+
+		activityTracker.init();
 
 	})();
 
