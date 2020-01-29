@@ -5,31 +5,19 @@ request_result1.refused
 
 "use strict";
 
-const rooturl = require('./rooturl');
 const apiRequest = require('./api-request');
-const JsonFile = require('../utils/json-file');
+
+const rooturl = require('../../settings/rooturl.json');
+const sql_db_auth = require(`../../settings/sql_db_auth.json`);
+const db_endpoints = require('../../settings/db_endpoints.json');
 
 function DatabaseEndpoint() {
 
     this.MAX_WALLET_AMOUNT = 100000000000;
     this.MAX_RAIN_USERS = 10;
 
-    this.sql_db_auth = new JsonFile(`./settings/sql_db_auth.json`, {
-        url: '',
-        client_id: '',
-        client_secret: '',
-        audience: ''
-    });
-
-    this.db_endpoints = new JsonFile('./settings/db_endpoints.json', {
-        bitcorn: '/twitch|', // tested
-        rain: '/rain', // tested
-        subticker: '/payout', // tested
-        tipcorn: '/tipcorn', // tested
-        withdraw: '/withdraw', // tested
-        token: '/token',
-		blacklist: '/ban' // tested
-	});
+    this.sql_db_auth = sql_db_auth;
+    this.db_endpoints = db_endpoints;
 	
     this.paymentCode = {
         Banned: -7,
@@ -60,66 +48,66 @@ function DatabaseEndpoint() {
 }
 
 DatabaseEndpoint.prototype.rooturl = function() {
-	return rooturl.getValues();
+	return rooturl;
 }
 
 // v3
 DatabaseEndpoint.prototype.makeErrorRequest = async function (data) {
-	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth.getValues());
-	const url = `${rooturl.getValues().base}/${rooturl.getValues().errorlog}`;
+	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const url = `${rooturl.base}/${rooturl.errorlog}`;
     return apiRequest.makeRequest(url, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
-	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth.getValues());
-	const url = `${rooturl.getValues().base}/${baseUrl}${endpoint}`;
+	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const url = `${rooturl.base}/${baseUrl}${endpoint}`;
     return apiRequest.makeRequest(url, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestDirect = async function (baseUrl, twitchId, data) {
-    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth.getValues());
-	const url = `${rooturl.getValues().base}/${baseUrl}`;
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const url = `${rooturl.base}/${baseUrl}`;
     return apiRequest.makeRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestDirect = async function (baseUrl, twitchId, data) {
-    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth.getValues());
-	const url = `${rooturl.getValues().base}/${baseUrl}`;
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const url = `${rooturl.base}/${baseUrl}`;
     return apiRequest.criticalRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestBase = async function (baseUrl, endpoint, twitchId, data) {
-    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth.getValues());
-	const url = `${rooturl.getValues().base}/${baseUrl}${endpoint}`;
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const url = `${rooturl.base}/${baseUrl}${endpoint}`;
     return apiRequest.criticalRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequest = async function (endpoint, data) {
-    return this.makeRequestBase(rooturl.getValues().transaction, endpoint, data);
+    return this.makeRequestBase(rooturl.transaction, endpoint, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequest = async function (endpoint, twitchId, data) {
-    return this.criticalRequestBase(rooturl.getValues().transaction, endpoint, twitchId, data);
+    return this.criticalRequestBase(rooturl.transaction, endpoint, twitchId, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestTest = async function (endpoint, data) {
-    return this.makeRequestBase(rooturl.getValues().test, endpoint, data);
+    return this.makeRequestBase(rooturl.test, endpoint, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestUser = async function (endpoint, data) {
-    return this.makeRequestBase(rooturl.getValues().user, endpoint, data);
+    return this.makeRequestBase(rooturl.user, endpoint, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestTest = async function (endpoint, twitchId, data) {
-    return this.criticalRequestBase(rooturl.getValues().test, endpoint, twitchId, data);
+    return this.criticalRequestBase(rooturl.test, endpoint, twitchId, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestWallet = async function (twitchId, data) {
-    return this.criticalRequestDirect(rooturl.getValues().wallet, twitchId, data);
+    return this.criticalRequestDirect(rooturl.wallet, twitchId, data);
 }
 
 DatabaseEndpoint.prototype.tokenRequest = async function (token, twitchId, twitchUsername) {
-    return this.makeRequest(`${this.db_endpoints.getValues().token}`, {
+    return this.makeRequest(`${this.db_endpoints.token}`, {
         twitchId,
         twitchUsername,
         token
@@ -155,7 +143,7 @@ DatabaseEndpoint.prototype._criticalRecipientsRequestIdUsername = async function
 
 // With arbitrary body data
 DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId) {
-    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().bitcorn}`, twitchId, {
+    return this._criticalArbitraryRequest(`${this.db_endpoints.bitcorn}`, twitchId, {
         id: twitchId
     });
 }
@@ -164,7 +152,7 @@ DatabaseEndpoint.prototype.bitcornRequest = async function (twitchId) {
 Expect code: this.walletCode
 */
 DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, amount, cornaddy) {
-    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().withdraw}`, twitchId, {
+    return this._criticalArbitraryRequest(`${this.db_endpoints.withdraw}`, twitchId, {
         id: twitchId,
         amount,
         cornaddy
@@ -176,14 +164,14 @@ DatabaseEndpoint.prototype.withdrawRequest = async function (twitchId, amount, c
 Expect code: this.paymentCode
 */
 DatabaseEndpoint.prototype.rainRequest = async function (recipients, twitchId) {
-    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().rain}`, recipients, twitchId);
+    return this._criticalRecipientsRequest(`${this.db_endpoints.rain}`, recipients, twitchId);
 }
 
 /*
 Expect code: this.paymentCode
 */
 DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, receiverId, amount) {
-    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().tipcorn}`, senderId, {
+    return this._criticalArbitraryRequest(`${this.db_endpoints.tipcorn}`, senderId, {
         senderId,
         receiverId,
         amount
@@ -194,14 +182,14 @@ DatabaseEndpoint.prototype.tipcornRequest = async function (senderId, receiverId
 Expect code: this.paymentCode
 */
 DatabaseEndpoint.prototype.subtickerRequest = async function (recipients, twitchId) {
-    return this._criticalRecipientsRequest(`${this.db_endpoints.getValues().subticker}`, recipients, twitchId);
+    return this._criticalRecipientsRequest(`${this.db_endpoints.subticker}`, recipients, twitchId);
 }
 
 /*
 Expect code: this.banResultCode
 */
 DatabaseEndpoint.prototype.blacklistRequest = async function (senderId, receiverTwitchId) {
-    return this._criticalArbitraryRequest(`${this.db_endpoints.getValues().blacklist}`, senderId, { senderId, receiverTwitchId });
+    return this._criticalArbitraryRequest(`${this.db_endpoints.blacklist}`, senderId, { senderId, receiverTwitchId });
 }
 
 /*
@@ -251,19 +239,19 @@ const body = {
 */
 DatabaseEndpoint.prototype.request = function(twitchId, body) {
 	return {
-		rain: () => this._criticalArbitraryRequest(this.db_endpoints.getValues().rain, twitchId, body),
-		tipcorn: () => this._criticalArbitraryRequest(this.db_endpoints.getValues().tipcorn,  twitchId, body),
-		bitcorn: () => this.makeRequestUser(`${this.db_endpoints.getValues().bitcorn}${twitchId}`, null),
-		withdraw: () => this.criticalRequestDirect(rooturl.getValues().wallet, twitchId, body)
+		rain: () => this._criticalArbitraryRequest(this.db_endpoints.rain, twitchId, body),
+		tipcorn: () => this._criticalArbitraryRequest(this.db_endpoints.tipcorn,  twitchId, body),
+		bitcorn: () => this.makeRequestUser(`${this.db_endpoints.bitcorn}${twitchId}`, null),
+		withdraw: () => this.criticalRequestDirect(rooturl.wallet, twitchId, body)
 	};
 }
 
 // v3
 /*
-const body = ['75987197', user.id, '120524051'];
+const body = {chatters: [ids], minutes: 1.5}
 */
 DatabaseEndpoint.prototype.requestPayout = function(body) {
-	return this.makeRequest(this.db_endpoints.getValues().subticker, body)
+	return this.makeRequest(this.db_endpoints.subticker, body);
 }
 
 // v3
@@ -271,7 +259,7 @@ DatabaseEndpoint.prototype.requestPayout = function(body) {
 const body = null;
 */
 DatabaseEndpoint.prototype.requestBlacklist = async function (twitchId, banUserId) {
-    return this.makeRequestUser(`${this.db_endpoints.getValues().blacklist}`, {Sender: `twitch|${twitchId}`, BanUser: `twitch|${banUserId}`});
+    return this.makeRequestUser(`${this.db_endpoints.blacklist}`, {Sender: `twitch|${twitchId}`, BanUser: `twitch|${banUserId}`});
 }
 
 // v3

@@ -9,6 +9,7 @@ if (module === require.main) {
 		const tmi = require('./src/tmi');
 		const messenger = require('./src/messenger');
 		const activityTracker = require('./src/activity-tracker');
+		const subTicker = require('./src/sub-ticker');
 		
 		tmi.registerEvents();
 		
@@ -32,6 +33,8 @@ if (module === require.main) {
 		console.log(result);
 
 		activityTracker.init();
+		const subInit = await subTicker.init();
+		console.log(subInit);
 
 	})();
 

@@ -20,7 +20,7 @@ function onChatMessage(target, user, msg, self) {
 
 const activityTracker = new JsonFile('../../settings/activity-tracker.json', {});
 
-console.log('MAX_RAIN_USER_CACHE_WITH_PADDING', activityTracker.data);
+//console.log('MAX_RAIN_USER_CACHE_WITH_PADDING', activityTracker.data);
 
 function addToActiveChatters(target, id, username) {
     if (allowedUsers.activityTrackerOmitUsername(username) === true) return;

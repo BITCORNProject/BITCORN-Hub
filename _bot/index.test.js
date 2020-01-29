@@ -718,6 +718,33 @@ describe('#mocha promises', function () {
 		expect(result.success).to.be.equal(true);
 	});
 
+	it('should not send two reward requests with the same message id', async () => {
+
+		const promises = [];
+
+		let userstate = null;
+		let methods = null;
+		let channel = null;
+		let username = null;
+		let message = null;
+		let streakMonths = null;
+		let recipient = null;
+		let months = null;
+
+		userstate = {bits: 10, username: 'callowcreation', id: '0932a496-50f2-4020-982d-09102ef36b13'};
+		methods = null;
+		channel = '#callowcreation';
+		username = 'callowcreation';
+		promises.push(tmi.onCheer(channel, userstate, message));
+
+		promises.push(tmi.onCheer(channel, userstate, message));
+
+		const results = await Promise.all(promises);
+
+		expect(results[0].error).to.be.equal(null);
+		expect(results[1].success).to.be.equal(false);
+	});
+
 	it('should handle rewards events', async () => {
 
 		const promises = [];
@@ -731,25 +758,25 @@ describe('#mocha promises', function () {
 		let recipient = null;
 		let months = null;
 
-		userstate = {bits: 10, username: 'callowcreation'};
+		userstate = {bits: 10, username: 'callowcreation', id: 'random-id-lol'};
 		methods = null;
 		channel = '#callowcreation';
 		username = 'callowcreation';
 		promises.push(tmi.onCheer(channel, userstate, message));
 
-		userstate = null;
+		userstate = {id: 'random-id-kappa'};
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
 		promises.push(tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate));
 
-		userstate = null;
+		userstate = {id: 'random-id-callowbruh'};
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
 		promises.push(tmi.onSubscription(channel, username, methods, message, userstate));
 
-		userstate = null;
+		userstate = {id: 'random-id-mttv420'};
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
@@ -762,4 +789,70 @@ describe('#mocha promises', function () {
 			expect(result.error).to.be.equal(null);
 		}
 	});
+
+	it('should send sub ticker payout request', async () => {
+		
+		const auth = require('../settings/auth');
+
+		const MINUTE_AWARD_MULTIPLIER = serverSettings.getValues().MINUTE_AWARD_MULTIPLIER;
+		let viewers = [];
+
+		const channel = 'markettraderstv';
+		const url = `https://tmi.twitch.tv/group/user/${channel}/chatters`;
+        const chatters_result = await fetch(url);
+        const chatters_json = await chatters_result.json();
+        viewers = [];
+        for (const key in chatters_json) {
+            const chatters = chatters_json[key];
+            for (const k in chatters) {
+                if (k === 'broadcaster') continue;
+                viewers = viewers.concat(chatters[k]);
+            }
+		}
+		
+		log(viewers.length);
+
+		const promises = [];
+		let chatters = [];
+		while(viewers.length > 0) {
+			const chunked = viewers.splice(0, 100);
+			promises.push(new Promise(async (resolve) => {
+				const usernames = chunked.join(',');
+				const users = await fetch(`http://localhost:${auth.data.PORT}/users?usernames=${usernames}`).then(res => res.json());				
+				resolve(users.result.users.map(x => x._id));
+			}));
+		}
+		const presults = await Promise.all(promises);
+		chatters = [].concat.apply([], presults);
+		
+		//log(chatters.length);
+		chatters.length = 5;
+
+		//log(chatters);
+
+		const body = {
+			chatters: chatters,
+			minutes: MINUTE_AWARD_MULTIPLIER
+		};
+		const results = await databaseAPI.requestPayout(body);
+
+		log(body);
+
+		expect(results).to.be.greaterThan(0);
+	});
+
+	it('should perform sub ticker after init', async () => {
+		const subTicker = require('./src/sub-ticker');
+
+		const channel = 'callowcreation';
+
+		const initResult = await subTicker.init();
+		expect(initResult.success).to.be.equal(true);
+
+		const results = await subTicker.performPayout(channel);
+
+		expect(results).to.be.greaterThan(0);
+
+	});
+
 });

@@ -141,23 +141,36 @@ async function onMessageHandler(target, user, msg, self) {
 Rewards
 
 */
+const rewardedIds = [];
 async function onCheer(channel, userstate, message) {
+	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
+	rewardedIds.push(userstate.id);
+
 	const username = userstate.username;
 	const amount = userstate.bits * amounts.cheer['0000'];
 	return handleRewardEvent('cheer', channel, username, amount);
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
+	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubGift` };
+	rewardedIds.push(userstate.id);
+
 	const amount = amounts.subgift[methods.plan];
 	return handleRewardEvent('subgift', channel, username, amount);
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
+	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubscription` };
+	rewardedIds.push(userstate.id);
+
 	const amount = amounts.subscription[methods.plan];
 	return handleRewardEvent('subscription', channel, username, amount);
 }
 
 async function onResub(channel, username, months, message, userstate, methods) {
+	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onResub` };
+	rewardedIds.push(userstate.id);
+	
 	const amount = amounts.resub[methods.plan];
 	return handleRewardEvent('resub', channel, username, amount);
 }
@@ -165,7 +178,7 @@ async function onResub(channel, username, months, message, userstate, methods) {
 async function handleRewardEvent(type, channel, username, amount) {
 	messenger.enqueueReward(type, channel, username, amount);
 	const result = await messenger.sendQueuedRewards();
-	
+
 	for (let i = 0; i < outRerwardCallbacks.length; i++) {
 		outRerwardCallbacks[i](result);
 	}
