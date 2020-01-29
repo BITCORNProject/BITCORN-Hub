@@ -855,4 +855,14 @@ describe('#mocha promises', function () {
 
 	});
 
+	it('should send error to database logger', async () => {
+
+		const errorLogger = require('../source/utils/error-logger');
+
+		const error = new Error('Faile test as expected');
+		const errorcode = 0;
+		const result = await errorLogger.asyncErrorLogger(error, errorcode);
+		expect(result).to.be.equal(true);
+	});
+
 });

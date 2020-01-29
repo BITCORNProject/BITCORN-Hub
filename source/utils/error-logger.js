@@ -55,11 +55,11 @@ async function asyncLogError(sendData, errorcode, message, botData) {
 */
 async function asyncErrorLogger(error, errorcode) {
 	const sendData = {
-		timestamp: Date.now(),
+		timestamp: new Date(),
 		application: 'bitcornhub-twitch', // save as .env variable
 		message: error.message,
 		stacktrace: error.stack,
-		code: errorcode,
+		code: `${errorcode}`,
 		id: 0
 	};
     return databaseAPI.makeErrorRequest(sendData);
