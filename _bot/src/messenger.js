@@ -1,8 +1,8 @@
 "use strict";
 const fetch = require('node-fetch');
 
-const serverSettings = require('../../settings/server-settings');
-const auth = require('../../settings/auth');
+const serverSettings = require('../settings/server-settings');
+const auth = require('../settings/auth');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
 
@@ -64,7 +64,7 @@ async function sendQueuedRewards() {
 		error = err;
 	}
 
-	await new Promise(resolve => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS));
+	await new Promise(resolve => setTimeout(resolve, serverSettings.IRC_DELAY_MS));
 
 	queue.isBusy = false;
 	if (error) {
@@ -92,7 +92,7 @@ async function handleTipRewards(type, channel, username, amount) {
 	const commandHelper = require('./shared-lib/command-helper');
 	const databaseAPI = require('./api-interface/database-api');
 
-	const authValues = auth.getValues();
+	const authValues = auth;
 	const fromUser = await fetch(`http://localhost:${authValues.PORT}/user?username=${authValues.BOT_USERNAME}`).then(res => res.json());
 	const toUser = await fetch(`http://localhost:${authValues.PORT}/user?username=${username}`).then(res => res.json());
 
@@ -123,10 +123,10 @@ function enqueueMessageByType(type, target, message) {
 	if (type === MESSAGE_TYPE.irc_chat) {
 		chatQueue.enqueue({ target, message });
 	} else if (type === MESSAGE_TYPE.irc_whisper) {
-		if (target.toLowerCase() !== auth.getValues().BOT_USERNAME.toLowerCase()) {
+		if (target.toLowerCase() !== auth.BOT_USERNAME.toLowerCase()) {
 			whisperQueue.enqueue({ target, message });
 		} else {
-			console.error(`Bot ${auth.getValues().BOT_USERNAME} attempt to whisper self`);
+			console.error(`Bot ${auth.BOT_USERNAME} attempt to whisper self`);
 		}
 	} else {
 		throw new Error(`${type} ${target} ${message}`);
@@ -179,7 +179,7 @@ async function sendQueuedMessagesByType(type) {
 		error = err;
 	}
 
-	await new Promise(resolve => setTimeout(resolve, serverSettings.data.IRC_DELAY_MS));
+	await new Promise(resolve => setTimeout(resolve, serverSettings.IRC_DELAY_MS));
 
 	queue.isBusy = false;
 	if (error) {

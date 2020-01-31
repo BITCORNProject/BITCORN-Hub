@@ -7,8 +7,8 @@
 const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../../settings/auth');
-const serverSettings = require('../../../settings/server-settings');
+const auth = require('../../settings/auth');
+const serverSettings = require('../../settings/server-settings');
 
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
@@ -37,7 +37,7 @@ module.exports = {
 
 		if (cleanParams.isNumber(rain_amount) === false ||
 			cleanParams.isNumber(rain_user_count) === false ||
-			rain_amount < serverSettings.getValues().MIN_RAIN_AMOUNT ||
+			rain_amount < serverSettings.MIN_RAIN_AMOUNT ||
 			rain_amount >= databaseAPI.MAX_WALLET_AMOUNT ||
 			rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS) {
 
@@ -110,7 +110,7 @@ module.exports = {
 				}
 
 			} else {
-				message = util.format('Hmmmmm Rain Fail', event.twitchUsername, amount);
+				message = util.format(`ERROR: ${results.status || results.code} - Hmmmmm Rain Fail`, event.twitchUsername, amount);
 			}
 		}
 

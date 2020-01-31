@@ -3,7 +3,7 @@
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
 const commander = require('./commander');
-const auth = require('../../settings/auth');
+const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
 
@@ -14,6 +14,11 @@ const outRerwardCallbacks = [];
 
 const cooldowns = {};
 const global_cooldowns = {};
+
+// to stop duplicate rewards being processed
+// example image location
+// \misc\duplicate-reward.PNG
+const rewardedIds = []; 
 
 const channels = ['callowcreation'];
 
@@ -48,8 +53,8 @@ const clients = {
 			reconnect: true
 		},
 		identity: {
-			username: auth.data.BOT_USERNAME,
-			password: auth.data.OAUTH_TOKEN
+			username: auth.BOT_USERNAME,
+			password: auth.OAUTH_TOKEN
 		},
 		channels: channels
 	}),
@@ -60,8 +65,8 @@ const clients = {
 			port: 80
 		},
 		identity: {
-			username: auth.data.BOT_USERNAME,
-			password: auth.data.OAUTH_TOKEN
+			username: auth.BOT_USERNAME,
+			password: auth.OAUTH_TOKEN
 		},
 		channels: channels
 	})
@@ -141,7 +146,6 @@ async function onMessageHandler(target, user, msg, self) {
 Rewards
 
 */
-const rewardedIds = [];
 async function onCheer(channel, userstate, message) {
 	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
 	rewardedIds.push(userstate.id);

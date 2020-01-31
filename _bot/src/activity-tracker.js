@@ -5,10 +5,10 @@
 "use strict";
 
 const JsonFile = require('./utils/json-file');
-const serverSettings = require('../../settings/server-settings');
+const serverSettings = require('../settings/server-settings');
 const allowedUsers = require('./utils/allowed-users');
 
-const MAX_RAIN_USER_CACHE = serverSettings.getValues().MAX_RAIN_USER_CACHE;
+const MAX_RAIN_USER_CACHE = serverSettings.MAX_RAIN_USER_CACHE;
 const MAX_RAIN_USER_CACHE_WITH_PADDING = MAX_RAIN_USER_CACHE * 1.4;
 let activeChatters = {};
 

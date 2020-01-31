@@ -7,8 +7,8 @@
 const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../../settings/auth');
-const serverSettings = require('../../../settings/server-settings');
+const auth = require('../../settings/auth');
+const serverSettings = require('../../settings/server-settings');
 
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
@@ -33,7 +33,7 @@ module.exports = {
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 
-		const user = await fetch(`http://localhost:${auth.getValues().PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
 		if (!user.success || user.error) {
 			message = JSON.stringify(user);
@@ -58,7 +58,7 @@ module.exports = {
 				message = util.format('User %s was added to the blacklist', result.Value.twitchusername);
 
 			} else {
-				message = util.format('Hmmmmm %s Blacklist did not work', twitchUsername);
+				message = util.format(`ERROR: ${result.status || result.code} - Hmmmmm Blacklist Fail`, twitchUsername, amount);
 			}
 		}
 

@@ -62,7 +62,7 @@ module.exports = {
 					success = true;
 					message = util.format(`You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://www.coinexplorer.net/CORN/transaction/%s`, result.txid);
 				} else {
-					message = 'You failed to withdraw: invalid payment action';
+					message = util.format(`ERROR: ${results.status || results.code} - Hmmmmm Withdraw Fail`, event.twitchUsername, amount);
 				}
 			}
 		}

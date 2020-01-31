@@ -5,6 +5,8 @@ request_result1.refused
 
 "use strict";
 
+const { is_production } = require('../../prod');
+
 const apiRequest = require('./api-request');
 
 const rooturl = require('../../settings/rooturl.json');
@@ -51,59 +53,67 @@ DatabaseEndpoint.prototype.rooturl = function() {
 	return rooturl;
 }
 
+DatabaseEndpoint.prototype.base = function() {
+	if(is_production) {
+		return rooturl.base.production;
+	} else {
+		return rooturl.base.development;
+	}
+}
+
 // v3
 DatabaseEndpoint.prototype.makeErrorRequest = async function (data) {
 	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
-	const url = `${rooturl.base}/${rooturl.errorlog}`;
+	const url = `${this.base()}/${this.rooturl().errorlog}`;
     return apiRequest.makeRequest(url, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
 	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
-	const url = `${rooturl.base}/${baseUrl}${endpoint}`;
+	const url = `${this.base()}/${baseUrl}${endpoint}`;
     return apiRequest.makeRequest(url, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestDirect = async function (baseUrl, twitchId, data) {
     const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
-	const url = `${rooturl.base}/${baseUrl}`;
+	const url = `${this.base()}/${baseUrl}`;
     return apiRequest.makeRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestDirect = async function (baseUrl, twitchId, data) {
     const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
-	const url = `${rooturl.base}/${baseUrl}`;
+	const url = `${this.base()}/${baseUrl}`;
     return apiRequest.criticalRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestBase = async function (baseUrl, endpoint, twitchId, data) {
     const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
-	const url = `${rooturl.base}/${baseUrl}${endpoint}`;
+	const url = `${this.base()}/${baseUrl}${endpoint}`;
     return apiRequest.criticalRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequest = async function (endpoint, data) {
-    return this.makeRequestBase(rooturl.transaction, endpoint, data);
+    return this.makeRequestBase(this.rooturl().transaction, endpoint, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequest = async function (endpoint, twitchId, data) {
-    return this.criticalRequestBase(rooturl.transaction, endpoint, twitchId, data);
+    return this.criticalRequestBase(this.rooturl().transaction, endpoint, twitchId, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestTest = async function (endpoint, data) {
-    return this.makeRequestBase(rooturl.test, endpoint, data);
+    return this.makeRequestBase(this.rooturl().test, endpoint, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestUser = async function (endpoint, data) {
-    return this.makeRequestBase(rooturl.user, endpoint, data);
+    return this.makeRequestBase(this.rooturl().user, endpoint, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestTest = async function (endpoint, twitchId, data) {
-    return this.criticalRequestBase(rooturl.test, endpoint, twitchId, data);
+    return this.criticalRequestBase(this.rooturl().test, endpoint, twitchId, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestWallet = async function (twitchId, data) {
-    return this.criticalRequestDirect(rooturl.wallet, twitchId, data);
+    return this.criticalRequestDirect(this.rooturl().wallet, twitchId, data);
 }
 
 DatabaseEndpoint.prototype.tokenRequest = async function (token, twitchId, twitchUsername) {
@@ -242,7 +252,7 @@ DatabaseEndpoint.prototype.request = function(twitchId, body) {
 		rain: () => this._criticalArbitraryRequest(this.db_endpoints.rain, twitchId, body),
 		tipcorn: () => this._criticalArbitraryRequest(this.db_endpoints.tipcorn,  twitchId, body),
 		bitcorn: () => this.makeRequestUser(`${this.db_endpoints.bitcorn}${twitchId}`, null),
-		withdraw: () => this.criticalRequestDirect(rooturl.wallet, twitchId, body)
+		withdraw: () => this.criticalRequestDirect(this.rooturl().wallet, twitchId, body)
 	};
 }
 

@@ -1,5 +1,6 @@
 "use strict";
 
+const { is_production } = require('../prod');
 const moduleloader = require('./utils/moduleloader');
 
 const commandsPath = '../commands';
@@ -32,12 +33,17 @@ const expectedOutProperties = {
 	configs: {}
 };
 
+function commandName(name) {
+	return is_production ? name : `${name}test`;
+}
+
 function createCommandsMap() {
 	const commandsMap = new Map();
 	for (let i = 0; i < commands.length; i++) {
 		const command = commands[i];
-		if (commandsMap.has(command.configs.name)) continue;
-		commandsMap.set(command.configs.name, command);
+		const name = commandName(command.configs.name);
+		if (commandsMap.has(name)) continue;		
+		commandsMap.set(name, command);
 	}
 	return commandsMap;
 }
@@ -107,7 +113,8 @@ module.exports = {
 	expectedOutProperties,
 
 	commands,
-
+	commandName,
+	
 	createCommandsMap,
 	messageAsCommand,
 

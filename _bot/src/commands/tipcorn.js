@@ -7,8 +7,8 @@
 const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../../settings/auth');
-const serverSettings = require('../../../settings/server-settings');
+const auth = require('../../settings/auth');
+const serverSettings = require('../../settings/server-settings');
 
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
@@ -37,13 +37,13 @@ module.exports = {
 		const amount = cleanParams.amount(event.args.params[1]);
 
 		if (cleanParams.isNumber(amount) === false ||
-			amount < serverSettings.getValues().MIN_TIPCORN_AMOUNT ||
+			amount < serverSettings.MIN_TIPCORN_AMOUNT ||
 			amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 
 			message = 'Invalid input';
 		} else {
 
-			const user = await fetch(`http://localhost:${auth.getValues().PORT}/user?username=${twitchUsername}`).then(res => res.json());
+			const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
 			if (!user.success || user.error) {
 				message = JSON.stringify(user);

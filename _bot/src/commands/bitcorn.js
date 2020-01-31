@@ -40,10 +40,9 @@ module.exports = {
 
 			message = `API access locked for ${event.twitchId}`;
 
-		} else if (result.status) {
+		} else if (result.status || result.code) {
 
-			// NOTE needs to be logged to the locally as an error
-			message = `${message}: ${result.status} ${result.statusText}`;
+			message = util.format(`ERROR: ${results.status || results.code} - Hmmmmm Bitcorn Fail`, event.twitchUsername);
 
 		} else {
 			success = true;
