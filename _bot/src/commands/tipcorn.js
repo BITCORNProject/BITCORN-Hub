@@ -13,6 +13,7 @@ const serverSettings = require('../../settings/server-settings');
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
+const allowedUsers = require('../utils/allowed-users');
 
 const commandHelper = require('../shared-lib/command-helper');
 
@@ -36,20 +37,28 @@ module.exports = {
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
 
-		if (cleanParams.isNumber(amount) === false ||
+		if(allowedUsers.activityTrackerOmitUsername(twitchUsername)) {
+			message = `${this.configs.name} used on omit username ${twitchUsername}`;
+		} else if (cleanParams.isNumber(amount) === false ||
 			amount < serverSettings.MIN_TIPCORN_AMOUNT ||
 			amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 
-			message = 'Invalid input';
+			if (amount < serverSettings.MIN_TIPCORN_AMOUNT) {
+				success = true;
+				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, serverSettings.MIN_TIPCORN_AMOUNT, this.configs.example);
+			} else if(amount >= databaseAPI.MAX_WALLET_AMOUNT) {
+				success = true;
+				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);
+			} else {
+				message = 'Invalid input';
+			}
 		} else {
 
 			const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
 			if (!user.success || user.error) {
-				message = JSON.stringify(user);
-				if (user.success === false) {
-					message = user.message;
-				}
+				success = true;
+				message = util.format(`%s - mttvMOONMAN Here's a tip for you: %s who? mttvMOONMAN`, twitchUsername);
 			} else {
 				const body = {
 					from: `twitch|${event.twitchId}`,
@@ -60,7 +69,7 @@ module.exports = {
 				};
 
 				const result = await databaseAPI.request(event.twitchId, body).tipcorn();
-				
+
 				({ message, success } = commandHelper.handelTipResponse(result, event.twitchUsername, twitchUsername, amount));
 			}
 		}

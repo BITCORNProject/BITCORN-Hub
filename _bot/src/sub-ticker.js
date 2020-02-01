@@ -47,10 +47,7 @@ async function performPayout(channel) {
 		chatters: chatters,
 		minutes: MINUTE_AWARD_MULTIPLIER
 	};
-	const results = await databaseAPI.requestPayout(body);
-
-	console.log(results);
-	return results;
+	return databaseAPI.requestPayout(body);
 }
 
 async function init() {

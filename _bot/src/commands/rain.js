@@ -40,8 +40,18 @@ module.exports = {
 			rain_amount < serverSettings.MIN_RAIN_AMOUNT ||
 			rain_amount >= databaseAPI.MAX_WALLET_AMOUNT ||
 			rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS) {
-
-			message = 'Invalid input';
+			if (rain_amount < serverSettings.MIN_RAIN_AMOUNT) {
+				success = true;
+				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, serverSettings.MIN_RAIN_AMOUNT, this.configs.example);
+			} else if(rain_user_count > databaseAPI.MAX_RAIN_USERS) {
+				success = true;
+				message = util.format(`Number of people you can %s to is 1 to %d`, this.configs.name, databaseAPI.MAX_RAIN_USERS);
+			} else if(rain_amount >= databaseAPI.MAX_WALLET_AMOUNT) {
+				success = true;
+				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);
+			} else {
+				message = 'Invalid input';
+			}
 		} else {
 			const chatternamesArr = activityTracker.getChatterActivity(event.channel)
 				.filter(x => x.username !== event.twitchUsername && x.id);
@@ -85,11 +95,11 @@ module.exports = {
 					return x.to && !x.txId && x.to.isbanned === false;
 				}).map(x => x.to.twitchusername);
 
-				if(failedItems.length === 0) {
+				if (failedItems.length === 0) {
 					for (let i = 0; i < items.length; i++) {
 						const item = items[i];
-						if(successItems.includes(item.username)) continue;
-						if(results.find(x => x.to && x.to.twitchusername === item.username)) continue;
+						if (successItems.includes(item.username)) continue;
+						if (results.find(x => x.to && x.to.twitchusername === item.username)) continue;
 						failedItems.push(item.username);
 					}
 				}
@@ -99,13 +109,18 @@ module.exports = {
 					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
 					message = `${successMessage}${(failedItems.length > 0 ? failedMessage : '')}`;
 				} else if (successItems.length == 0 && failedItems.length > 0) {
-					const successMessage = `${event.twitchUsername} FeelsRainMan`;
-					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
-					message = `${successMessage}${failedMessage}`;
+					if(results[0].from.balance < rain_amount) {
+						message = util.format(`DogePls SourPls %s You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`, event.twitchUsername);
+					} else {
+						const successMessage = `${event.twitchUsername} FeelsRainMan`;
+						const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+						message = `${successMessage}${failedMessage}`;
+					}
 				} else if (successItems.length > 0 && failedItems.length == 0) {
 					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
 					message = successMessage;
 				} else if (successItems.length == 0 && failedItems.length == 0) {
+					success = false;
 					message = `${event.twitchUsername} rained on noone`;
 				}
 

@@ -46,7 +46,7 @@ module.exports = {
 
 		} else {
 			success = true;
-			message = util.format(`Howdy BITCORN Farmer! You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.twitchUsername);
+			message = util.format(`Howdy BITCORN Farmer! You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.cornAddy);
 		}
 		
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };

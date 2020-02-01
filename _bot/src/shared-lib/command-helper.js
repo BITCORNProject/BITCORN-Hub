@@ -10,7 +10,7 @@ function handelTipResponse(result, fromUsername, toUsername, amount) {
 	if (result.status && result.status === 500) {
 		// NOTE needs to be logged to the locally as an error
 		message = `${message}: ${result.status} ${result.statusText}`;
-		
+
 	} else if (result.status && result.status === 420) {
 
 		message = `API access locked for ${fromUsername}`;
@@ -22,9 +22,15 @@ function handelTipResponse(result, fromUsername, toUsername, amount) {
 	} else if (result.length > 0 && result[0].from.isbanned === false) {
 		const resultUser = result[0].to;
 		if (resultUser) {
+
 			if (resultUser.isbanned === false) {
-				success = true;
-				message = util.format('mttvCorn @%s Just slipped @%s %d BITCORN with a FIRM handshake. mttvCorn', fromUsername, resultUser.twitchusername, amount);
+				if (result[0].txId) {
+					success = true;
+					message = util.format('mttvCorn @%s Just slipped @%s %d BITCORN with a FIRM handshake. mttvCorn', fromUsername, resultUser.twitchusername, amount);
+				} else {
+					success = true;
+					message = util.format(`%s You do not have enough in your balance to tip %d CORN`, fromUsername, amount);
+				}
 			} else {
 				message = `User BANNED: ${resultUser.twitchusername}`;
 			}

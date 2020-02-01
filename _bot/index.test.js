@@ -362,26 +362,26 @@ describe('#mocha promises', function () {
 			to: `twitch|120524051`,
 			platform: 'twitch',
 			amount: 1,
-			columns: ['balance', 'tipped']
+			columns: ['balance', 'twitchusername']
 		};
 		const result = await databaseAPI.request(twitchId, body).tipcorn();
 		expect(result.status).to.be.equal(500);
 	});
 
-	it('should get api response for tipcorn tipped:', async () => {
+	it('should get api response for tipcorn amountOfTipsSent:', async () => {
 		const twitchId = '75987197';
 		const body = {
 			from: `twitch|75987197`,
 			to: `twitch|120524051`,
 			platform: 'twitch',
 			amount: 1,
-			columns: ['balance', 'tipped']
+			columns: ['balance', 'amountoftipssent']
 		};
 		const results = await databaseAPI.request(twitchId, body).tipcorn();
 		for (let i = 0; i < results.length; i++) {
-			const result = results[i];
-			expect(result.from).to.be.ownProperty('tipped');
-			expect(result.to).to.be.ownProperty('tipped');
+			const result = results[i]; 
+			expect(result.from).to.be.ownProperty('amountoftipssent');
+			expect(result.to).to.be.ownProperty('amountoftipssent');
 		}
 	});
 
@@ -440,6 +440,28 @@ describe('#mocha promises', function () {
 
 		const target = '#callowcreation';
 		const msg = `${commander.commandName('$tipcorn')} @mattras007 101`;
+		const self = false;
+
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
+
+		if (obj.success === false) {
+			log('Command Output =>>>>>>>>>> ', obj);
+		}
+
+		expect(obj.success).to.be.equal(true);
+		expect(obj.configs.name).to.be.equal('tipcorn');
+	});	
+
+	// Integration test only ?? !! ??
+	it('should execute $tipcorn insufficient funds with message handler ', async () => {
+
+		const twitchUsername = 'd4rkcide';
+		const auth = require('./settings/auth');
+		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = { 'user-id': user_id, username: user_login };
+
+		const target = '#callowcreation';
+		const msg = `${commander.commandName('$tipcorn')} @mattras007 4200000001`;
 		const self = false;
 
 		const obj = await tmi.onMessageHandler(target, user, msg, self);
@@ -512,7 +534,7 @@ describe('#mocha promises', function () {
 		const type = require('./src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'callowcreation';
 		const auth = require('./settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		const user = { 'user-id': user_id, username: user_login };
@@ -523,6 +545,28 @@ describe('#mocha promises', function () {
 		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
 
 		expect(obj.success).to.be.equal(true);
+		expect(obj.message).to.be.not.equal(`You failed to withdraw: insufficient funds`);
+	});
+
+	it('should process withdraw insufficient funds', async () => {
+
+		await new Promise(resulve => setTimeout(resulve, 50));
+
+		const type = require('./src/utils/message-type').irc_whisper;
+		const target = '#callowcreation';
+
+		const twitchUsername = 'callowcreation';
+		const auth = require('./settings/auth');
+		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = { 'user-id': user_id, username: user_login };
+
+		const msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
+		const self = false;
+
+		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
+
+		expect(obj.success).to.be.equal(true);
+		expect(obj.message).to.be.equal(`You failed to withdraw: insufficient funds`);
 	});
 
 
@@ -687,6 +731,30 @@ describe('#mocha promises', function () {
 
 		expect(obj.success).to.be.equal(true);
 		expect(obj.configs.name).to.be.equal('rain');
+	});
+
+	// Integration test only ?? !! ??
+	it('should execute $rain insufficient funds with message handler', async () => {
+
+		const twitchUsername = 'd4rkcide';
+
+		const auth = require('./settings/auth');
+		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+
+		const target = '#callowcreation';
+		const user = { 'user-id': user_id, username: user_login };
+		const msg = `${commander.commandName('$rain')} 4200000024.999999999999999 10`;
+		const self = false;
+
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
+
+		if (obj.success === false) {
+			log('Command Output =>>>>>>>>>> ', obj, obj.message);
+		}
+
+		expect(obj.success).to.be.equal(true);
+		expect(obj.configs.name).to.be.equal('rain');
+		expect(obj.message).to.be.equal(`DogePls SourPls ${twitchUsername} You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`);
 	});
 
 	it('should get $blacklist response from invoking execute', async () => {
