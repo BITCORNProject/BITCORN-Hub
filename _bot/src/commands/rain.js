@@ -82,7 +82,9 @@ module.exports = {
 			} else if (results.status) {
 
 				message = `${message}: ${results.status} ${results.statusText}`;
-
+			} else if (!results[0].from) {
+				message = `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`;
+				success = true;
 			} else if (results.length > 0 && results[0].from.isbanned === false) {
 
 				success = true;

@@ -19,6 +19,9 @@ function handelTipResponse(result, fromUsername, toUsername, amount) {
 
 		message = `${message}: ${result.status} ${result.statusText}`;
 
+	} else if (!result[0].from) {
+		message = `cttvMOONMAN Here's a tip for you: You need to register and deposit / earn BITCORN in order to use tip! cttvMOONMAN`;
+		success = true;
 	} else if (result.length > 0 && result[0].from.isbanned === false) {
 		const resultUser = result[0].to;
 		if (resultUser) {

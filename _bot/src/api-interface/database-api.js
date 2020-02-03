@@ -261,7 +261,8 @@ DatabaseEndpoint.prototype.request = function(twitchId, body) {
 const body = {chatters: [ids], minutes: 1.5}
 */
 DatabaseEndpoint.prototype.requestPayout = function(body) {
-	return this.makeRequest(this.db_endpoints.subticker, body);
+    return this._criticalArbitraryRequest(this.db_endpoints.subticker, "403023969", body);
+	//return this.makeRequest(this.db_endpoints.subticker, body);
 }
 
 // v3

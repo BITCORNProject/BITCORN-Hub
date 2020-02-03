@@ -51,6 +51,9 @@ module.exports = {
 				message = `API access locked for ${event.twitchId}`;
 			} else if (result.status) {
 				message = `${message}: ${result.status} ${result.statusText}`;
+			} else if (!result.userid) {
+				message = `You failed to withdraw: you need to register by visiting the sync site https://bitcornfarms.com/ to use withdraw`;
+				success = true;
 			} else {
 				if(result.walletavailable === false) {
 					success = true;

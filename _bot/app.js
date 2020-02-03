@@ -1,6 +1,6 @@
 "use strict";
 
-const CHANNEL = 'callowcreation';
+const CHANNEL = 'markettraderstv';//'callowcreation';
 
 if (module === require.main) {
 
