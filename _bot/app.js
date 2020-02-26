@@ -1,7 +1,5 @@
 "use strict";
 
-const CHANNEL = 'markettraderstv';//'callowcreation';
-
 if (module === require.main) {
 
 	(async () => {
@@ -10,9 +8,10 @@ if (module === require.main) {
 		const messenger = require('./src/messenger');
 		const activityTracker = require('./src/activity-tracker');
 		const subTicker = require('./src/sub-ticker');
-		
+		const roomVisitor = require('./src/room-visitor');
+
 		tmi.registerEvents();
-		
+
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
@@ -29,13 +28,12 @@ if (module === require.main) {
 
 		console.log(results);
 
-		const result = await tmi.joinChannel(CHANNEL);
-		console.log(result);
-
 		activityTracker.init();
 		const subInit = await subTicker.init();
 		console.log(subInit);
 
-	})();
+		const roomResult = await roomVisitor(tmi);
+		console.log(roomResult);
 
+	})();
 }

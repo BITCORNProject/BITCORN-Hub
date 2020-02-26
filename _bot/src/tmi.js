@@ -20,6 +20,7 @@ const global_cooldowns = {};
 // \misc\duplicate-reward.PNG
 const rewardedIds = []; 
 
+//const channels = ['markettraderstv', 'd4rkcide'];
 const channels = ['callowcreation'];
 
 const amounts = {

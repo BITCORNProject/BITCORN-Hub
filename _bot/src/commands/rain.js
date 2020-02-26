@@ -91,18 +91,19 @@ module.exports = {
 
 				const successItems = results.filter(x => {
 					return x.to && x.txId && x.to.isbanned === false;
-				}).map(x => x.to.twitchusername);
+				}).map(x => x.to.twitchusername.toLowerCase());
 
 				const failedItems = results.filter(x => {
 					return x.to && !x.txId && x.to.isbanned === false;
-				}).map(x => x.to.twitchusername);
+				}).map(x => x.to.twitchusername.toLowerCase());
 
 				if (failedItems.length === 0) {
 					for (let i = 0; i < items.length; i++) {
 						const item = items[i];
-						if (successItems.includes(item.username)) continue;
-						if (results.find(x => x.to && x.to.twitchusername === item.username)) continue;
-						failedItems.push(item.username);
+						const username = item.username.toLowerCase();
+						if (successItems.includes(username)) continue;
+						if (results.find(x => x.to && x.to.twitchusername === username)) continue;
+						failedItems.push(username);
 					}
 				}
 
