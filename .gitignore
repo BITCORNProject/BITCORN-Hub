@@ -9,3 +9,7 @@ access.json
 command_testers.txt
 .vscode
 /entry-errors
+
+# v3
+
+/_bot/settings/*.json

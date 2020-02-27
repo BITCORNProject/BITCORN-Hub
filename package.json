@@ -1,10 +1,10 @@
 {
     "name": "bitcornhub",
     "version": "1.0.0",
-    "description": "Chatbot IRC and Twitch API wrapper for channel CryptoTradersTV",
-    "main": "main.js",
+    "description": "Chatbot IRC and Twitch API wrapper for channel MarketTradersTv",
+    "main": "app.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "mocha _bot/index.test.js --exit --timeout=20000"
     },
     "author": "Jones S. Cropper",
     "license": "ISC",
@@ -14,13 +14,21 @@
     },
     "dependencies": {
         "body-parser": "^1.17.2",
+        "chai-as-promised": "^7.1.1",
+        "dotenv": "^8.2.0",
         "ejs": "^2.6.1",
         "express": "^4.15.2",
+        "lodash": "^4.17.15",
         "nocache": "^2.0.0",
         "node-fetch": "^2.3.0",
         "node-schedule": "^1.3.2",
         "request": "^2.88.0",
         "socket.io": "^2.2.0",
-        "tmi.js": "^1.4.5"
+        "tmi.js": "^1.5.0",
+        "ws": "^7.2.1"
+    },
+    "devDependencies": {
+        "chai": "^4.2.0",
+        "mocha": "^7.0.0"
     }
 }

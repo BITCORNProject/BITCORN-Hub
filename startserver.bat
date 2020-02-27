@@ -1,2 +1,2 @@
-node main
+node server
 cmd /k

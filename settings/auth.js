@@ -12,7 +12,7 @@ const auth = new JsonFile('./settings/auth.json', {
     BOT_USERNAME: 'wollac',
     OAUTH_TOKEN: 'oauth:lkjlklfvb9085klmndf9d78b908590ojkl',
 
-    CHANNEL_NAME: 'cryptotraderstv,callowcreation,d4rkcide',
+    CHANNEL_NAME: 'markettraderstv,callowcreation,d4rkcide',
 
     KRAKEN_CLIENT_ID: '0lhfgjh008rfgsd0lsdg90438jpdg9u904j',
     KRAKEN_SECRET: '0lkjlklfvb9085klmndf9d78b908590ojkl',

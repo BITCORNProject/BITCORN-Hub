@@ -150,6 +150,10 @@ async function getChannel() {
     return getEndpoint(`https://api.twitch.tv/kraken/channel`);
 }
 
+async function getUserLogins(usernames) {
+	return getEndpoint(`https://api.twitch.tv/kraken/users?login=${usernames}`);
+}
+
 async function getSubscribersById(channel_id) {
     return getLimitedSubscribersById(channel_id, 100, 0, 'asc');
 }
@@ -192,6 +196,7 @@ exports.init = init;
 exports.authUrl = authUrl;
 exports.authenticateCode = authenticateCode;
 exports.getChannel = getChannel;
+exports.getUserLogins = getUserLogins;
 exports.getUserSubscribes = getUserSubscribes;
 exports.getChannelSubscribers = getChannelSubscribers;
 exports.getLimitedSubscribers = getLimitedSubscribers;

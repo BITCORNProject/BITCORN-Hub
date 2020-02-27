@@ -4,7 +4,7 @@
 
 "use strict";
 
-const databaseAPI = require('../config/api-interface/database-api');
+const databaseAPI = require('../api-interface/database-api');
 
 async function asyncThrowAndLogError(event, obj) {
     

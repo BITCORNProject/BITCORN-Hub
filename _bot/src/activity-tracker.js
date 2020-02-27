@@ -4,33 +4,26 @@
 
 "use strict";
 
-const tmi = require('./config/tmi');
-
-const JsonFile = require('../source/utils/json-file');
+const JsonFile = require('./utils/json-file');
 const serverSettings = require('../settings/server-settings');
+const allowedUsers = require('./utils/allowed-users');
 
-const MAX_RAIN_USER_CACHE = serverSettings.getValues().MAX_RAIN_USER_CACHE;
+const MAX_RAIN_USER_CACHE = serverSettings.MAX_RAIN_USER_CACHE;
 const MAX_RAIN_USER_CACHE_WITH_PADDING = MAX_RAIN_USER_CACHE * 1.4;
 let activeChatters = {};
 
 function onChatMessage(target, user, msg, self) {
-    const event = Object.create({ target, user, msg, self });
-    if (event.self) { return { success: false, message: `self`, event }; }
+    const event = { target, user, msg, self };
+    //if (event.self) { return { success: false, message: `self`, event }; }
     addToActiveChatters(target, event.user['user-id'], event.user.username);
 }
 
-const omit_usernames = [
-    "nightbot",
-    "mttvbotcorn",
-    "bitcornhub",
-    "stay_hydrated_bot",
-    "fakecornfakecorn"
-];
+const activityTracker = new JsonFile('../../settings/activity-tracker.json', {});
 
-const activityTracker = new JsonFile('./settings/activity-tracker.json', {});
+//console.log('MAX_RAIN_USER_CACHE_WITH_PADDING', activityTracker.data);
 
 function addToActiveChatters(target, id, username) {
-    if (omit_usernames.indexOf(username) !== -1) return;
+    if (allowedUsers.activityTrackerOmitUsername(username) === true) return;
 
     if (activeChatters[target] === undefined) {
         activeChatters[target] = [];
@@ -72,35 +65,19 @@ function getChatterActivity(target) {
     //          Uncomment to use most recent
     //chatternamesArr.sort((a, b) => b.count - a.count);
 
-    chatternamesArr = chatternamesArr.map(x => ({ id: x.id, username: x.username }));
+    chatternamesArr = chatternamesArr.filter(x => x).map(x => ({ id: x.id, username: x.username }));
 
     return chatternamesArr;
 }
 
-async function init() {
-
-    tmi.addMessageCallback(onChatMessage);
-
-    // converter used to reformat the activity file from id, username to include count
-    /*const converter = activityTracker.getValues();
-
-    for (const target in converter) {
-        const value = converter[target];
-        if (activeChatters[target] === undefined) {
-            activeChatters[target] = [];
-        }
-        for (let i = 0; i < value.length; i++) {
-            const item = value[i];
-            if(!item || item.count) continue;
-            addToActiveChatters(target, item.id, item.username);
-        }
-    }*/
-    
-    activeChatters = activityTracker.getValues();
-
-    return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
+function init() {
+	activeChatters = activityTracker.getValues();
+	return {success: true};
 }
 
-exports.init = init;
-exports.getChatterActivity = getChatterActivity;
+module.exports = {
+	init,
+	onChatMessage,
+	getChatterActivity
+};
 
