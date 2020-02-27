@@ -168,7 +168,7 @@ module.exports = Object.create({
 
                             const recipientName = items.filter(x => x.id === recipientResponse.platformUserId)[0].username;
 
-                            const msg = `Hey ${recipientName}, ${event.user['display-name']} just rained ${recipientResponse.balanceChange} $BITCORN on you in CryptoTradersTV's chat!`;
+                            const msg = `Hey ${recipientName}, ${event.user['display-name']} just rained ${recipientResponse.balanceChange} $BITCORN on you in MarketTradersTv's chat!`;
                             //tmi.botWhisper(recipientName, msg);
                             totalRainedUsers += 1;
                             singleRainedAmount = recipientResponse.balanceChange;

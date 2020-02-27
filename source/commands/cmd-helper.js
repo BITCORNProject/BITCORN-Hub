@@ -165,7 +165,7 @@ const messageStrings = new JsonFile('./settings/strings.json', {
     apifailed: `Can not connect to server %s%s failed, please report this: status %d`,
     idmismatch: `Something unexpected happened %s%s failed, please report this: twitchId=%s twitchid=%s`,
     somethingwrong: `Something went wrong with the %s%s command, please report this: code %d`,
-    pleasereport: `Something went wrong with the %s%s command, please report this to https://discord.gg/9j3mkCd CryptoTradersTV Discord bitcorn-support channel`,
+    pleasereport: `Something went wrong with the %s%s command, please report this to https://discord.gg/9j3mkCd MarketTradersTv Discord bitcorn-support channel`,
     commanderror: `Command error in %s%s, please report this: %s`,
     help: `mttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ mttvCorn`,
     usebitcorn: `Use $bitcorn to register and see your balance`,

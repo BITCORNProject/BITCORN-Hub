@@ -2,7 +2,7 @@
     "name": "bitcornhub",
     "version": "1.0.0",
     "description": "Chatbot IRC and Twitch API wrapper for channel MarketTradersTv",
-    "main": "app.js",
+    "main": "index.js",
     "scripts": {
         "test": "mocha _bot/index.test.js --exit --timeout=20000"
     },
