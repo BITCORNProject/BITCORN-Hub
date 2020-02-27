@@ -379,7 +379,7 @@ describe('#mocha promises', function () {
 		};
 		const results = await databaseAPI.request(twitchId, body).tipcorn();
 		for (let i = 0; i < results.length; i++) {
-			const result = results[i]; 
+			const result = results[i];
 			expect(result.from).to.be.ownProperty('amountoftipssent');
 			expect(result.to).to.be.ownProperty('amountoftipssent');
 		}
@@ -450,7 +450,7 @@ describe('#mocha promises', function () {
 
 		expect(obj.success).to.be.equal(true);
 		expect(obj.configs.name).to.be.equal('tipcorn');
-	});	
+	});
 
 	// Integration test only ?? !! ??
 	it('should execute $tipcorn insufficient funds with message handler ', async () => {
@@ -472,8 +472,8 @@ describe('#mocha promises', function () {
 
 		expect(obj.success).to.be.equal(true);
 		expect(obj.configs.name).to.be.equal('tipcorn');
-	});	
-	
+	});
+
 	it('should execute $tipcorn success for unregistered users with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
@@ -797,7 +797,7 @@ describe('#mocha promises', function () {
 
 	it('should not give reward got no-reward channels', async () => {
 		const channel = 'naivebot';
-		
+
 		const result = tmi.noRewardCheck(channel);
 
 		expect(result).to.be.equal(true);
@@ -816,7 +816,7 @@ describe('#mocha promises', function () {
 		let recipient = null;
 		let months = null;
 
-		userstate = {bits: 10, username: 'callowcreation', id: '0932a496-50f2-4020-982d-09102ef36b13'};
+		userstate = { bits: 10, username: 'callowcreation', id: '0932a496-50f2-4020-982d-09102ef36b13' };
 		methods = null;
 		channel = '#callowcreation';
 		username = 'callowcreation';
@@ -843,25 +843,25 @@ describe('#mocha promises', function () {
 		let recipient = null;
 		let months = null;
 
-		userstate = {bits: 10, username: 'callowcreation', id: 'random-id-lol'};
+		userstate = { bits: 10, username: 'callowcreation', id: 'random-id-lol' };
 		methods = null;
 		channel = '#callowcreation';
 		username = 'callowcreation';
 		promises.push(tmi.onCheer(channel, userstate, message));
 
-		userstate = {id: 'random-id-kappa'};
+		userstate = { id: 'random-id-kappa' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
 		promises.push(tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate));
 
-		userstate = {id: 'random-id-callowbruh'};
+		userstate = { id: 'random-id-callowbruh' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
 		promises.push(tmi.onSubscription(channel, username, methods, message, userstate));
 
-		userstate = {id: 'random-id-mttv420'};
+		userstate = { id: 'random-id-mttv420' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
@@ -877,7 +877,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should send sub ticker payout request', async () => {
-		
+
 		const auth = require('../settings/auth');
 
 		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
@@ -885,32 +885,32 @@ describe('#mocha promises', function () {
 
 		const channel = 'markettraderstv';
 		const url = `https://tmi.twitch.tv/group/user/${channel}/chatters`;
-        const chatters_result = await fetch(url);
-        const chatters_json = await chatters_result.json();
-        viewers = [];
-        for (const key in chatters_json) {
-            const chatters = chatters_json[key];
-            for (const k in chatters) {
-                if (k === 'broadcaster') continue;
-                viewers = viewers.concat(chatters[k]);
-            }
+		const chatters_result = await fetch(url);
+		const chatters_json = await chatters_result.json();
+		viewers = [];
+		for (const key in chatters_json) {
+			const chatters = chatters_json[key];
+			for (const k in chatters) {
+				if (k === 'broadcaster') continue;
+				viewers = viewers.concat(chatters[k]);
+			}
 		}
-		
+
 		log(viewers.length);
 
 		const promises = [];
 		let chatters = [];
-		while(viewers.length > 0) {
+		while (viewers.length > 0) {
 			const chunked = viewers.splice(0, 100);
 			promises.push(new Promise(async (resolve) => {
 				const usernames = chunked.join(',');
-				const users = await fetch(`http://localhost:${auth.PORT}/users?usernames=${usernames}`).then(res => res.json());				
+				const users = await fetch(`http://localhost:${auth.PORT}/users?usernames=${usernames}`).then(res => res.json());
 				resolve(users.result.users.map(x => x._id));
 			}));
 		}
 		const presults = await Promise.all(promises);
 		chatters = [].concat.apply([], presults);
-		
+
 		//log(chatters.length);
 		chatters.length = 5;
 
@@ -920,14 +920,18 @@ describe('#mocha promises', function () {
 			chatters: chatters,
 			minutes: MINUTE_AWARD_MULTIPLIER
 		};
-		const results = await databaseAPI.requestPayout(body);
+		const { result: { users: [{ _id: senderId }] } } = await fetch(`http://localhost:${auth.PORT}/users?usernames=${auth.BOT_USERNAME}`).then(res => res.json());
+
+		console.log(`---------------> ${senderId}`);
+
+		const results = await databaseAPI.requestPayout(senderId, body);
 
 		log(body);
 
 		expect(results).to.be.greaterThan(0);
 	});
 
-	it('should perform sub ticker after init', async () => {
+	it.only('should perform sub ticker after init', async () => {
 		const subTicker = require('../src/sub-ticker');
 
 		const channel = 'callowcreation';
@@ -951,7 +955,7 @@ describe('#mocha promises', function () {
 		expect(result).to.be.equal(true);
 	});
 
-	it('should be able to get env development variable not in production', () => {		
+	it('should be able to get env development variable not in production', () => {
 		const { is_production } = require('../prod');
 		expect(is_production).to.be.equal(false);
 	});
