@@ -795,12 +795,12 @@ describe('#mocha promises', function () {
 		expect(result).to.be.equal(true);
 	});
 
-	it('should not give reward got no-reward channels', async () => {
+	it.only('should not give reward got no-reward channels', async () => {
 		const channel = 'naivebot';
 
 		const result = tmi.noRewardCheck(channel);
-
 		expect(result).to.be.equal(true);
+		
 	});
 
 	it('should not send two reward requests with the same message id', async () => {
@@ -931,7 +931,7 @@ describe('#mocha promises', function () {
 		expect(results).to.be.greaterThan(0);
 	});
 
-	it.only('should perform sub ticker after init', async () => {
+	it('should perform sub ticker after init', async () => {
 		const subTicker = require('../src/sub-ticker');
 
 		const channel = 'callowcreation';

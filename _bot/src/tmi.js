@@ -1,13 +1,14 @@
 "use strict";
 
+const fs = require('fs');
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
 const commander = require('./commander');
 const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
-const noRewards = require('../settings/no-rewards.json');
 
+const noRewardFilename = './_bot/settings/no-rewards.json';
 const commandsMap = commander.createCommandsMap();
 
 const outMessageCallbacks = [];
@@ -184,7 +185,8 @@ function duplicateRewardCheck(rewardId) {
 }
 
 function noRewardCheck(channel)  {
-	return noRewards.map(x => hashReplace(x)).includes(hashReplace(channel));
+	const channels = JSON.parse(fs.readFileSync(noRewardFilename, 'utf-8'));
+	return channels.map(x => hashReplace(x)).includes(hashReplace(channel));
 }
 
 function hashReplace(channel) {
