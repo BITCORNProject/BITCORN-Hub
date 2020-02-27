@@ -34,12 +34,12 @@ describe('#mocha promises', function () {
 	//let messenger = null;
 	//let databaseAPI = null;
 
-	const tmi = require('./src/tmi');
-	const messenger = require('./src/messenger');
-	const commander = require('./src/commander');
-	const math = require('./src/utils/math');
+	const tmi = require('../src/tmi');
+	const messenger = require('../src/messenger');
+	const commander = require('../src/commander');
+	const math = require('../src/utils/math');
 
-	const serverSettings = require('./settings/server-settings');
+	const serverSettings = require('../settings/server-settings');
 
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
@@ -50,14 +50,14 @@ describe('#mocha promises', function () {
 				tipcorn: () => Promise.resolve({ status: 500 })
 			}
 		}
-	} : require('./src/api-interface/database-api');
+	} : require('../src/api-interface/database-api');
 
-	const activityTracker = require('./src/activity-tracker');
-	const allowedUsers = require('./src/utils/allowed-users');
+	const activityTracker = require('../src/activity-tracker');
+	const allowedUsers = require('../src/utils/allowed-users');
 
 	async function mockEvent(msg, twitchUsername, channel, irc_target) {
 
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		return {
 			twitchId: user.id,
@@ -127,14 +127,14 @@ describe('#mocha promises', function () {
 	});
 
 	it('should load commands from file system', () => {
-		const moduleloader = require('./src/utils/moduleloader');
+		const moduleloader = require('../src/utils/moduleloader');
 		const commandsPath = '../commands';
 		const commands = moduleloader(commandsPath);
 		expect(commands.length).to.be.greaterThan(0);
 	});
 
 	it('should commands loaded have all configs', () => {
-		const moduleloader = require('./src/utils/moduleloader');
+		const moduleloader = require('../src/utils/moduleloader');
 		const commandsPath = '../commands';
 		const commands = moduleloader(commandsPath);
 
@@ -193,7 +193,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should utility clean params of @ < >', () => {
-		const cleanParams = require('./src/utils/clean-params');
+		const cleanParams = require('../src/utils/clean-params');
 
 		const msg = '$tipcorn <@naivebot> 420';
 		const args = commander.messageAsCommand(msg);
@@ -204,7 +204,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should confirm params is a number', () => {
-		const { amount, isNumber } = require('./src/utils/clean-params');
+		const { amount, isNumber } = require('../src/utils/clean-params');
 
 		const msg = '$tipcorn <@naivebot> <420>';
 		const args = commander.messageAsCommand(msg);
@@ -291,7 +291,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('./src/commands/bitcorn');
+		} : require('../src/commands/bitcorn');
 
 		const obj = await commander.validateAndExecute(event, command);
 		if (obj.success === false) {
@@ -330,7 +330,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('./src/commands/bitcorn');
+		} : require('../src/commands/bitcorn');
 
 		const event = await mockEvent('$bitcorn', 'naivebot', 'callowcreation', '#callowcreation');
 
@@ -355,11 +355,11 @@ describe('#mocha promises', function () {
 	/*
 	$tipcorn tests
 	*/
-	it.only('should get api response for tipcorn status 500', async () => {
+	it('should get api response for tipcorn status 500', async () => {
 		const twitchId = '75987197';
 		const body = {
 			from: `${twitchId}`,
-			to: `twitch|120524051`,
+			to: `120524051`,
 			platform: 'twitch',
 			amount: 1,
 			columns: ['balance', 'twitchusername']
@@ -411,7 +411,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('./src/commands/tipcorn');
+		} : require('../src/commands/tipcorn');
 		const event = await mockEvent('$tipcorn d4rkcide 100', 'callowcreation', '#callowcreation', '#callowcreation');
 
 		const results = await commander.validateAndExecute(event, command);
@@ -434,7 +434,7 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn successfully with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		const user = { 'user-id': user_id, username: user_login };
 
@@ -456,7 +456,7 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn insufficient funds with message handler ', async () => {
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		const user = { 'user-id': user_id, username: user_login };
 
@@ -477,7 +477,7 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn success for unregistered users with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		const user = { 'user-id': user_id, username: user_login };
 
@@ -500,7 +500,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('./src/commands/withdraw');
+		} : require('../src/commands/withdraw');
 
 		const event = await mockEvent('$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g', 'callowcreation', 'callowcreation', '#callowcreation');
 
@@ -512,11 +512,11 @@ describe('#mocha promises', function () {
 	it('should process whispers and chat messages - chat', async () => {
 		await _wait(50);
 
-		const type = require('./src/utils/message-type').irc_chat;
+		const type = require('../src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		const user = { 'user-id': user_id, username: user_login };
 
@@ -531,11 +531,11 @@ describe('#mocha promises', function () {
 
 		await new Promise(resulve => setTimeout(resulve, 50));
 
-		const type = require('./src/utils/message-type').irc_whisper;
+		const type = require('../src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
 		const twitchUsername = 'callowcreation';
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		const user = { 'user-id': user_id, username: user_login };
 
@@ -552,11 +552,11 @@ describe('#mocha promises', function () {
 
 		await new Promise(resulve => setTimeout(resulve, 50));
 
-		const type = require('./src/utils/message-type').irc_whisper;
+		const type = require('../src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
 		const twitchUsername = 'callowcreation';
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 		const user = { 'user-id': user_id, username: user_login };
 
@@ -584,8 +584,8 @@ describe('#mocha promises', function () {
 
 	it('should not enqueue MESSAGE_TYPE whisper self', () => {
 
-		const MESSAGE_TYPE = require('./src/utils/message-type');
-		const auth = require('./settings/auth');
+		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const auth = require('../settings/auth');
 
 		let target = 'naivebot';
 		let message = 'We can see the thing';
@@ -596,7 +596,7 @@ describe('#mocha promises', function () {
 
 	it('should queue messages to send by MESSAGE_TYPE', () => {
 
-		const MESSAGE_TYPE = require('./src/utils/message-type');
+		const MESSAGE_TYPE = require('../src/utils/message-type');
 
 		while (messenger.whisperQueue.size() > 0) messenger.whisperQueue.dequeue();
 		while (messenger.chatQueue.size() > 0) messenger.chatQueue.dequeue();
@@ -620,7 +620,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should send chat message from queue', async () => {
-		const MESSAGE_TYPE = require('./src/utils/message-type');
+		const MESSAGE_TYPE = require('../src/utils/message-type');
 
 		let target = '#callowcreation';
 		let message = 'should send chat message from queue ' + Date.now();
@@ -638,7 +638,7 @@ describe('#mocha promises', function () {
 
 		await new Promise(resulve => setTimeout(resulve, 500));
 
-		const MESSAGE_TYPE = require('./src/utils/message-type');
+		const MESSAGE_TYPE = require('../src/utils/message-type');
 
 		let target = '#callowcreation';
 		let message = 'should send many message from chat queue ' + Date.now();
@@ -655,7 +655,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should send whisper message from whisper queue', async () => {
-		const MESSAGE_TYPE = require('./src/utils/message-type');
+		const MESSAGE_TYPE = require('../src/utils/message-type');
 
 		let target = '#callowcreation';
 		let message = 'should send whisper message from whisper queue ' + Date.now();
@@ -704,7 +704,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('./src/commands/rain');
+		} : require('../src/commands/rain');
 		const event = await mockEvent('$rain 24.999999999999999 5', 'd4rkcide', '#callowcreation', '#callowcreation');
 		const result = await commander.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
@@ -715,7 +715,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'd4rkcide';
 
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
 		const target = '#callowcreation';
@@ -738,7 +738,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'd4rkcide';
 
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
 		const target = '#callowcreation';
@@ -762,7 +762,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('./src/commands/blacklist');
+		} : require('../src/commands/blacklist');
 		const event = await mockEvent(`${commander.commandName('$blacklist')} @naivebot`, 'callowcreation', '#callowcreation', '#callowcreation');
 		const result = await commander.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
@@ -786,6 +786,21 @@ describe('#mocha promises', function () {
 		const result = await messenger.sendQueuedRewards();
 
 		expect(result.success).to.be.equal(true);
+	});
+
+	it('should not allow duplicate rewards', async () => {
+		const rewardId = '1234567890';
+		tmi.duplicateRewardCheck(rewardId);
+		const result = tmi.duplicateRewardCheck(rewardId);
+		expect(result).to.be.equal(true);
+	});
+
+	it('should not give reward got no-reward channels', async () => {
+		const channel = 'naivebot';
+		
+		const result = tmi.noRewardCheck(channel);
+
+		expect(result).to.be.equal(true);
 	});
 
 	it('should not send two reward requests with the same message id', async () => {
@@ -857,12 +872,13 @@ describe('#mocha promises', function () {
 		for (let i = 0; i < results.length; i++) {
 			const result = results[i];
 			expect(result.error).to.be.equal(null);
+			expect(result.success).to.be.equal(true);
 		}
 	});
 
 	it('should send sub ticker payout request', async () => {
 		
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 
 		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 		let viewers = [];
@@ -912,7 +928,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should perform sub ticker after init', async () => {
-		const subTicker = require('./src/sub-ticker');
+		const subTicker = require('../src/sub-ticker');
 
 		const channel = 'callowcreation';
 
@@ -927,7 +943,7 @@ describe('#mocha promises', function () {
 
 	it('should send error to database logger', async () => {
 
-		const errorLogger = require('./src/utils/error-logger');
+		const errorLogger = require('../src/utils/error-logger');
 
 		const error = new Error('Failed test as expected');
 		const errorcode = 0;
@@ -936,7 +952,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should be able to get env development variable not in production', () => {		
-		const { is_production } = require('./prod');
+		const { is_production } = require('../prod');
 		expect(is_production).to.be.equal(false);
 	});
 
@@ -944,7 +960,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'd4rkcide';
 
-		const auth = require('./settings/auth');
+		const auth = require('../settings/auth');
 		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
 		const target = '#callowcreation';
