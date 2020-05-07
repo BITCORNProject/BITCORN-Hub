@@ -29,7 +29,7 @@ async function performPayout(channel) {
 			viewers = viewers.concat(chatters[k]);
 		}
 	}
-
+	
 	const promises = [];
 	let chatters = [];
 	while (viewers.length > 0) {
@@ -47,7 +47,9 @@ async function performPayout(channel) {
 		chatters: chatters,
 		minutes: MINUTE_AWARD_MULTIPLIER
 	};
-	return databaseAPI.requestPayout(body);
+	const { result: { users: [{ _id: senderId }] } } = await fetch(`http://localhost:${auth.PORT}/users?usernames=${auth.BOT_USERNAME}`).then(res => res.json());
+
+	return databaseAPI.requestPayout(senderId, body);
 }
 
 async function init() {

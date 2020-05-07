@@ -1,5 +1,6 @@
 "use strict";
 
+const fs = require('fs');
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
 const commander = require('./commander');
@@ -7,6 +8,7 @@ const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
 
+const noRewardFilename = './_bot/settings/no-rewards.json';
 const commandsMap = commander.createCommandsMap();
 
 const outMessageCallbacks = [];
@@ -148,36 +150,47 @@ Rewards
 
 */
 async function onCheer(channel, userstate, message) {
-	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
-	rewardedIds.push(userstate.id);
-
+	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
+	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onCheer` };
 	const username = userstate.username;
 	const amount = userstate.bits * amounts.cheer['0000'];
 	return handleRewardEvent('cheer', channel, username, amount);
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
-	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubGift` };
-	rewardedIds.push(userstate.id);
-
+	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubGift` };
+	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubGift` };
 	const amount = amounts.subgift[methods.plan];
 	return handleRewardEvent('subgift', channel, username, amount);
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
-	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubscription` };
-	rewardedIds.push(userstate.id);
-
+	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubscription` };
+	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubscription` };
 	const amount = amounts.subscription[methods.plan];
 	return handleRewardEvent('subscription', channel, username, amount);
 }
 
-async function onResub(channel, username, months, message, userstate, methods) {
-	if (rewardedIds.includes(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onResub` };
-	rewardedIds.push(userstate.id);
-	
+async function onResub(channel, username, months, message, userstate, methods) {	
+	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onResub` };
+	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onResub` };
 	const amount = amounts.resub[methods.plan];
 	return handleRewardEvent('resub', channel, username, amount);
+}
+
+function duplicateRewardCheck(rewardId) {	
+	if (rewardedIds.includes(rewardId) === true) return true;
+	rewardedIds.push(rewardId);
+	return false;
+}
+
+function noRewardCheck(channel)  {
+	const channels = JSON.parse(fs.readFileSync(noRewardFilename, 'utf-8'));
+	return channels.map(x => hashReplace(x)).includes(hashReplace(channel));
+}
+
+function hashReplace(channel) {
+	return channel.replace('#', '').toLowerCase();
 }
 
 async function handleRewardEvent(type, channel, username, amount) {
@@ -249,10 +262,13 @@ module.exports = {
 	addRewardOutputListener,
 
 	amounts,
-
+	
 	onCheer,
 	onSubGift,
 	onSubscription,
-	onResub
+	onResub,
+
+	duplicateRewardCheck,
+	noRewardCheck
 
 };

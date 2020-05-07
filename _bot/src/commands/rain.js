@@ -22,7 +22,7 @@ module.exports = {
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Rain a certain Amount to the last 1-10 of People who were active',
-		example: '$rain <amount> <1-10>',
+		example: '$rain <amount> <1-25>',
 		enabled: true,
 		irc_in: MESSAGE_TYPE.irc_chat,
 		irc_out: MESSAGE_TYPE.irc_chat
@@ -92,18 +92,22 @@ module.exports = {
 				const successItems = results.filter(x => {
 					return x.to && x.txId && x.to.isbanned === false;
 				}).map(x => x.to.twitchusername.toLowerCase());
-
-				const failedItems = results.filter(x => {
-					return x.to && !x.txId && x.to.isbanned === false;
+				const ignore = results.filter(x => {
+					return x.to && x.to.isbanned === true;
 				}).map(x => x.to.twitchusername.toLowerCase());
-
+				/*
+				const failedItems = results.filter(x => {
+					return !x.to && !x.txId && x.to.isbanned === false;
+				}).map(x => x.to.twitchusername);*/
+				let failedItems = [];
 				if (failedItems.length === 0) {
 					for (let i = 0; i < items.length; i++) {
 						const item = items[i];
-						const username = item.username.toLowerCase();
-						if (successItems.includes(username)) continue;
-						if (results.find(x => x.to && x.to.twitchusername === username)) continue;
-						failedItems.push(username);
+						const name = item.username.toLowerCase();
+						if (successItems.includes(name)||ignore.includes(name)) continue;
+						//if (results.find(x => x.to && x.to.twitchusername === name)) continue;
+						
+						failedItems.push(item.username);
 					}
 				}
 

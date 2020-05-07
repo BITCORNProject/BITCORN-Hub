@@ -120,17 +120,18 @@ async function keepAlive() {
     channel.user_id = result.id;
 }
 
-function getAuthorizedOptions(access_token) {
+function getAuthorizedOptions(client_id, access_token) {
     return {
         headers: {
             'Authorization': 'Bearer ' + access_token,
+            'Client-ID': client_id,
             'Content-Type': 'application/json'
         }
     };
 }
 
 async function getEndpoint(url) {
-    const result = await fetch(url, getAuthorizedOptions(authenticated.access_token))
+    const result = await fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
         .then(res => res.json())
         .catch(error => { error });
 
