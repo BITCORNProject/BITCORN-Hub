@@ -13,3 +13,5 @@ command_testers.txt
 # v3
 
 /_bot/settings/*.json
+
+/coverage/
