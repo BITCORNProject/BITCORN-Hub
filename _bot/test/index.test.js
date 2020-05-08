@@ -75,10 +75,7 @@ describe('#mocha promises', function () {
 
 		activityTracker.init();
 
-		return Promise.all([
-			tmi.connectToChat(),
-			tmi.connectToWhisper()
-		]);
+		return tmi.connectToChat();
 	});
 
 	after(() => {
@@ -90,10 +87,6 @@ describe('#mocha promises', function () {
 
 	it.skip('should have connectToChat property', () => {
 		expect(tmi).to.be.ownProperty('connectToChat');
-	});
-
-	it('should have connectToWhisper property', () => {
-		expect(tmi).to.be.ownProperty('connectToWhisper');
 	});
 
 	it('should have tmi join channel', async () => {

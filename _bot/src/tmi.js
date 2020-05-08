@@ -20,7 +20,7 @@ const global_cooldowns = {};
 // to stop duplicate rewards being processed
 // example image location
 // \misc\duplicate-reward.PNG
-const rewardedIds = []; 
+const rewardedIds = [];
 
 //const channels = ['markettraderstv', 'd4rkcide'];
 const channels = ['callowcreation'];
@@ -49,31 +49,17 @@ const amounts = {
 	}
 };
 
-const clients = {
-	chat: new tmi.client({
-		connection: {
-			cluster: "aws",
-			reconnect: true
-		},
-		identity: {
-			username: auth.BOT_USERNAME,
-			password: auth.OAUTH_TOKEN
-		},
-		channels: channels
-	}),
-	whisper: new tmi.client({
-		connection: {
-			reconnect: true,
-			server: "group-ws.tmi.twitch.tv",
-			port: 80
-		},
-		identity: {
-			username: auth.BOT_USERNAME,
-			password: auth.OAUTH_TOKEN
-		},
-		channels: channels
-	})
-};
+const client = new tmi.client({
+	connection: {
+		cluster: "aws",
+		reconnect: true
+	},
+	identity: {
+		username: auth.BOT_USERNAME,
+		password: auth.OAUTH_TOKEN
+	},
+	channels: channels
+});
 
 function addMessageOutputListener(func) {
 	outMessageCallbacks.push(func);
@@ -150,41 +136,41 @@ Rewards
 
 */
 async function onCheer(channel, userstate, message) {
-	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
-	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onCheer` };
+	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
+	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onCheer` };
 	const username = userstate.username;
 	const amount = userstate.bits * amounts.cheer['0000'];
 	return handleRewardEvent('cheer', channel, username, amount);
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
-	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubGift` };
-	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubGift` };
+	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubGift` };
+	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubGift` };
 	const amount = amounts.subgift[methods.plan];
 	return handleRewardEvent('subgift', channel, username, amount);
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
-	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubscription` };
-	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubscription` };
+	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubscription` };
+	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubscription` };
 	const amount = amounts.subscription[methods.plan];
 	return handleRewardEvent('subscription', channel, username, amount);
 }
 
-async function onResub(channel, username, months, message, userstate, methods) {	
-	if(duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onResub` };
-	if(noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onResub` };
+async function onResub(channel, username, months, message, userstate, methods) {
+	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onResub` };
+	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onResub` };
 	const amount = amounts.resub[methods.plan];
 	return handleRewardEvent('resub', channel, username, amount);
 }
 
-function duplicateRewardCheck(rewardId) {	
+function duplicateRewardCheck(rewardId) {
 	if (rewardedIds.includes(rewardId) === true) return true;
 	rewardedIds.push(rewardId);
 	return false;
 }
 
-function noRewardCheck(channel)  {
+function noRewardCheck(channel) {
 	const channels = JSON.parse(fs.readFileSync(noRewardFilename, 'utf-8'));
 	return channels.map(x => hashReplace(x)).includes(hashReplace(channel));
 }
@@ -204,30 +190,26 @@ async function handleRewardEvent(type, channel, username, amount) {
 }
 
 async function connectToChat() {
-	return clients.chat.connect();
-}
-
-async function connectToWhisper() {
-	return clients.whisper.connect();
+	return client.connect();
 }
 
 async function joinChannel(channel) {
-	return clients.chat.join(channel);
+	return client.join(channel);
 }
 
 async function partChannel(channel) {
-	return clients.chat.part(channel);
+	return client.part(channel);
 }
 
 function addRewardHandlers() {
-	clients.chat.on("cheer", onCheer);
-	clients.chat.on("subgift", onSubGift);
-	clients.chat.on("subscription", onSubscription);
-	clients.chat.on("resub", onResub);
+	client.on("cheer", onCheer);
+	client.on("subgift", onSubGift);
+	client.on("subscription", onSubscription);
+	client.on("resub", onResub);
 }
 
 function addMessageHandler(handler) {
-	clients.chat.on('message', handler);
+	client.on('message', handler);
 }
 
 function registerEvents() {
@@ -243,12 +225,11 @@ module.exports = {
 	registerEvents,
 
 	connectToChat,
-	connectToWhisper,
 	joinChannel,
 	partChannel,
 
-	chatClient: clients.chat,
-	whisperClient: clients.whisper,
+	chatClient: client,
+	whisperClient: client,
 
 	addMessageHandler,
 
@@ -262,7 +243,7 @@ module.exports = {
 	addRewardOutputListener,
 
 	amounts,
-	
+
 	onCheer,
 	onSubGift,
 	onSubscription,

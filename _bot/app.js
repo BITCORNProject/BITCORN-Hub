@@ -18,15 +18,12 @@ if (module === require.main) {
 		tmi.addMessageHandler(activityTracker.onChatMessage);
 		tmi.addRewardHandlers();
 
-		const results = await Promise.all([
-			tmi.connectToChat(),
-			tmi.connectToWhisper()
-		]);
+		const result = await tmi.connectToChat();
 
 		tmi.addMessageOutputListener(console.log);
 		tmi.addRewardOutputListener(console.log);
 
-		console.log(results);
+		console.log(result);
 
 		activityTracker.init();
 		const subInit = await subTicker.init();

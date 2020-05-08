@@ -42,7 +42,7 @@ module.exports = {
 
 		} else if (result.status || result.code) {
 
-			message = util.format(`ERROR: ${results.status || results.code} - Hmmmmm Bitcorn Fail`, event.twitchUsername);
+			message = util.format(`ERROR: ${result.status || result.code} - Hmmmmm Bitcorn Fail`, event.twitchUsername);
 
 		} else {
 			success = true;
