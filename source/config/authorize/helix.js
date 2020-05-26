@@ -6,6 +6,7 @@
 
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
+const crypto = require('crypto');
 const auth = require('../../../settings/auth');
 
 function Authenticated() {
@@ -20,38 +21,51 @@ function Authenticated() {
 const authenticated = new Authenticated();
 
 const channel = {
-    user_id: 0,
-    status: ''
+	user_id: ''
 };
+
 const appOptions = {
+	client_id: '',
+	client_secret: '',
+	redirect_uri: '',
     scope: [
         'user:edit:broadcast',
         'user:edit',
         'user:read:email',
         'analytics:read:games',
         'bits:read'
-    ].join(' ')
+	].join(' '),
+	state: ''
 };
 
 function authUrl() {
-    
+
+	const buf = crypto.randomBytes(32);
+	const state = buf.toString('hex');
+	
     appOptions.client_id = auth.data.HELIX_CLIENT_ID;
     appOptions.client_secret = auth.data.HELIX_SECRET;
-    appOptions.redirect_uri = auth.data.HELIX_CALLBACK_URL;
+	appOptions.redirect_uri = auth.data.HELIX_CALLBACK_URL;
+	appOptions.state = state;
 
     const urlParams = [
         `client_id=${appOptions.client_id}`,
         `redirect_uri=${encodeURIComponent(appOptions.redirect_uri)}`,
         `response_type=code`,
         `scope=${encodeURIComponent(appOptions.scope)}`,
-        `state=bot-twitch-api-app`
-    ];
+        `state=${appOptions.state}`
+	];
+	
     const urlQuery = urlParams.join('&');
 
     return `https://id.twitch.tv/oauth2/authorize?${urlQuery}`;
 }
 
-async function authenticateCode(code) {
+async function authenticateCode({code, state}) {
+
+    if (appOptions.state !== state) {
+        return { error: new Error(`state '${state}' does not match initial value '${appOptions.state}'`) };
+    }
 
     const url = `https://id.twitch.tv/oauth2/token`;
 
@@ -69,21 +83,13 @@ async function authenticateCode(code) {
 
     const options = { headers: headers, method: 'POST', body: new URLSearchParams(form) };
 
-    const json = await fetch(url, options)
-        .then(res => res.json())
+    return fetch(url, options)
+		.then(res => res.json())
+		.then(setAuthenticated)
+		.then(setChannel)
+		.then(keepAlive)
         .catch(error => { error });
-
-    if (json.error) {
-        return { success: false, error: json.error };
-    }
-
-    authenticated.access_token = json.access_token;
-    authenticated.refresh_token = json.refresh_token;
-    authenticated.scope = json.scope;
-    authenticated.expires_in = json.expires_in;
-
-    await keepAlive();
-};
+}
 
 async function keepAlive() {
 
@@ -102,53 +108,43 @@ async function keepAlive() {
 
     const options = { headers: headers, method: 'POST', body: new URLSearchParams(form) };
 
-    const json = await fetch(url, options)
-        .then(res => res.json())
+    return fetch(url, options)
+		.then(res => res.json())
+		.then(setAuthenticated)
+		.then(() => setTimeout(keepAlive, (authenticated.expires_in - 1000) * 1000))
         .catch(error => { error });
-
-    if (json.error) {
-        return { success: false, error: json.error };
-    }
-
-    authenticated.access_token = json.access_token;
-    authenticated.token_type = json.token_type;
-    authenticated.expires_in = json.expires_in;
-
-    setTimeout(keepAlive, (authenticated.expires_in - 1000) * 1000);
-
-    const result = await getUser();
-    channel.user_id = result.id;
 }
 
-function getAuthorizedOptions(client_id, access_token) {
+function setAuthenticated(json) {
+	if (json.error) throw json.error;
+	for (const key in json) {
+		if (authenticated.hasOwnProperty(key)) {
+			authenticated[key] = json[key];
+		}
+	}
+	return { error: null };
+}
+
+async function setChannel() {
+	return getUser()
+		.then(result => channel.user_id = result.data[0].id)
+		.catch(error => { error });
+}
+
+function getAuthorizedOptions() {
     return {
         headers: {
-            'Authorization': 'Bearer ' + access_token,
-            'Client-ID': client_id,
+            'Authorization': 'Bearer ' + authenticated.access_token,
+            'Client-ID': appOptions.client_id,
             'Content-Type': 'application/json'
         }
     };
 }
 
 async function getEndpoint(url) {
-    const result = await fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
+    return fetch(url, getAuthorizedOptions())
         .then(res => res.json())
         .catch(error => { error });
-
-    if (result.error) {
-        return { success: false, message: result.error.message, error: result.error };
-    }
-
-    if (result.data) {
-        if (result.data.length > 0) {
-            result.data[0].success = true;
-            return result.data[0];
-        } else {
-            return { success: false, message: `The stream seems to be offline.` };
-        }
-    }
-
-    return { success: false, message: `Fetch endpoint ${url} failed.` };
 }
 
 async function getUserLogin(user_name) {

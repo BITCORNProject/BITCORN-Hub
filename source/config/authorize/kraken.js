@@ -4,28 +4,15 @@
 
 "use strict";
 
-const fetch = require('node-fetch');
-const { URLSearchParams } = require('url');
+const { TwitchAPI, AppOptions } = require('./twitch-api');
 const auth = require('../../../settings/auth');
 
-function Authenticated() {
-    this.access_token = '';
-    this.token_type = '';
-    this.scope = '';
-    this.expires_in = 0;
-    this.refresh_token = '';
-    this.id_token = '';
-}
-
-const authenticated = new Authenticated();
-
-const channel = {
-    _id: 0,
-    status: ''
-};
-
-const appOptions = {
-    scope: [
+const appOptions = new AppOptions(
+	'https://api.twitch.tv/kraken/oauth2/authorize',
+	auth.data.KRAKEN_CLIENT_ID,
+	auth.data.KRAKEN_SECRET,
+	auth.data.KRAKEN_CALLBACK_URL,
+	[
         'openid',
         'viewing_activity_read',
         'user_subscriptions',
@@ -33,125 +20,25 @@ const appOptions = {
         'channel_read',
         'channel_subscriptions',
         'channel_check_subscription'
-    ].join(' ')
-}
+    ]
+);
 
-function authUrl() {
-    
-    appOptions.client_id = auth.data.KRAKEN_CLIENT_ID;
-    appOptions.client_secret = auth.data.KRAKEN_SECRET;
-    appOptions.redirect_uri = auth.data.KRAKEN_CALLBACK_URL;
+const api = new TwitchAPI(appOptions);
 
-    const urlParams = [
-        `client_id=${appOptions.client_id}`,
-        `redirect_uri=${encodeURIComponent(appOptions.redirect_uri)}`,
-        `response_type=code`,
-        `scope=${encodeURIComponent(appOptions.scope)}`
-    ];
-
-    const urlQuery = urlParams.join('&');
-
-    return `https://api.twitch.tv/kraken/oauth2/authorize?${urlQuery}`;
-}
-
-async function authenticateCode(code) {
-
-    const url = 'https://api.twitch.tv/kraken/oauth2/token';
-
-    const form = {
-        client_id: appOptions.client_id,
-        client_secret: appOptions.client_secret,
-        code: code,
-        grant_type: 'authorization_code',
-        redirect_uri: appOptions.redirect_uri
-    };
-
-    const options = { method: 'POST', body: new URLSearchParams(form) };
-
-    const json = await fetch(url, options)
-        .then(res => res.json())
-        .catch(error => { error });
-
-    if (json.error) {
-        return { success: false, error: error };
-    }
-
-    authenticated.access_token = json.access_token;
-    authenticated.refresh_token = json.refresh_token;
-    authenticated.scope = json.scope;
-    authenticated.expires_in = json.expires_in;
-
-    const { result } = await getChannel();
-    channel._id = result ? result._id : '';
-
-    //const subs = await getChannelSubscribers();
-
-    //console.log(subs);
-
-    await keepAlive();
+api.setChannel = () => {
+	return getChannel()
+		.then((_id) => {
+			api.channel.user_id = _id;
+		})
+		.catch(error => { error });
 };
 
-async function keepAlive() {
-
-    const url = 'https://api.twitch.tv/kraken/oauth2/token';
-
-    const form = {
-        grant_type: 'refresh_token',
-        refresh_token: authenticated.refresh_token,
-        client_id: appOptions.client_id,
-        client_secret: appOptions.client_secret,
-    };
-
-    const options = { method: 'POST', body: new URLSearchParams(form) };
-
-    const json = await fetch(url, options)
-        .then(res => res.json())
-        .catch(error => { error });
-
-    if (json.error) {
-        return { success: false, error: error };
-    }
-
-    authenticated.access_token = json.access_token;
-    authenticated.token_type = json.token_type;
-    authenticated.expires_in = json.expires_in;
-
-    setTimeout(keepAlive, (authenticated.expires_in - 1000) * 1000);
-}
-
-function getAuthorizedOptions(access_token) {
-    return {
-        headers: {
-            'Accept': 'application/vnd.twitchtv.v5+json',
-            'Client-ID': appOptions.client_id,
-            'Authorization': 'OAuth ' + access_token,
-            'Content-Type': 'application/json'
-        }
-    };
-}
-
-async function getEndpoint(url) {
-    
-    const result = await fetch(url, getAuthorizedOptions(authenticated.access_token))
-        .then(res => res.json())
-        .catch(error => { error });
-
-        if (!result) {
-            return { success: false, message: `Kraken endpoint failed: ${url}`, error: new Error(`Kraken endpoint failed: ${url}`) };
-        }
-        if (result.error) {
-            return { success: false, message: result.error.message, error: result.error };
-        }
-
-    return { success: true, result };
-}
-
 async function getChannel() {
-    return getEndpoint(`https://api.twitch.tv/kraken/channel`);
+    return api.getEndpoint(`https://api.twitch.tv/kraken/channel`);
 }
 
 async function getUserLogins(usernames) {
-	return getEndpoint(`https://api.twitch.tv/kraken/users?login=${usernames}`);
+	return api.getEndpoint(`https://api.twitch.tv/kraken/users?login=${usernames}`);
 }
 
 async function getSubscribersById(channel_id) {
@@ -160,7 +47,7 @@ async function getSubscribersById(channel_id) {
 
 // direction = asc || desc
 async function getLimitedSubscribersById(channel_id, limit, offset, direction = 'asc') {
-    return getEndpoint(`https://api.twitch.tv/kraken/channels/${channel_id}/subscriptions?limit=${limit}&offset=${offset}&direction=${direction}`);
+    return api.getEndpoint(`https://api.twitch.tv/kraken/channels/${channel_id}/subscriptions?limit=${limit}&offset=${offset}&direction=${direction}`);
 }
 
 async function getLimitedSubscribers(limit, offset, direction = 'asc') {
@@ -171,11 +58,11 @@ async function getChannelSubscribers() {
     return getSubscribersById(getChannelId());
 }
 async function getUserSubscribes(user_id) {
-    return getEndpoint(`https://api.twitch.tv/kraken/channels/${getChannelId()}/subscriptions/${user_id}`);
+    return api.getEndpoint(`https://api.twitch.tv/kraken/channels/${getChannelId()}/subscriptions/${user_id}`);
 }
 
 function getChannelId() {
-    return channel._id;
+    return api.channel.user_id;
 }
 
 async function init(app) {
@@ -185,7 +72,7 @@ async function init(app) {
 
         if (clientName === 'control-panel') {
             //console.log('KRAKEN', clientName);
-            socket.emit('login-kraken', { name: 'kraken', authenticated: channel._id });
+            socket.emit('login-kraken', { name: 'kraken', authenticated: api.channel.user_id });
         }
     });
 
@@ -193,8 +80,8 @@ async function init(app) {
 }
 
 exports.init = init;
-exports.authUrl = authUrl;
-exports.authenticateCode = authenticateCode;
+exports.authUrl = () => appOptions.authUrl();
+exports.authenticateCode = ({ code, state }) => api.authenticateCode({ code, state });
 exports.getChannel = getChannel;
 exports.getUserLogins = getUserLogins;
 exports.getUserSubscribes = getUserSubscribes;
