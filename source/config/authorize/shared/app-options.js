@@ -25,19 +25,26 @@ class AppOptions {
 		this.authUrl = `${authorize_path}?${urlQuery}`;
 	}
 
-	async authenticateCode({ token_url, code, state, headers }) {
-
-		if (this.state !== state) {
-			return { error: new Error(`state '${state}' does not match initial value '${this.state}'`) };
-		}
-
-		const form = {
+	formAuthorizationCode(code) {
+		return {
 			client_id: this.client_id,
 			client_secret: this.client_secret,
 			code: code,
 			grant_type: 'authorization_code',
 			redirect_uri: this.redirect_uri
 		};
+	}
+
+	formRefreshToken(token) {
+		return {
+			grant_type: 'refresh_token',
+			refresh_token: token,
+			client_id: this.client_id,
+			client_secret: this.client_secret
+		};
+	}
+
+	async postForm({ token_url, form, headers }) {
 
 		const options = {
 			method: 'POST',
@@ -51,6 +58,27 @@ class AppOptions {
 		return fetch(token_url, options)
 			.then(res => res.json())
 			.catch(error => { error });
+	}
+
+	getOAuthOptions(access_token) { // for kraken
+		return {
+			headers: {
+				'Authorization': 'OAuth ' + access_token,
+				'Client-ID': this.client_id,
+				'Accept': 'application/vnd.twitchtv.v5+json',
+				'Content-Type': 'application/json'
+			}
+		};
+	}
+
+	getBearerOptions(access_token) { // for helix
+		return {
+			headers: {
+				'Authorization': 'Bearer ' + access_token,
+				'Client-ID': this.client_id,
+				'Content-Type': 'application/json'
+			}
+		};
 	}
 }
 

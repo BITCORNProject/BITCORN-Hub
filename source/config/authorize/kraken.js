@@ -8,7 +8,6 @@ const Authenticated = require("./shared/authenticated");
 const AppOptions = require("./shared/app-options");
 
 const fetch = require('node-fetch');
-const { URLSearchParams } = require('url');
 const auth = require('../../../settings/auth');
 
 const authenticated = new Authenticated();
@@ -36,10 +35,13 @@ const appOptions = new AppOptions({
 
 async function authenticateCode({ code, state }) {
 
-	const json = await appOptions.authenticateCode({
+	if (appOptions.state !== state) {
+		return { error: new Error(`state '${state}' does not match initial value '${appOptions.state}'`) };
+	}
+
+	const json = await appOptions.postForm({
 		token_url: 'https://api.twitch.tv/kraken/oauth2/token',
-		code,
-		state
+		form: appOptions.formAuthorizationCode(code)
 	});
 
 	authenticated.updateValues(json);
@@ -52,24 +54,10 @@ async function authenticateCode({ code, state }) {
 
 async function keepAlive() {
 
-	const url = 'https://api.twitch.tv/kraken/oauth2/token';
-
-	const form = {
-		grant_type: 'refresh_token',
-		refresh_token: authenticated.refresh_token,
-		client_id: appOptions.client_id,
-		client_secret: appOptions.client_secret,
-	};
-
-	const options = { method: 'POST', body: new URLSearchParams(form) };
-
-	const json = await fetch(url, options)
-		.then(res => res.json())
-		.catch(error => { error });
-
-	if (json.error) {
-		return { error: error };
-	}
+	const json = await appOptions.postForm({
+		token_url: 'https://api.twitch.tv/kraken/oauth2/token',
+		form: appOptions.formRefreshToken(authenticated.refresh_token)
+	});
 
 	authenticated.updateValues(json);
 
@@ -78,20 +66,9 @@ async function keepAlive() {
 	return { error: null };
 }
 
-function getAuthorizedOptions(access_token) {
-	return {
-		headers: {
-			'Accept': 'application/vnd.twitchtv.v5+json',
-			'Client-ID': appOptions.client_id,
-			'Authorization': 'OAuth ' + access_token,
-			'Content-Type': 'application/json'
-		}
-	};
-}
-
 async function getEndpoint(url) {
 
-	const result = await fetch(url, getAuthorizedOptions(authenticated.access_token))
+	const result = await fetch(url, appOptions.getOAuthOptions(authenticated.access_token))
 		.then(res => res.json())
 		.catch(error => { error });
 

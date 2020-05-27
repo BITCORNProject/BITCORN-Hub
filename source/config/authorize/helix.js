@@ -8,7 +8,6 @@ const Authenticated = require("./shared/authenticated");
 const AppOptions = require("./shared/app-options");
 
 const fetch = require('node-fetch');
-const { URLSearchParams } = require('url');
 const auth = require('../../../settings/auth');
 
 const authenticated = new Authenticated();
@@ -34,10 +33,13 @@ const appOptions = new AppOptions({
 
 async function authenticateCode({ code, state }) {
 
-	const json = await appOptions.authenticateCode({
+	if (appOptions.state !== state) {
+		return { error: new Error(`state '${state}' does not match initial value '${appOptions.state}'`) };
+	}
+
+	const json = await appOptions.postForm({
 		token_url: 'https://id.twitch.tv/oauth2/token', 
-		code, 
-		state, 
+		form: appOptions.formAuthorizationCode(code),
 		headers: {
 			'Authorization': 'Basic ' + (Buffer.from(appOptions.client_id + ':' + appOptions.client_secret).toString('base64'))
 		}
@@ -53,24 +55,13 @@ async function authenticateCode({ code, state }) {
 
 async function keepAlive() {
 
-	const url = 'https://id.twitch.tv/oauth2/token';
-
-	const form = {
-		grant_type: 'refresh_token',
-		refresh_token: authenticated.refresh_token,
-		client_id: appOptions.client_id,
-		client_secret: appOptions.client_secret,
-	};
-
-	const headers = {
-		'Authorization': 'Basic ' + (Buffer.from(appOptions.client_id + ':' + appOptions.client_secret).toString('base64'))
-	};
-
-	const options = { headers: headers, method: 'POST', body: new URLSearchParams(form) };
-
-	const json = await fetch(url, options)
-		.then(res => res.json())
-		.catch(error => { error });
+	const json = await appOptions.postForm({
+		token_url: 'https://id.twitch.tv/oauth2/token',
+		form: appOptions.formRefreshToken(authenticated.refresh_token),
+		headers: {
+			'Authorization': 'Basic ' + (Buffer.from(appOptions.client_id + ':' + appOptions.client_secret).toString('base64'))
+		}
+	});
 
 	authenticated.updateValues(json);
 
@@ -79,18 +70,9 @@ async function keepAlive() {
 	return { error: null };
 }
 
-function getAuthorizedOptions(client_id, access_token) {
-	return {
-		headers: {
-			'Authorization': 'Bearer ' + access_token,
-			'Client-ID': client_id,
-			'Content-Type': 'application/json'
-		}
-	};
-}
-
 async function getEndpoint(url) {
-	const result = await fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
+
+	const result = await fetch(url, appOptions.getBearerOptions(authenticated.access_token))
 		.then(res => res.json())
 		.catch(error => { error });
 
