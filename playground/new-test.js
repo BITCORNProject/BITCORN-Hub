@@ -5,38 +5,42 @@
 
 "use strict";
 
-const _ = require('./test-dependencies');
+const auth = require('../settings/auth');
+//const _ = require('./test-dependencies');
+
+const { Timer } = require('../public/js/server/timer');
 
 (async () => {
 	try {
 
-		const timer = new _.Timer();
+		const timer = new Timer();
 		timer.start();
+		// client.js
 
-		const user = await _.helix.getUserLogin('naivebot');
-		const recipients = [
-			`twitch|75987197`,
-			`twitch|${user.id}`
-		];
-		const amount = 41 / recipients.length;
+		const WebSocket = require('ws')
+		const url = 'ws://localhost:8080'
+		const connection = new WebSocket(url)
+		
+		connection.onopen = () => {
+			connection.send('Message From Client')
+		}
 
-		const body = {
-			from: `twitch|120524051`,
-			to: recipients,
-			platform: 'twitch',
-			amount: amount,
-			columns: ['balance', 'twitchusername', 'cornaddy']
-		};
+		connection.onerror = (error) => {
+			console.log('WebSocket error:', error)
+		}
 
+		connection.onmessage = (e) => {
+			console.log(e.data)
+		}
 
-		const result = await _.databaseApi.request(user.id, null).bitcorn();
-
-		console.log(result);
+		if(connection.readyState === connection.OPEN) {
+			connection.send();
+		}
 
 		const time = timer.stop();
 		console.log('Execution time: ' + time);
 
-		_.assert(time);
+		assert(time);
 	} catch (error) {
 		console.log(error);
 
