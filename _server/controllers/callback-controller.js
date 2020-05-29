@@ -4,8 +4,7 @@
 
 "use strict";
 
-const kraken = require('../config/authorize/kraken');
-const helix = require('../config/authorize/helix');
+const helix = require('../authorize/helix');
 const qs = require('querystring');
 
 async function redirectAuthCode(name, obj, req, res, next) {
@@ -20,9 +19,6 @@ async function redirectAuthCode(name, obj, req, res, next) {
 }
 
 module.exports = {
-	kraken: async (req, res, next) => {
-		await redirectAuthCode('kraken', kraken, req, res, next);
-	},
 	helix: async (req, res, next) => {
 		await redirectAuthCode('helix', helix, req, res, next);
 	}

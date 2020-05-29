@@ -1,7 +1,6 @@
 "use strict";
 const fetch = require('node-fetch');
 
-const auth = require('../settings/auth');
 const serverSettings = require('../settings/server-settings');
 const databaseAPI = require('./api-interface/database-api');
 
@@ -35,21 +34,29 @@ async function performPayout(channel) {
 	while (viewers.length > 0) {
 		const chunked = viewers.splice(0, 100);
 		promises.push(new Promise(async (resolve) => {
-			const usernames = chunked.join(',');
-			const users = await fetch(`http://localhost:${auth.PORT}/users?usernames=${usernames}`).then(res => res.json());
-			resolve(users.result.users.map(x => x._id));
+			const user_logins = chunked.map(x => `login=${x}`).join('&');
+			const result = await fetch(`http://localhost:${process.env.PORT}/users?${user_logins}`).then(res => res.json());
+			if(result.error) {
+				resolve([]);
+			} else {
+				resolve(result.data.map(x => x.id));
+			}
 		}));
 	}
+	
 	const presults = await Promise.all(promises);
 	chatters = [].concat.apply([], presults);
 
-	const body = {
-		chatters: chatters,
-		minutes: MINUTE_AWARD_MULTIPLIER
-	};
-	const { result: { users: [{ _id: senderId }] } } = await fetch(`http://localhost:${auth.PORT}/users?usernames=${auth.BOT_USERNAME}`).then(res => res.json());
-
-	return databaseAPI.requestPayout(senderId, body);
+	if(chatters.length > 0) {
+		const body = {
+			chatters: chatters,
+			minutes: MINUTE_AWARD_MULTIPLIER
+		};
+		const  { data: [{ id: senderId }] } = await fetch(`http://localhost:${process.env.PORT}/users?usernames=${process.env.BOT_USERNAME}`).then(res => res.json());
+	
+		return databaseAPI.requestPayout(senderId, body);
+	}
+	return null;
 }
 
 async function init() {
@@ -57,7 +64,7 @@ async function init() {
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
-		const channel = auth.CHANNEL_NAME.split(',')[0];
+		const channel = process.env.CHANNEL_NAME.split(',')[0];
 		const result = await performPayout(channel);
 		console.log({ result });
 

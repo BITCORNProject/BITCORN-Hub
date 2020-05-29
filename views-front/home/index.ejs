@@ -146,7 +146,6 @@
                 <div style="display: flex; flex-direction: column; height: 100%">
                     <div id="display-control-dashboard">
                         <div><span>Dashboard</span>
-                            <input id="control-dashboard-login-kraken" type="button" value="Login Kraken" />
                             <input id="control-dashboard-login-helix" type="button" value="Login Helix" />
                         </div>
                         <div style="display: flex; flex: 2;">
@@ -225,42 +224,8 @@
                                 </form>
                             </div>
                         </div>
-                    </div>
-                    <div id="display-control-subscription" style="display: flex; flex-direction: column; height: 100%">
-                        <div>
-                            <span>Subscription</span>
-                            <input id="control-subscription-login-kraken" type="button" value="Login Kraken" />
-                        </div>
-                        <div id="control-subscription-list-container" style="height: 500px; overflow: auto;">
-                            <ul id="control-subscription-list">
-
-                            </ul>
-                        </div>
-                        <div id="control-subscription-inputs-container"
-                            style="display: flex; position: absolute; top: 550px;">
-                            <div style="display: flex; padding: 2px;">
-                                <select id="control-subscription-select" style="width: 150px;">
-                                    <option value="5">5 Subscriber List</option>
-                                    <option value="10">10 Subscriber List</option>
-                                    <option value="25">25 Subscriber List</option>
-                                    <option value="50">50 Subscriber List</option>
-                                    <option value="100">100 Subscriber List</option>
-                                </select>
-                            </div>
-                            <div style="display: flex; padding: 2px;">
-                                <input id="control-subscription-previous-button" type="button" value="Previous"
-                                    style="width: 80px;" />
-                            </div>
-                            <div style="display: flex; padding: 2px;">
-                                <input id="control-subscription-next-button" type="button" value="Next"
-                                    style="width: 80px;" />
-                            </div>
-                            <div style="display: flex; padding: 2px;">
-                                <p>Showing <span id="control-subscription-index">0</span> of <span
-                                        id="control-subscription-total">0</span> pages</p>
-                            </div>
-                        </div>
-                    </div>
+					</div>
+					
                     <div id="display-control-settings">
 
                         <div style="width: 100%;">
@@ -278,86 +243,6 @@
                                 <li><a href="#tabs-control-settings-3">...New</a></li>
                             </ul>
 
-                            <div id="tabs-control-settings-1">
-                                <form id="control-settings-auth-form">
-                                    <div>
-                                        <div>Auth Settings</div>
-                                        <div class="notice">Changes to these settings will require a server restart.
-                                        </div>
-                                    </div>
-                                    <div id="control-settings-auth-inputs">
-
-                                        <div id="control-settings-auth-port" class="item-container"><label
-                                                class="item-label">PORT</label><input class="item-input" type="text"
-                                                value="1337" name="PORT" />
-                                        </div>
-                                        <div id="control-settings-auth-channel-name" class="item-container"><label
-                                                class="item-label">CHANNEL_NAME</label><input class="item-input"
-                                                type="text" value="naivebot" name="CHANNEL_NAME" />
-                                        </div>
-
-                                        <div id="control-settings-auth-bot-username" class="item-container"><label
-                                                class="item-label">BOT_USERNAME</label><input class="item-input"
-                                                type="text" value="naivebot" name="BOT_USERNAME" /></div>
-
-                                        <div id="control-settings-auth-oauth-token" class="item-container"><label
-                                                class="item-label">OAUTH_TOKEN</label><input class="item-input"
-                                                type="password" value="" placeholder="IRC Bot Token"
-                                                name="OAUTH_TOKEN" />
-                                        </div>
-
-                                        <div id="control-settings-auth-kraken-client-id" class="item-container"><label
-                                                class="item-label">KRAKEN_CLIENT_ID</label><input class="item-input"
-                                                type="password" value="" placeholder="Twitch V5 Client ID"
-                                                name="KRAKEN_CLIENT_ID" />
-                                        </div>
-
-                                        <div id="control-settings-auth-kraken-secret" class="item-container"><label
-                                                class="item-label">KRAKEN_SECRET</label><input class="item-input"
-                                                type="password" value="lkjlklfvb9085klmndf9d78b908590ojkl"
-                                                name="KRAKEN_SECRET" />
-                                        </div>
-
-                                        <div id="control-settings-auth-kraken-callback-url" class="item-container">
-                                            <label class="item-label">KRAKEN_CALLBACK_URL</label><input
-                                                class="item-input" type="text" value="http://localhost"
-                                                name="KRAKEN_CALLBACK_URL" />
-                                        </div>
-
-                                        <div id="control-settings-auth-helix-client-id" class="item-container"><label
-                                                class="item-label">HELIX_CLIENT_ID</label><input class="item-input"
-                                                type="password" value="lkjlklfvb9085klmndf9d78b908590ojkl"
-                                                name="HELIX_CLIENT_ID" />
-                                        </div>
-
-                                        <div id="control-settings-auth-helix-secret" class="item-container"><label
-                                                class="item-label">HELIX_SECRET</label><input class="item-input"
-                                                type="password" value="lkjlklfvb9085klmndf9d78b908590ojkl"
-                                                name="HELIX_SECRET" />
-                                        </div>
-
-                                        <div id="control-settings-auth-helix-callback-url" class="item-container"><label
-                                                class="item-label">HELIX_CALLBACK_URL</label><input class="item-input"
-                                                type="text" value="http://localhost" name="HELIX_CALLBACK_URL" />
-                                        </div>
-                                    </div>
-
-                                    <div style="width: 100%;">
-                                        <input id="control-settings-auth-save-button" type="submit" value="Save" />
-                                        <span style="display: inline-block; width: 100%; text-align: right;">
-                                            <label class="item-label">Chat Rooms:</label>
-                                            <span style="margin-right: 30px;">
-                                                <input id="control-settings-auth-chatrooms-join" type="text" value="" />
-                                                <input type='button' value="Join" onclick="onJoin()" />
-                                            </span>
-                                            <span style="margin-left: 30px;">
-                                                <select id="control-settings-auth-chatrooms-part"></select>
-                                                <input type='button' value="Leave" onclick="onPart()" />
-                                            </span>
-                                        </span>
-                                    </div>
-                                </form>
-                            </div>
                             <div id="tabs-control-settings-2">
                                 <form id="control-settings-server-form">
                                     <div>Server Settings</div>
@@ -477,9 +362,6 @@
                         jchannelname: $('#control-settings-auth-channel-name input'),
                         jbotusername: $('#control-settings-auth-bot-username input'),
                         joauthtoken: $('#control-settings-auth-oauth-token input'),
-                        jkrakenclientid: $('#control-settings-auth-kraken-client-id input'),
-                        jkrakensecret: $('#control-settings-auth-kraken-secret input'),
-                        jkrakencallbackurl: $('#control-settings-auth-kraken-callback-url input'),
                         jhelixclientid: $('#control-settings-auth-helix-client-id input'),
                         jhelixsecret: $('#control-settings-auth-helix-secret input'),
                         jhelixcallbackurl: $('#control-settings-auth-helix-callback-url input')
@@ -864,22 +746,10 @@
                 setThemeFromIndex(themeIndex);
             });
 
-            $('#control-dashboard-login-kraken').click((e) => {
-                window.location = `./login-kraken`;
-            });
-            $('#control-subscription-login-kraken').click((e) => {
-                window.location = `./login-kraken`;
-            });
             $('#control-dashboard-login-helix').click((e) => {
                 window.location = `./login-helix`;
             });
-            socket.on('login-kraken', (data) => {
-                console.log(data);
-                if (data.authenticated) {
-                    $('#control-dashboard-login-kraken').hide();
-                    $('#control-subscription-login-kraken').hide();
-                }
-            });
+
             socket.on('login-helix', (data) => {
                 console.log(data);
                 if (data.authenticated) {

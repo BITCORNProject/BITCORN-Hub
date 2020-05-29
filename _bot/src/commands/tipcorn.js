@@ -7,7 +7,6 @@
 const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../settings/auth');
 const serverSettings = require('../../settings/server-settings');
 
 const databaseAPI = require('../api-interface/database-api');
@@ -37,7 +36,7 @@ module.exports = {
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
 
-		if(allowedUsers.activityTrackerOmitUsername(twitchUsername)) {
+		if (allowedUsers.activityTrackerOmitUsername(twitchUsername)) {
 			message = `${this.configs.name} used on omit username ${twitchUsername}`;
 		} else if (cleanParams.isNumber(amount) === false ||
 			amount < serverSettings.MIN_TIPCORN_AMOUNT ||
@@ -46,7 +45,7 @@ module.exports = {
 			if (amount < serverSettings.MIN_TIPCORN_AMOUNT) {
 				success = true;
 				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, serverSettings.MIN_TIPCORN_AMOUNT, this.configs.example);
-			} else if(amount >= databaseAPI.MAX_WALLET_AMOUNT) {
+			} else if (amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 				success = true;
 				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);
 			} else {
@@ -54,11 +53,11 @@ module.exports = {
 			}
 		} else {
 
-			const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+			const { data: [user] } = await fetch(`http://localhost:${process.env.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
-			if (!user.success || user.error) {
+			if (!user || user.error) {
 				success = true;
-				message = util.format(`%s - mttvMOONMAN Here's a tip for you: %s who? mttvMOONMAN`, twitchUsername);
+				message = util.format(`%s - mttvMOONMAN Here's a tip for you: %s who? mttvMOONMAN`, event.twitchUsername, twitchUsername);
 			} else {
 				const body = {
 					from: `twitch|${event.twitchId}`,

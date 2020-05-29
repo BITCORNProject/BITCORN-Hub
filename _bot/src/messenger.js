@@ -2,7 +2,6 @@
 const fetch = require('node-fetch');
 
 const serverSettings = require('../settings/server-settings');
-const auth = require('../settings/auth');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
 
@@ -92,9 +91,8 @@ async function handleTipRewards(type, channel, username, amount) {
 	const commandHelper = require('./shared-lib/command-helper');
 	const databaseAPI = require('./api-interface/database-api');
 
-	const authValues = auth;
-	const fromUser = await fetch(`http://localhost:${authValues.PORT}/user?username=${authValues.BOT_USERNAME}`).then(res => res.json());
-	const toUser = await fetch(`http://localhost:${authValues.PORT}/user?username=${username}`).then(res => res.json());
+	const fromUser = await fetch(`http://localhost:${process.env.PORT}/user?username=${process.env.BOT_USERNAME}`).then(res => res.json());
+	const toUser = await fetch(`http://localhost:${process.env.PORT}/user?username=${username}`).then(res => res.json());
 
 	const body = {
 		from: `twitch|${fromUser.id}`,
@@ -123,10 +121,10 @@ function enqueueMessageByType(type, target, message) {
 	if (type === MESSAGE_TYPE.irc_chat) {
 		chatQueue.enqueue({ target, message });
 	} else if (type === MESSAGE_TYPE.irc_whisper) {
-		if (target.toLowerCase() !== auth.BOT_USERNAME.toLowerCase()) {
+		if (target.toLowerCase() !== process.env.BOT_USERNAME.toLowerCase()) {
 			whisperQueue.enqueue({ target, message });
 		} else {
-			console.error(`Bot ${auth.BOT_USERNAME} attempt to whisper self`);
+			console.error(`Bot ${process.env.BOT_USERNAME} attempt to whisper self`);
 		}
 	} else {
 		throw new Error(`${type} ${target} ${message}`);

@@ -7,9 +7,6 @@
 const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../settings/auth');
-const serverSettings = require('../../settings/server-settings');
-
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
@@ -33,7 +30,7 @@ module.exports = {
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 
-		const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const user = await fetch(`http://localhost:${process.env.PORT}/user?username=${twitchUsername}`).then(res => res.json());
 
 		if (!user.success || user.error) {
 			message = JSON.stringify(user);

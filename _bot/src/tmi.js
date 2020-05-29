@@ -4,7 +4,6 @@ const fs = require('fs');
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
 const commander = require('./commander');
-const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
 
@@ -55,8 +54,8 @@ const client = new tmi.client({
 		reconnect: true
 	},
 	identity: {
-		username: auth.BOT_USERNAME,
-		password: auth.OAUTH_TOKEN
+		username: process.env.BOT_USERNAME,
+		password: process.env.OAUTH_TOKEN
 	},
 	channels: channels
 });

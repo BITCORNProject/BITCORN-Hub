@@ -60,18 +60,7 @@ class AppOptions {
 			.catch(error => { error });
 	}
 
-	getOAuthOptions(access_token) { // for kraken
-		return {
-			headers: {
-				'Authorization': 'OAuth ' + access_token,
-				'Client-ID': this.client_id,
-				'Accept': 'application/vnd.twitchtv.v5+json',
-				'Content-Type': 'application/json'
-			}
-		};
-	}
-
-	getBearerOptions(access_token) { // for helix
+	getBearerOptions(access_token) {
 		return {
 			headers: {
 				'Authorization': 'Bearer ' + access_token,

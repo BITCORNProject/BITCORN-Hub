@@ -5,14 +5,12 @@
 "use strict";
 
 const qs = require('querystring');
-const kraken = require('./authorize/kraken');
-const helix = require('./authorize/helix');
 const controllers = require('../controllers');
+const helix = require('../authorize/helix');
 const login = controllers.login;
 const callback = controllers.callback;
 
 const authMap = new Map();
-authMap.set('kraken', { login: login.kraken, callback: callback.kraken });
 authMap.set('helix', { login: login.helix, callback: callback.helix });
 
 exports.init = async (app) => {
@@ -25,8 +23,8 @@ exports.init = async (app) => {
 
     app.get('/users', async (req, res, next) => {    
 		const req_data = qs.parse(req.url.split('?')[1]);
-    	const usernames = req_data.usernames;
-		const resUsers = await kraken.getUserLogins(usernames);
+    	const user_logins = req_data.user_logins;
+		const resUsers = await helix.getUserLogins(user_logins);
 		res.json(resUsers);
 	});
 

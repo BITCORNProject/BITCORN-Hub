@@ -3,25 +3,24 @@
 */
 
 "use strict";
+require('dotenv').config();
 
 const orderedRequires = [];
 
-orderedRequires.push(require('./source/config/authorize/kraken'));
-orderedRequires.push(require('./source/config/authorize/helix'));
+orderedRequires.push(require('./authorize/helix'));
 
-const app = require('./source/config/express');
-const auth = require('./settings/auth');
+const app = require('./config/express');
 
 if (module === require.main) {
 
 	(async () => {
 		try {
 			const { server } = await new Promise(async (resolve) => {
-				const server = app.listen(auth.data.PORT, () => {
+				const server = app.listen(process.env.PORT, () => {
 					resolve({ server: server, port: server.address().port });
 				});
 			});
-			console.log({ success: true, message: `Server listening on port ${auth.data.PORT}` })
+			console.log({ success: true, message: `Server listening on port ${process.env.PORT}` })
 
 			const io = require('socket.io')(server);
 

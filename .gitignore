@@ -15,3 +15,5 @@ command_testers.txt
 /_bot/settings/*.json
 
 /coverage/
+.nyc_output/
+.VSCodeCounter/

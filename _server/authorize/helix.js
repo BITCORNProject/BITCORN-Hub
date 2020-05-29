@@ -8,7 +8,6 @@ const Authenticated = require("./shared/authenticated");
 const AppOptions = require("./shared/app-options");
 
 const fetch = require('node-fetch');
-const auth = require('../../../settings/auth');
 
 const authenticated = new Authenticated();
 
@@ -19,9 +18,9 @@ const channel = {
 
 const appOptions = new AppOptions({
 	authorize_path: 'https://id.twitch.tv/oauth2/authorize',
-	client_id: auth.data.HELIX_CLIENT_ID,
-	client_secret: auth.data.HELIX_SECRET,
-	redirect_uri: auth.data.HELIX_CALLBACK_URL,
+	client_id: process.env.HELIX_CLIENT_ID,
+	client_secret: process.env.HELIX_SECRET,
+	redirect_uri: process.env.HELIX_CALLBACK_URL,
 	scope: [
 		'user:edit:broadcast',
 		'user:edit',
@@ -38,7 +37,7 @@ async function authenticateCode({ code, state }) {
 	}
 
 	const json = await appOptions.postForm({
-		token_url: 'https://id.twitch.tv/oauth2/token', 
+		token_url: 'https://id.twitch.tv/oauth2/token',
 		form: appOptions.formAuthorizationCode(code),
 		headers: {
 			'Authorization': 'Basic ' + (Buffer.from(appOptions.client_id + ':' + appOptions.client_secret).toString('base64'))
@@ -71,33 +70,22 @@ async function keepAlive() {
 }
 
 async function getEndpoint(url) {
-
-	const result = await fetch(url, appOptions.getBearerOptions(authenticated.access_token))
+	return fetch(url, appOptions.getBearerOptions(authenticated.access_token))
 		.then(res => res.json())
 		.catch(error => { error });
+}
 
-	if (result.error) {
-		return { success: false, message: result.error.message, error: result.error };
-	}
-
-	if (result.data) {
-		if (result.data.length > 0) {
-			result.data[0].success = true;
-			return result.data[0];
-		} else {
-			return { success: false, message: `The stream seems to be offline.` };
-		}
-	}
-
-	return { success: false, message: `Fetch endpoint ${url} failed.` };
+async function getUser() {
+	return getEndpoint(`https://api.twitch.tv/helix/users`);
 }
 
 async function getUserLogin(user_name) {
 	return getEndpoint(`https://api.twitch.tv/helix/users?login=${user_name}`);
 }
 
-async function getUser() {
-	return getEndpoint(`https://api.twitch.tv/helix/users`);
+// login=callowcreation&id=76556566...
+async function getUserLogins(user_logins) {
+	return getEndpoint(`https://api.twitch.tv/helix/users?${user_logins}`);
 }
 
 async function getStream() {
@@ -134,6 +122,7 @@ exports.authUrl = () => appOptions.authUrl;
 exports.authenticateCode = authenticateCode;
 exports.getUser = getUser;
 exports.getUserLogin = getUserLogin;
+exports.getUserLogins = getUserLogins;
 exports.getStream = getStream;
 exports.getStreamById = getStreamById;
 exports.getUserFollows = getUserFollows;
