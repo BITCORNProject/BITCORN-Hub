@@ -1,6 +1,6 @@
-/node_modules
-/bower_components
-/logs
+node_modules/
+bower_components/
+logs/
 /settings/*.json
 /settings/commands
 *.env
@@ -17,3 +17,4 @@ command_testers.txt
 /coverage/
 .nyc_output/
 .VSCodeCounter/
+node_modules

@@ -47,7 +47,7 @@ async function authenticateCode({ code, state }) {
 	authenticated.updateValues(json);
 
 	const result = await getUser();
-	channel.user_id = result.id;
+	channel.user_id = result.data[0].id;
 
 	return keepAlive();
 };
@@ -108,7 +108,7 @@ async function init(app) {
 	app.on('connection', (socket) => {
 		const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
 		const clientName = socket.handshake.headers.referer.substring(lastIndex + 1, socket.handshake.headers.referer.length);
-
+		
 		if (clientName === 'control-panel') {
 			socket.emit('login-helix', { name: 'helix', authenticated: channel.user_id });
 		}
