@@ -6,7 +6,7 @@
 
 module.exports = {
     index: async (req, res, next) => { 
-        res.render('home/index', { 
+        res.render('index', { 
             isOverlay: false,
         });
     }

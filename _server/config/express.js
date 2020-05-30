@@ -17,7 +17,6 @@ app.set('views', 'views-front');
 
 app.disable('view cache');
 
-app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(nocache());
 

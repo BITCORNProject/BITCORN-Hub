@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+
+	<title>Authorize Twith DevMode</title>
+
+</head>
+
+<body>
+	<div>
+		<span>Dashboard</span>
+		<input id="control-dashboard-login-helix" type="button" value="Login Helix" />
+	</div>
+
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
+	<script>
+		"use strict";
+
+		const socket = io.connect();
+
+		$(document).ready(() => {
+
+			$('#control-dashboard-login-helix').click((e) => {
+				window.location = `./login-helix`;
+			});
+
+			socket.on('login-helix', (data) => {
+				console.log(data);
+				if (data.authenticated) {
+					$('#control-dashboard-login-helix').hide();
+				}
+			});
+
+		});
+	</script>
+</body>
