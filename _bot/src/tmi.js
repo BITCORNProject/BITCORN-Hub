@@ -7,7 +7,7 @@ const commander = require('./commander');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
 
-const noRewardFilename = './_bot/settings/no-rewards.json';
+const noRewardFilename = './settings/no-rewards.json';
 const commandsMap = commander.createCommandsMap();
 
 const outMessageCallbacks = [];

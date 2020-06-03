@@ -28,32 +28,45 @@ async function performPayout(channel) {
 			viewers = viewers.concat(chatters[k]);
 		}
 	}
-	
+
 	const promises = [];
 	let chatters = [];
 	while (viewers.length > 0) {
 		const chunked = viewers.splice(0, 100);
 		promises.push(new Promise(async (resolve) => {
-			const user_logins = chunked.map(x => `login=${x}`).join('&');
-			const result = await fetch(`http://localhost:${process.env.PORT}/users?${user_logins}`).then(res => res.json());
-			if(result.error) {
+			const url = `http://localhost:${process.env.PORT}/users`;
+			const options = {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': 'Basic ' + (Buffer.from(process.env.HELIX_CLIENT_ID + ':' + process.env.HELIX_CLIENT_SECRET).toString('base64'))
+				},
+				body: JSON.stringify({ 
+					user_logins: chunked,
+					columns: ['id']
+				})
+			};
+			const result = await fetch(url, options);
+			if (result.status !== 200) {
+				console.log(result);
 				resolve([]);
 			} else {
-				resolve(result.data.map(x => x.id));
+				const json = await result.json();
+				resolve(json);
 			}
 		}));
 	}
-	
+
 	const presults = await Promise.all(promises);
 	chatters = [].concat.apply([], presults);
 
-	if(chatters.length > 0) {
+	if (chatters.length > 0) {
 		const body = {
 			chatters: chatters,
 			minutes: MINUTE_AWARD_MULTIPLIER
 		};
-		const  { data: [{ id: senderId }] } = await fetch(`http://localhost:${process.env.PORT}/users?usernames=${process.env.BOT_USERNAME}`).then(res => res.json());
-	
+		const { data: [{ id: senderId }] } = await fetch(`http://localhost:${process.env.PORT}/users?usernames=${process.env.BOT_USERNAME}`).then(res => res.json());
+
 		return databaseAPI.requestPayout(senderId, body);
 	}
 	return null;
@@ -61,7 +74,7 @@ async function performPayout(channel) {
 
 async function init() {
 
-	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
+	const MINUTE_AWARD_MULTIPLIER = 0.5;// serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
 		const channel = process.env.CHANNEL_NAME.split(',')[0];

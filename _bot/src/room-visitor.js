@@ -5,7 +5,7 @@ const fs = require('fs');
 const _ = require('lodash');
 
 let joinedChannels = [];
-const filename = './_bot/settings/channels.json';
+const filename = './settings/channels.json';
 
 module.exports = async (tmi) => {
 
