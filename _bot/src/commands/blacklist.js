@@ -8,6 +8,7 @@ const fetch = require('node-fetch');
 const util = require('util');
 
 const databaseAPI = require('../api-interface/database-api');
+const twitchAPI = require('../api-interface/twitch-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 
@@ -30,16 +31,15 @@ module.exports = {
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 
-		const user = await fetch(`http://localhost:${process.env.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const twitchResult = await twitchAPI.getUserId(twitchUsername);
 
-		if (!user.success || user.error) {
-			message = JSON.stringify(user);
-			if (user.success === false) {
-				message = user.message;
-			}
+		if (twitchResult.status === 404 || twitchResult.error) {
+			const errorResult = await errorLogger.asyncErrorLogger(twitchResult.error, twitchResult.status);
+			success = false;
+			message = JSON.stringify(errorResult);
 		} else {
 
-			const result = await databaseAPI.requestBlacklist(event.twitchId, user.id);
+			const result = await databaseAPI.requestBlacklist(event.twitchId, twitchResult.id);
 			if (result.status && result.status === 500) {
 
 				// NOTE needs to be logged to the locally as an error

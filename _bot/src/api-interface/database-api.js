@@ -18,7 +18,6 @@ function DatabaseEndpoint() {
     this.MAX_WALLET_AMOUNT = 100000000000;
     this.MAX_RAIN_USERS = 10;
 
-    this.sql_db_auth = sql_db_auth;
     this.db_endpoints = db_endpoints;
 	
     this.paymentCode = {
@@ -61,33 +60,42 @@ DatabaseEndpoint.prototype.base = function() {
 	}
 }
 
+DatabaseEndpoint.prototype.sql_db_auth = function() {
+	if(is_production) {
+		return sql_db_auth.production;
+	} else {
+		return sql_db_auth.development;
+	}
+}
+
+
 // v3
 DatabaseEndpoint.prototype.makeErrorRequest = async function (data) {
-	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth());
 	const url = `${this.base()}/${this.rooturl().errorlog}`;
     return apiRequest.makeRequest(url, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
-	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth());
 	const url = `${this.base()}/${baseUrl}${endpoint}`;
     return apiRequest.makeRequest(url, access_token, data);
 }
 
 DatabaseEndpoint.prototype.makeRequestDirect = async function (baseUrl, twitchId, data) {
-    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth());
 	const url = `${this.base()}/${baseUrl}`;
     return apiRequest.makeRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestDirect = async function (baseUrl, twitchId, data) {
-    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth());
 	const url = `${this.base()}/${baseUrl}`;
     return apiRequest.criticalRequest(url, twitchId, access_token, data);
 }
 
 DatabaseEndpoint.prototype.criticalRequestBase = async function (baseUrl, endpoint, twitchId, data) {
-    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+    const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth());
 	const url = `${this.base()}/${baseUrl}${endpoint}`;
     return apiRequest.criticalRequest(url, twitchId, access_token, data);
 }

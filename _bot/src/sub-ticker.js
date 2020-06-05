@@ -3,6 +3,8 @@ const fetch = require('node-fetch');
 
 const serverSettings = require('../settings/server-settings');
 const databaseAPI = require('./api-interface/database-api');
+const twitchAPI = require('./api-interface/twitch-api');
+const errorLogger = require('./utils/error-logger');
 
 const timeValues = {
 	SECOND: 1000,
@@ -33,31 +35,24 @@ async function performPayout(channel) {
 	let chatters = [];
 	while (viewers.length > 0) {
 		const chunked = viewers.splice(0, 100);
-		promises.push(new Promise(async (resolve) => {
-			const url = `http://localhost:${process.env.PORT}/users`;
-			const options = {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': 'Basic ' + (Buffer.from(process.env.HELIX_CLIENT_ID + ':' + process.env.HELIX_CLIENT_SECRET).toString('base64'))
-				},
-				body: JSON.stringify({ 
-					user_logins: chunked,
-					columns: ['id']
-				})
-			};
-			const result = await fetch(url, options);
-			if (result.status !== 200) {
-				console.log(result);
-				resolve([]);
-			} else {
-				const json = await result.json();
-				resolve(json);
+		promises.push(new Promise(async (resolve, reject) => {
+			const users = await twitchAPI.getUsersId(chunked);
+			if (users.error) {
+				reject(users);
+			} else if (users) {
+				resolve(users.map(x => x.id));
 			}
 		}));
 	}
 
-	const presults = await Promise.all(promises);
+	const presults = await Promise.all(promises)
+		.catch(e => e);
+
+	if(presults.error) {
+		console.log(presults.error);
+		return errorLogger.asyncErrorLogger(presults.error, 0);
+	}
+
 	chatters = [].concat.apply([], presults);
 
 	if (chatters.length > 0) {
@@ -65,7 +60,7 @@ async function performPayout(channel) {
 			chatters: chatters,
 			minutes: MINUTE_AWARD_MULTIPLIER
 		};
-		const { data: [{ id: senderId }] } = await fetch(`http://localhost:${process.env.PORT}/users?usernames=${process.env.BOT_USERNAME}`).then(res => res.json());
+		const { id: senderId } = await twitchAPI.getUserId(process.env.BOT_USERNAME);
 
 		return databaseAPI.requestPayout(senderId, body);
 	}

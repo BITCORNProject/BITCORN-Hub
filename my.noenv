@@ -1,0 +1,10 @@
+NODE_ENV=development
+
+PORT=3000
+
+HELIX_CLIENT_ID="6u41ufgw1ztpwbhmbi495lr3m6z5hq"
+HELIX_SECRET="zr268uv8clschri2tsf4frvuuliwjk"
+
+BOT_USERNAME="bitcornhub"
+OAUTH_TOKEN="oauth:ywxa6pp901ajif95tdfeoxz5oyln32"
+CHANNEL_NAME="callowcreation"

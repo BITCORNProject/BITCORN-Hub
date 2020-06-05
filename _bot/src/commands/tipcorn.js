@@ -10,6 +10,7 @@ const util = require('util');
 const serverSettings = require('../../settings/server-settings');
 
 const databaseAPI = require('../api-interface/database-api');
+const twitchAPI = require('../api-interface/twitch-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
@@ -53,35 +54,21 @@ module.exports = {
 				message = 'Invalid input';
 			}
 		} else {
+			const twitchResult = await twitchAPI.getUserId(twitchUsername);
 
-			const url = `http://localhost:${process.env.PORT}/user`;
-			const options = {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': 'Basic ' + (Buffer.from(process.env.HELIX_CLIENT_ID + ':' + process.env.HELIX_CLIENT_SECRET).toString('base64'))
-				},
-				body: JSON.stringify({
-					username: twitchUsername,
-					columns: ['id']
-				})
-			};
-			console.log(options);
-			const twitchResult = await fetch(url, options);
-			if(twitchResult.status === 404) {
+			console.log(twitchResult);
+
+			if (twitchResult.status === 404) {
 				success = true;
 				message = util.format(`%s - mttvMOONMAN Here's a tip for you: %s who? mttvMOONMAN`, event.twitchUsername, twitchUsername);
 			} else if (twitchResult.error) {
-				const errorResult = await errorLogger.asyncErrorLogger(error, twitchResult.status);
+				const errorResult = await errorLogger.asyncErrorLogger(twitchResult.error, twitchResult.status);
 				success = false;
 				message = JSON.stringify(errorResult);
 			} else {
-				const user = await twitchResult.json();
-
-				console.log(user);
 				const body = {
 					from: `twitch|${event.twitchId}`,
-					to: `twitch|${user.id}`,
+					to: `twitch|${twitchResult.id}`,
 					platform: 'twitch',
 					amount: amount,
 					columns: ['balance', 'twitchusername', 'isbanned']

@@ -25,7 +25,7 @@ const whisperQueue = new _Queue();
 const rewardQueue = new _Queue();
 
 function enqueueReward(type, channel, username, amount) {
-	rewardQueue.enqueue({type, channel, username, amount});
+	rewardQueue.enqueue({ type, channel, username, amount });
 }
 
 async function sendQueuedRewards() {
@@ -73,7 +73,7 @@ async function sendQueuedRewards() {
 	}
 	let outMessage = error ? `Failed to send message type for reward on ${queue.attempts} attempts` : `Sent message: ${result.message}`;
 
-	if(queue.attempts >= MAX_QUEUE_RETRIES) {
+	if (queue.attempts >= MAX_QUEUE_RETRIES) {
 		queue.dequeue();
 		outMessage = `${outMessage} **** ${MAX_QUEUE_RETRIES} MAX_QUEUE_RETRIES ${JSON.stringify(item)}`;
 	}
@@ -90,9 +90,10 @@ async function handleTipRewards(type, channel, username, amount) {
 
 	const commandHelper = require('./shared-lib/command-helper');
 	const databaseAPI = require('./api-interface/database-api');
+	const twitchAPI = require('./api-interface/twitch-api');
 
-	const fromUser = await fetch(`http://localhost:${process.env.PORT}/user?username=${process.env.BOT_USERNAME}`).then(res => res.json());
-	const toUser = await fetch(`http://localhost:${process.env.PORT}/user?username=${username}`).then(res => res.json());
+	const fromUser = await twitchAPI.getUserColumns(process.env.BOT_USERNAME, ['id', 'login']);
+	const toUser = await twitchAPI.getUserColumns(username, ['id', 'login']);
 
 	const body = {
 		from: `twitch|${fromUser.id}`,
@@ -189,8 +190,8 @@ async function sendQueuedMessagesByType(type) {
 		queue.attempts = 0;
 	}
 	let outMessage = error ? `Failed to send message type ${type} on ${queue.attempts} attempts` : `Sent message: ${item.message}`;
-	
-	if(queue.attempts >= MAX_QUEUE_RETRIES) {
+
+	if (queue.attempts >= MAX_QUEUE_RETRIES) {
 		queue.dequeue();
 		outMessage = `${outMessage} **** ${MAX_QUEUE_RETRIES} MAX_QUEUE_RETRIES ${JSON.stringify(item)}`;
 	}
