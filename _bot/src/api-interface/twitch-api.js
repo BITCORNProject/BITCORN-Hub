@@ -11,7 +11,7 @@ function getBasePath() {
 	if(is_production) {
 		return rooturl['twitch-api'].production;
 	} else {
-		return rooturl['twitch-api'].production;
+		return rooturl['twitch-api'].development;
 	}
 }
 

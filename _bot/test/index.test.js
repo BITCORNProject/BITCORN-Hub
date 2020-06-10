@@ -28,6 +28,9 @@ async function _wait(ms) {
 }
 
 describe('#mocha promises', function () {
+	
+	this.timeout(30000);
+
 	const isMock = false;
 
 	//let tmi = null;
@@ -81,8 +84,7 @@ describe('#mocha promises', function () {
 
 	after(() => {
 		return Promise.all([
-			tmi.chatClient.disconnect(),
-			tmi.whisperClient.disconnect()
+			tmi.chatClient.disconnect()
 		]);
 	});
 
@@ -478,20 +480,6 @@ describe('#mocha promises', function () {
 		expect(obj.message).to.include('https://bitcornfarms.com/');
 	});
 
-	it('should get $withdraw response from invoking execute', async () => {
-		const command = isMock ? {
-			execute(event) {
-				return Promise.resolve({ success: true });
-			}
-		} : require('../src/commands/withdraw');
-
-		const event = await mockEvent('$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g', 'callowcreation', 'callowcreation', '#callowcreation');
-
-		const results = await commander.validateAndExecute(event, command);
-		expect(results.success).to.be.not.equal(false);
-	});
-
-	// Chat message and whisper handler merge into one method
 	it('should process whispers and chat messages - chat', async () => {
 		await _wait(50);
 
@@ -508,47 +496,6 @@ describe('#mocha promises', function () {
 		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
 		expect(obj.success).to.be.equal(true);
 	});
-
-	it('should process whispers and chat messages - whisper', async () => {
-
-		await new Promise(resulve => setTimeout(resulve, 50));
-
-		const type = require('../src/utils/message-type').irc_whisper;
-		const target = '#callowcreation';
-
-		const twitchUsername = 'callowcreation';
-		const { id: user_id, login: user_login } = await twitchAPI.getUserColumns(twitchUsername, ['id', 'login']);
-		const user = { 'user-id': user_id, username: user_login };
-
-		const msg = `${commander.commandName('$withdraw')} 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
-		const self = false;
-
-		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
-
-		expect(obj.success).to.be.equal(true);
-		expect(obj.message).to.be.not.equal(`You failed to withdraw: insufficient funds`);
-	});
-
-	it('should process withdraw insufficient funds', async () => {
-
-		await new Promise(resulve => setTimeout(resulve, 50));
-
-		const type = require('../src/utils/message-type').irc_whisper;
-		const target = '#callowcreation';
-
-		const twitchUsername = 'callowcreation';
-		const { id: user_id, login: user_login } = await twitchAPI.getUserColumns(twitchUsername, ['id', 'login']);
-		const user = { 'user-id': user_id, username: user_login };
-
-		const msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
-		const self = false;
-
-		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
-
-		expect(obj.success).to.be.equal(true);
-		expect(obj.message).to.be.equal(`You failed to withdraw: insufficient funds`);
-	});
-
 
 	// chat and whisper queue
 	it('should add items to chat queue', () => {
@@ -782,7 +729,7 @@ describe('#mocha promises', function () {
 
 	it('should not send two reward requests with the same message id', async () => {
 
-		const promises = [];
+		const results = [];
 
 		let userstate = null;
 		let methods = null;
@@ -797,19 +744,17 @@ describe('#mocha promises', function () {
 		methods = null;
 		channel = '#callowcreation';
 		username = 'callowcreation';
-		promises.push(tmi.onCheer(channel, userstate, message));
+		results.push(await tmi.onCheer(channel, userstate, message));
 
-		promises.push(tmi.onCheer(channel, userstate, message));
-
-		const results = await Promise.all(promises);
+		results.push(await tmi.onCheer(channel, userstate, message));
 
 		expect(results[0].error).to.be.equal(null);
 		expect(results[1].success).to.be.equal(false);
 	});
 
-	it.only('should handle rewards events', async () => {
+	it('should handle rewards events', async () => {
 
-		const promises = [];
+		const results = [];
 
 		let userstate = null;
 		let methods = null;
@@ -824,100 +769,31 @@ describe('#mocha promises', function () {
 		methods = null;
 		channel = '#callowcreation';
 		username = 'callowcreation';
-		promises.push(tmi.onCheer(channel, userstate, message));
+		results.push(await tmi.onCheer(channel, userstate, message));
 
 		userstate = { id: 'random-id-kappa' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
-		promises.push(tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate));
+		results.push(await tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate));
 
 		userstate = { id: 'random-id-callowbruh' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
-		promises.push(tmi.onSubscription(channel, username, methods, message, userstate));
+		results.push(await tmi.onSubscription(channel, username, methods, message, userstate));
 
 		userstate = { id: 'random-id-mttv420' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
 		username = 'callowcreation';
-		promises.push(tmi.onResub(channel, username, months, message, userstate, methods));
+		results.push(await tmi.onResub(channel, username, months, message, userstate, methods));
 
-		const results = await Promise.all(promises);
-		console.log(results);
 		for (let i = 0; i < results.length; i++) {
 			const result = results[i];
 			expect(result.error).to.be.equal(null);
 			expect(result.success).to.be.equal(true);
 		}
-	});
-
-	it('should send sub ticker payout request', async () => {
-
-		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
-		let viewers = [];
-
-		const channel = 'markettraderstv';
-		const url = `https://tmi.twitch.tv/group/user/${channel}/chatters`;
-		const chatters_result = await fetch(url);
-		const chatters_json = await chatters_result.json();
-		viewers = [];
-		for (const key in chatters_json) {
-			const chatters = chatters_json[key];
-			for (const k in chatters) {
-				if (k === 'broadcaster') continue;
-				viewers = viewers.concat(chatters[k]);
-			}
-		}
-
-		log(viewers.length);
-
-		const promises = [];
-		let chatters = [];
-		while (viewers.length > 0) {
-			const chunked = viewers.splice(0, 100);
-			promises.push(new Promise(async (resolve) => {
-				const users = await twitchAPI.getUsersId(chunked);
-				resolve(users.map(x => x.id));
-			}));
-		}
-		const presults = await Promise.all(promises);
-		chatters = [].concat.apply([], presults);
-
-		//log(chatters.length);
-		chatters.length = 5;
-
-		//log(chatters);
-
-		const body = {
-			chatters: chatters,
-			minutes: MINUTE_AWARD_MULTIPLIER
-		};
-
-		const { id: senderId } = await twitchAPI.getUserId(process.env.BOT_USERNAME);
-
-		console.log(`---------------> ${senderId}`);
-
-		const results = await databaseAPI.requestPayout(senderId, body);
-
-		log(body);
-
-		expect(results).to.be.greaterThan(0);
-	});
-
-	it('should perform sub ticker after init', async () => {
-		const subTicker = require('../src/sub-ticker');
-
-		const channel = 'callowcreation';
-
-		const initResult = await subTicker.init();
-		expect(initResult.success).to.be.equal(true);
-
-		const results = await subTicker.performPayout(channel);
-
-		expect(results).to.be.greaterThan(0);
-
 	});
 
 	it('should send error to database logger', async () => {

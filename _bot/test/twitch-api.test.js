@@ -29,7 +29,7 @@ describe('#twitch api routes', function () {
 		expect(user).to.have.ownProperty('error');
 		expect(user.error).to.be.equal('Unauthorized');
 
-		//process.env.HELIX_CLIENT_ID = client_id[0];
+		process.env.HELIX_CLIENT_ID = client_id[0];
 	});
 
 	it('should get user and have id property', async () => {

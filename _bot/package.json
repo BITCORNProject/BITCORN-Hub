@@ -4,8 +4,11 @@
 	"main": "app.js",
 	"description": "Chatbot IRC and Twitch API wrapper for channel MarketTradersTv",
 	"scripts": {
-		"test": "mocha test/index.test.js --exit --timeout=20000",
-		"socket-test": "mocha _bot/test/service-socket.test.js --exit"
+		"test": "mocha test/**.test.js --exit --timeout=30000",
+		"index-test": "mocha test/index.test.js --exit",
+		"twitch-api-test": "mocha test/twitch-api.test.js --exit",
+		"sub-ticker-test": "mocha test/sub-ticker.test.js --exit",
+		"withdraw-test": "mocha test/withdraw.test.js --exit"
 	},
 	"author": "Jones S. Cropper",
 	"license": "ISC",
