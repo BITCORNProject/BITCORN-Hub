@@ -4,6 +4,7 @@
 
 "use strict";
 
+const { is_production } = require('../prod');
 const controllers = require('../controllers');
 const helix = require('../authorize/helix');
 const login = controllers.login;
@@ -83,8 +84,10 @@ exports.init = async (app) => {
 }
 
 function verifyAuthorization({ headers }) {
-	console.log(headers['authorization']);
-	console.log('Basic ' + (Buffer.from(process.env.HELIX_CLIENT_ID + ':' + process.env.HELIX_CLIENT_SECRET).toString('base64')));
+	if(is_production === false) {
+		console.log(headers['authorization']);
+		console.log('Basic ' + (Buffer.from(process.env.HELIX_CLIENT_ID + ':' + process.env.HELIX_CLIENT_SECRET).toString('base64')));
+	}
 	return headers['authorization'] === 'Basic ' + (Buffer.from(process.env.HELIX_CLIENT_ID + ':' + process.env.HELIX_CLIENT_SECRET).toString('base64'));
 }
 
