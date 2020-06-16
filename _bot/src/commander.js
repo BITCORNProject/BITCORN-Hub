@@ -57,6 +57,16 @@ function messageAsCommand(msg) {
 	return { prefix: msg[0], msg, name: name.substr(1, name.length - 1), params };
 }
 
+function messageAsAddCommand(msg) {
+	const addArgs = messageAsCommand(msg);
+	addArgs.add = { 
+		name: addArgs.params.shift(),
+		params: addArgs.params,
+		content: addArgs.params.join(' ')
+	};
+	return addArgs;
+}
+
 function checkCooldown(configs, twitchId, cooldowns) {
 	let success = false;
 
@@ -117,6 +127,7 @@ module.exports = {
 	
 	createCommandsMap,
 	messageAsCommand,
+	messageAsAddCommand,
 
 	checkCooldown,
 

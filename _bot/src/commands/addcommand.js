@@ -8,19 +8,19 @@ const MESSAGE_TYPE = require('../utils/message-type');
 
 module.exports = {
 	configs: {
-		name: 'help',
+		name: 'addcommand',
 		cooldown: 20,
 		global_cooldown: false,
-		description: 'Prints bitcorn commands to the chat.',
-		example: '$help',
+		description: 'Adds a command to the bot',
+		example: '$addcommand',
 		enabled: true,
 		irc_in: MESSAGE_TYPE.irc_chat,
 		irc_out: MESSAGE_TYPE.irc_chat
 	},
 	async execute(event) {
 		return { 
-			success: true, 
-			message: `mttvCorn To see all available BITCORN commands, please visit https://bitcornproject.com/help/ mttvCorn`, 
+			success: false, 
+			message: `Not implemented: ${this.configs.name} is not implemented`, 
 			irc_target: event.irc_target, 
 			configs: this.configs 
 		};

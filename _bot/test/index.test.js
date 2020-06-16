@@ -172,7 +172,7 @@ describe('#mocha promises', function () {
 
 	it('should create commands map from commands array', () => {
 		const commandsMap = commander.createCommandsMap();
-		const commandNames = ['bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist'];
+		const commandNames = ['bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist', 'addcommand'];
 		const mapped = commandNames.map(commander.commandName);
 		expect(commandsMap).to.have.all.keys(mapped);
 	});
@@ -673,7 +673,7 @@ describe('#mocha promises', function () {
 		const obj = await tmi.onMessageHandler(target, user, msg, self);
 
 		if (obj.success === false) {
-			log('Command Output =>>>>>>>>>> ', obj, obj.message);
+			log('Command Output =>>>>>>>messageAsCommand>>> ', obj, obj.message);
 		}
 
 		expect(obj.success).to.be.equal(true);
