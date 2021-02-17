@@ -257,7 +257,11 @@ DatabaseEndpoint.prototype.getRequestBase = async function (baseUrl, endpoint) {
 }
 
 DatabaseEndpoint.prototype.makeRequestChannels = async function () {
-	return this.getRequestBase(this.rooturl().user, this.db_endpoints.livestreams);
+	return this.getRequestBase(this.rooturl().user, this.db_endpoints.livestreams.join);
+}
+
+DatabaseEndpoint.prototype.makeRequestChannelsSettings = async function () {
+	return this.getRequestBase(this.rooturl().user, this.db_endpoints.livestreams.settings);
 }
 
 module.exports = new DatabaseEndpoint();

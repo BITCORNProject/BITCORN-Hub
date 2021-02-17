@@ -1002,8 +1002,6 @@ describe('#mocha promises', function () {
 
 		const isNum = isNumber(results.length);
 
-		console.log(results);
-
 		expect(isNum).to.be.equal(true);
 		expect(results.length).to.not.be.equal(0);
 	});
@@ -1038,6 +1036,72 @@ describe('#mocha promises', function () {
 		const result = await joinChannelsFromQueue(tmi);
 
 		expect(result.message).to.be.equal('Empty Queue');
+	});
+
+	it('should make livestreams settings request', async () => {
+
+		const { isNumber } = require('../src/utils/clean-params');
+
+		const results = await databaseAPI.makeRequestChannelsSettings();
+
+		const isNum = isNumber(results.length);
+
+		console.log(results);
+
+		expect(isNum).to.be.equal(true);
+		expect(results.length).to.not.be.equal(0);
+	});
+
+	it('should store livestreams settings to cache', async () => {
+
+		const channel = 'clayman666'.toLowerCase();
+		const settingsCache = require('../src/api-interface/settings-cache');
+		
+		const results = await databaseAPI.makeRequestChannelsSettings();
+		settingsCache.setItems(results);
+		
+		const items = settingsCache.getItems();
+		expect(items).to.be.ownProperty(channel);
+
+		expect(items[channel].ircTarget.toLowerCase()).to.be.equal(`#${channel}`);
+	});
+
+	it('should clear settings cache', async () => {
+
+		const channel = 'clayman666'.toLowerCase();
+		const settingsCache = require('../src/api-interface/settings-cache');
+		
+		const results = await databaseAPI.makeRequestChannelsSettings();
+		settingsCache.setItems(results);
+		
+		let items = settingsCache.getItems();
+		expect(items).to.be.ownProperty(channel);
+
+		settingsCache.clear();
+		items = settingsCache.getItems();
+		expect(items).to.be.not.ownProperty(channel);
+		expect(Object.keys(items).length).to.be.equal(0);
+
+	});
+
+	it.only('should get a specific livestreams channel settings from cache', async () => {
+
+		const channel = 'callowcreation';
+		const settingsCache = require('../src/api-interface/settings-cache');
+		settingsCache.clear();
+		
+		let item = settingsCache.getItem(channel);
+
+		expect(item).to.be.equal(undefined);
+
+		const results = await databaseAPI.makeRequestChannelsSettings();
+		settingsCache.setItems(results);
+
+		item = settingsCache.getItem(channel);
+
+		expect(item).to.be.ownProperty('ircTarget');
+
+		expect(item.ircTarget).to.be.equal(`#${channel}`);
 	});
 
 });
