@@ -28,6 +28,20 @@ const rewardQueue = new _Queue();
 function enqueueReward(type, channel, username, amount) {
 	rewardQueue.enqueue({type, channel, username, amount});
 }
+	/* w3rk
+	c = 0; 
+	n = time.now(); 
+	for { 
+		if c < 100 {
+		 msg<- deque(msg) 
+		dosmth(msg) 
+		timeToSleep = 31 - time.now() - n; 
+
+		if timeToSleep > 0 { sleep(timeToSleep); } 
+		c++;
+	}else { 
+		c=0; 
+	}}*/
 
 async function sendQueuedRewards() {
 

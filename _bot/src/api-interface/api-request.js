@@ -26,6 +26,7 @@ async function getCachedToken(client_credentials) {
 		cached.expires_in = result.expires_in;
 		cached.expires_time = (seconds + cached.expires_in) - secondsOff;
 	}
+	
 	return { access_token: cached.access_token };
 }
 
@@ -64,27 +65,36 @@ function getHeaders(access_token, twitchId) {
 	return headers;
 }
 
-async function _request(url, twitchId, access_token, data) {
-	return fetch(url, {
-		method: 'POST',
-		headers: getHeaders(access_token, twitchId),
-		body: JSON.stringify(data)
-	}).then(res => {
+
+async function _request(method, url, twitchId, access_token, data) {
+	const options = {
+		method: method,
+		headers: getHeaders(access_token, twitchId)
+	};
+	if (data) { 
+		options.body = JSON.stringify(data) 
+	}
+	return fetch(url, options).then(res => {
 		if (res.status !== 200) return res;
 		return res.json();
 	}).catch(e => e);
 }
 
+async function getRequest(url, access_token) {
+	return _request('GET', url, null, access_token, null);
+}
+
 async function makeRequest(url, access_token, data) {
-	return _request(url, null, access_token, data);
+	return _request('POST', url, null, access_token, data);
 }
 
 async function criticalRequest(url, twitchId, access_token, data) {
-	return _request(url, twitchId, access_token, data);
+	return _request('POST', url, twitchId, access_token, data);
 }
 
 module.exports = {
 	getCachedToken,
+	getRequest,
 	makeRequest,
 	criticalRequest
 };

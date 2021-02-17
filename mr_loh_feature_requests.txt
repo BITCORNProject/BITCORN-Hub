@@ -1,0 +1,11 @@
+Here are some feature requests:
+idle-rewards channel-owner
+custom sub-rewards
+channelpoints -> bitcorn auto-payout(redeem)
+
+
+ u have the watch file function there, instead of doing that u have request going every 2 minutes asking for the channels
+
+if the result is not http 200, dont do anything
+
+the endpoint returns a string array of the channels to join

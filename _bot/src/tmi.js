@@ -8,7 +8,6 @@ const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
 
-const noRewardFilename = './_bot/settings/no-rewards.json';
 const commandsMap = commander.createCommandsMap();
 
 const outMessageCallbacks = [];
@@ -23,7 +22,7 @@ const global_cooldowns = {};
 const rewardedIds = [];
 
 //const channels = ['markettraderstv', 'd4rkcide'];
-const channels = ['callowcreation'];
+const channels = [];
 
 const amounts = {
 	cheer: {
@@ -103,7 +102,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const result = await command.execute(event);
 
-	//console.log(result);
+	console.log({ event, result });
 	const data = result;
 	data.msg = msg;
 
@@ -171,7 +170,13 @@ function duplicateRewardCheck(rewardId) {
 }
 
 function noRewardCheck(channel) {
+
+	let noRewardFilename = './_bot/settings/no-rewards.json';
+	if (!fs.existsSync(noRewardFilename)) {
+		noRewardFilename = '../_bot/settings/no-rewards.json';
+	}
 	const channels = JSON.parse(fs.readFileSync(noRewardFilename, 'utf-8'));
+
 	return channels.map(x => hashReplace(x)).includes(hashReplace(channel));
 }
 

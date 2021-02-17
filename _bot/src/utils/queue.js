@@ -33,6 +33,13 @@ Queue.prototype.dequeue = function () {
 }
 
 /**
+* @return {Object} Removes all items from the queue and returns them
+*/
+Queue.prototype.empty = function () {
+	return this.items.splice(0, this.items.length);
+}
+
+/**
 * @return {Object} Returns the first item in the queue but does not remove it
 */
 Queue.prototype.peek = function () {

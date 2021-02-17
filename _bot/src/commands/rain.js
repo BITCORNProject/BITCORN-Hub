@@ -43,10 +43,10 @@ module.exports = {
 			if (rain_amount < serverSettings.MIN_RAIN_AMOUNT) {
 				success = true;
 				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, serverSettings.MIN_RAIN_AMOUNT, this.configs.example);
-			} else if(rain_user_count > databaseAPI.MAX_RAIN_USERS) {
+			} else if (rain_user_count > databaseAPI.MAX_RAIN_USERS) {
 				success = true;
 				message = util.format(`Number of people you can %s to is 1 to %d`, this.configs.name, databaseAPI.MAX_RAIN_USERS);
-			} else if(rain_amount >= databaseAPI.MAX_WALLET_AMOUNT) {
+			} else if (rain_amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 				success = true;
 				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);
 			} else {
@@ -67,7 +67,7 @@ module.exports = {
 				amount: amount,
 				columns: ['balance', 'twitchusername', 'isbanned', 'twitchid']
 			};
-
+			
 			const results = await databaseAPI.request(event.twitchId, body).rain();
 
 			if (results.status && results.status === 500) {
@@ -104,9 +104,9 @@ module.exports = {
 					for (let i = 0; i < items.length; i++) {
 						const item = items[i];
 						const name = item.username.toLowerCase();
-						if (successItems.includes(name)||ignore.includes(name)) continue;
+						if (successItems.includes(name) || ignore.includes(name)) continue;
 						//if (results.find(x => x.to && x.to.twitchusername === name)) continue;
-						
+
 						failedItems.push(item.username);
 					}
 				}
@@ -116,7 +116,7 @@ module.exports = {
 					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
 					message = `${successMessage}${(failedItems.length > 0 ? failedMessage : '')}`;
 				} else if (successItems.length == 0 && failedItems.length > 0) {
-					if(results[0].from.balance < rain_amount) {
+					if (results[0].from.balance < rain_amount) {
 						message = util.format(`DogePls SourPls %s You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`, event.twitchUsername);
 					} else {
 						const successMessage = `${event.twitchUsername} FeelsRainMan`;
