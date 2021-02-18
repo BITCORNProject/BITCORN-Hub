@@ -5,10 +5,13 @@ if (module === require.main) {
 	(async () => {
 
 		const tmi = require('./src/tmi');
+		const settingsCache = require('./src/api-interface/settings-cache');
 		const messenger = require('./src/messenger');
 		const activityTracker = require('./src/activity-tracker');
 		const subTicker = require('./src/sub-ticker');
-		const roomVisitor = require('./src/room-visitor');
+		const roomVisitor = require('./src/room-visitor');		
+		
+		await settingsCache.requestSettings();
 
 		tmi.registerEvents();
 

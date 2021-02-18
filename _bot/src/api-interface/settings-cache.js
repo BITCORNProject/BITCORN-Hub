@@ -5,6 +5,8 @@
 
 "use strict";
 
+const databaseAPI = require('./database-api');
+
 let cache = {};
 
 /*
@@ -44,9 +46,16 @@ function getItem(channel) {
 	return cache[channel];
 }
 
+async function requestSettings() {
+	const results = await databaseAPI.makeRequestChannelsSettings();
+	clear();
+	setItems(results);
+}
+
 module.exports = {
 	setItems,
 	getItems,
 	clear,
-	getItem
+	getItem,
+	requestSettings
 };

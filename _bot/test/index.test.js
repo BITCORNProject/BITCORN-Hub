@@ -1057,8 +1057,7 @@ describe('#mocha promises', function () {
 		const channel = 'clayman666'.toLowerCase();
 		const settingsCache = require('../src/api-interface/settings-cache');
 		
-		const results = await databaseAPI.makeRequestChannelsSettings();
-		settingsCache.setItems(results);
+		await settingsCache.requestSettings();
 		
 		const items = settingsCache.getItems();
 		expect(items).to.be.ownProperty(channel);
@@ -1084,7 +1083,7 @@ describe('#mocha promises', function () {
 
 	});
 
-	it.only('should get a specific livestreams channel settings from cache', async () => {
+	it('should get a specific livestreams channel settings from cache', async () => {
 
 		const channel = 'callowcreation';
 		const settingsCache = require('../src/api-interface/settings-cache');
@@ -1102,6 +1101,20 @@ describe('#mocha promises', function () {
 		expect(item).to.be.ownProperty('ircTarget');
 
 		expect(item.ircTarget).to.be.equal(`#${channel}`);
+	});
+
+	it.only('should early out with channel enable transaction is false', async () => {
+		const settingsCache = require('../src/api-interface/settings-cache');
+		await settingsCache.requestSettings();
+		
+		const target = '#callowcreation';
+		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const msg = commander.commandName('$help');
+		const self = false;
+		
+		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.success).to.be.equal(true);
+		expect(obj.message).to.be.equal('Transactions not enabled');
 	});
 
 });
