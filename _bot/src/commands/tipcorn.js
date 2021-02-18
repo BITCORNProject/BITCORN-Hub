@@ -14,6 +14,7 @@ const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
+const settingsHelper = require('../utils/settings-helper');
 
 const commandHelper = require('../shared-lib/command-helper');
 
@@ -33,6 +34,8 @@ module.exports = {
 		let success = false;
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
+
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.disabledOutput({ irc_target, configs: this.configs });
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);

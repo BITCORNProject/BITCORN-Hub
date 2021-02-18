@@ -7,6 +7,7 @@
 const util = require('util');
 const databaseAPI = require('../api-interface/database-api');
 const MESSAGE_TYPE = require('../utils/message-type');
+const settingsHelper = require('../utils/settings-helper');
 
 module.exports = {
 	configs: {
@@ -25,13 +26,15 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.disabledOutput({ irc_target, configs: this.configs });
+
 		const result = await databaseAPI.request(event.twitchId, null).bitcorn();
 		if (result.status && result.status === 500) {
 
 			// NOTE needs to be logged to the locally as an error
 			message = `${message}: ${result.status} ${result.statusText}`;
 
-		} else if(result.status && result.status === 204) {
+		} else if (result.status && result.status === 204) {
 
 			success = true;
 			message = util.format('Hey!  @%s you are not registered please visit the sync site https://bitcornfarms.com/', event.twitchUsername);
@@ -48,7 +51,7 @@ module.exports = {
 			success = true;
 			message = util.format(`Howdy BITCORN Farmer! You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.cornAddy);
 		}
-		
+
 		return { success: success, message: message, irc_target: irc_target, configs: this.configs };
 	}
 };

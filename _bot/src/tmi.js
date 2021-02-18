@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const tmi = require('tmi.js');
-const settingsCache = require('../src/api-interface/settings-cache');
 const messenger = require('./messenger');
 const commander = require('./commander');
 const auth = require('../settings/auth');
@@ -118,12 +117,6 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 async function onMessageHandler(target, user, msg, self) {
 	if (self) return { success: false, msg, message: 'Message from self', configs: commander.expectedCommandsConfigs };
-
-	const settingItem = settingsCache.getItem(target);
-
-	if(settingItem.enableTransactions === false) {
-		return { success: true, msg, message: 'Transactions not enabled', configs: commander.expectedCommandsConfigs };
-	}
 
 	const data = await asyncOnMessageReceived(user['message-type'] || MESSAGE_TYPE.irc_chat, target, user, msg);
 	/*if (data.success === true) {

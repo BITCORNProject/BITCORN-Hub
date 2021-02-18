@@ -1109,11 +1109,41 @@ describe('#mocha promises', function () {
 		
 		const target = '#callowcreation';
 		const user = { 'user-id': '120614707', username: 'naivebot' };
-		const msg = commander.commandName('$help');
 		const self = false;
+		let msg;
+		let obj;
+
+		msg = commander.commandName('$bitcorn');
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.message).to.be.equal('Transactions not enabled');
+
+		msg = `${commander.commandName('$rain')} 4200 10`;
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.message).to.be.equal('Transactions not enabled');
+
+		msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.message).to.be.equal('Transactions not enabled');
 		
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.success).to.be.equal(true);
+		user['message-type'] = 'whisper';
+
+		msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.message).to.be.equal('Transactions not enabled');
+	});
+
+	it('should not allow transaction for user without settings', async () => {
+		const settingsCache = require('../src/api-interface/settings-cache');
+		await settingsCache.requestSettings();
+		
+		const target = '#wollac';
+		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const self = false;
+		let msg;
+		let obj;
+
+		msg = commander.commandName('$bitcorn');
+		obj = await tmi.onMessageHandler(target, user, msg, self);
 		expect(obj.message).to.be.equal('Transactions not enabled');
 	});
 

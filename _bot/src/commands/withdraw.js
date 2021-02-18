@@ -8,6 +8,7 @@ const util = require('util');
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
+const settingsHelper = require('../utils/settings-helper');
 
 module.exports = {
 	configs: {
@@ -25,6 +26,8 @@ module.exports = {
 		let success = false;
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
+
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.disabledOutput({ irc_target, configs: this.configs });
 
 		const amount = cleanParams.amount(event.args.params[0]);
 		//IMPORTANT: Do not .toLowerCase() the address is case sensitive

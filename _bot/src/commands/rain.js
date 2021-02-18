@@ -14,6 +14,7 @@ const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const math = require('../utils/math');
+const settingsHelper = require('../utils/settings-helper');
 const activityTracker = require('../../src/activity-tracker');
 
 module.exports = {
@@ -31,6 +32,8 @@ module.exports = {
 		let success = false;
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
+
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.disabledOutput({ irc_target, configs: this.configs });
 
 		const rain_amount = cleanParams.amount(event.args.params[0]);
 		const rain_user_count = cleanParams.amount(event.args.params[1]);
