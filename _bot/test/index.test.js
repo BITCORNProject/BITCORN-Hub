@@ -1056,9 +1056,9 @@ describe('#mocha promises', function () {
 
 		const channel = 'clayman666'.toLowerCase();
 		const settingsCache = require('../src/api-interface/settings-cache');
-		
+
 		await settingsCache.requestSettings();
-		
+
 		const items = settingsCache.getItems();
 		expect(items).to.be.ownProperty(channel);
 
@@ -1069,10 +1069,10 @@ describe('#mocha promises', function () {
 
 		const channel = 'clayman666'.toLowerCase();
 		const settingsCache = require('../src/api-interface/settings-cache');
-		
+
 		const results = await databaseAPI.makeRequestChannelsSettings();
 		settingsCache.setItems(results);
-		
+
 		let items = settingsCache.getItems();
 		expect(items).to.be.ownProperty(channel);
 
@@ -1088,7 +1088,7 @@ describe('#mocha promises', function () {
 		const channel = 'callowcreation';
 		const settingsCache = require('../src/api-interface/settings-cache');
 		settingsCache.clear();
-		
+
 		let item = settingsCache.getItem(channel);
 
 		expect(item).to.be.equal(undefined);
@@ -1103,10 +1103,10 @@ describe('#mocha promises', function () {
 		expect(item.ircTarget).to.be.equal(`#${channel}`);
 	});
 
-	it.only('should early out with channel enable transaction is false', async () => {
+	it('should early out with channel enable transaction is false', async () => {
 		const settingsCache = require('../src/api-interface/settings-cache');
 		await settingsCache.requestSettings();
-		
+
 		const target = '#callowcreation';
 		const user = { 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
@@ -1124,7 +1124,7 @@ describe('#mocha promises', function () {
 		msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
 		obj = await tmi.onMessageHandler(target, user, msg, self);
 		expect(obj.message).to.be.equal('Transactions not enabled');
-		
+
 		user['message-type'] = 'whisper';
 
 		msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
@@ -1135,7 +1135,7 @@ describe('#mocha promises', function () {
 	it('should not allow transaction for user without settings', async () => {
 		const settingsCache = require('../src/api-interface/settings-cache');
 		await settingsCache.requestSettings();
-		
+
 		const target = '#wollac';
 		const user = { 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
@@ -1147,4 +1147,34 @@ describe('#mocha promises', function () {
 		expect(obj.message).to.be.equal('Transactions not enabled');
 	});
 
+	it('should convert minutes to ms', () => {
+		expect(math.convertMinsToMs(1.5)).to.be.equal(90000);
+		expect(math.convertMinsToMs(0.5)).to.be.equal(30000);
+		expect(math.convertMinsToMs(0.1)).to.be.equal(6000);
+	});
+
+	it('should get channel cooldown or set a default value', async () => {
+		const settingsCache = require('../src/api-interface/settings-cache');
+		await settingsCache.requestSettings();
+		const settingsHelper = require('../src/utils/settings-helper');
+
+		const target = '#wollac';
+
+		settingsCache.setItems([{
+			"minRainAmount": 1.00000000,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 0,
+			"ircTarget": target,
+			"txMessages": true,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": false
+		}]);
+
+		const commandsMap = commander.createCommandsMap();
+
+		const command = commandsMap.get(commander.commandName('rain'));
+		const result = settingsHelper.getChannelCooldown(target, command.configs.cooldown);
+
+		expect(result).to.be.equal(20);
+	});
 });

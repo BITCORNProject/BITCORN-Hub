@@ -7,6 +7,7 @@ const commander = require('./commander');
 const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');	
+const settingsHelper = require('./utils/settings-helper');	
 
 
 const commandsMap = commander.createCommandsMap();
@@ -85,7 +86,14 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
 	const selectedCooldownId = command.configs.global_cooldown === true ? target : user['user-id'];
-	if (commander.checkCooldown(command.configs, selectedCooldownId, selectCooldowns) === false) {
+	
+	const settingsConfigs = {
+		name: command.configs.name,
+		cooldown: settingsHelper.getChannelCooldown(target, command.configs.cooldown),
+		global_cooldown: command.configs.global_cooldown
+	};
+	
+	if (commander.checkCooldown(settingsConfigs, selectedCooldownId, selectCooldowns) === false) {
 		return { success: false, msg, message: `Cooldown pending global=${command.configs.global_cooldown}`, irc_target: target, configs: commander.expectedCommandsConfigs };
 	}
 

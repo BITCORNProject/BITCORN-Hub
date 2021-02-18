@@ -42,7 +42,7 @@ function createCommandsMap() {
 	for (let i = 0; i < commands.length; i++) {
 		const command = commands[i];
 		const name = commandName(command.configs.name);
-		if (commandsMap.has(name)) continue;		
+		if (commandsMap.has(name)) continue;
 		commandsMap.set(name, command);
 	}
 	return commandsMap;
@@ -57,31 +57,30 @@ function messageAsCommand(msg) {
 	return { prefix: msg[0], msg, name: name.substr(1, name.length - 1), params };
 }
 
-function checkCooldown(configs, twitchId, cooldowns) {
+function checkCooldown({ name, cooldown, global_cooldown }, twitchId, cooldowns) {
 	let success = false;
 
-	if (configs.global_cooldown === false) {
+	if (global_cooldown === false) {
 		if (twitchId in cooldowns) {
-			if (!cooldowns[twitchId][configs.name]) {
-				cooldowns[twitchId][configs.name] = 0;
+			if (!cooldowns[twitchId][name]) {
+				cooldowns[twitchId][name] = 0;
 			}
 
-			success = calculateCooldownSuccess(cooldowns[twitchId][configs.name]);
+			success = calculateCooldownSuccess(cooldowns[twitchId][name]);
 		} else {
 			cooldowns[twitchId] = {};
 			success = true;
 		}
 
-		cooldowns[twitchId][configs.name] = (new Date()).getTime() + (+configs.cooldown);
+		cooldowns[twitchId][name] = (new Date()).getTime() + (+cooldown);
 
 	} else {
-		if (configs.name in cooldowns) {
-
-			success = calculateCooldownSuccess(cooldowns[configs.name]);
+		if (name in cooldowns) {
+			success = calculateCooldownSuccess(cooldowns[name]);
 		} else {
 			success = true;
 		}
-		cooldowns[configs.name] = (new Date()).getTime() + (+configs.cooldown);
+		cooldowns[name] = (new Date()).getTime() + (+cooldown);
 	}
 	return success;
 }
@@ -114,7 +113,7 @@ module.exports = {
 
 	commands,
 	commandName,
-	
+
 	createCommandsMap,
 	messageAsCommand,
 
