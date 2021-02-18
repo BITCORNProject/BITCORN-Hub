@@ -39,6 +39,7 @@ describe('#mocha promises', function () {
 	const messenger = require('../src/messenger');
 	const commander = require('../src/commander');
 	const math = require('../src/utils/math');
+	const settingsCache = require('../src/api-interface/settings-cache');
 
 	const serverSettings = require('../settings/server-settings');
 
@@ -70,7 +71,10 @@ describe('#mocha promises', function () {
 		};
 	}
 
-	before(() => {
+	before(async () => {
+
+		await settingsCache.requestSettings();
+
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
@@ -947,7 +951,7 @@ describe('#mocha promises', function () {
 	it('should perform sub ticker after init', async () => {
 		const subTicker = require('../src/sub-ticker');
 
-		const channel = 'callowcreation';
+		const channel = 'markettraderstv';
 
 		const initResult = await subTicker.init();
 		expect(initResult.success).to.be.equal(true);
@@ -1055,9 +1059,6 @@ describe('#mocha promises', function () {
 	it('should store livestreams settings to cache', async () => {
 
 		const channel = 'clayman666'.toLowerCase();
-		const settingsCache = require('../src/api-interface/settings-cache');
-
-		await settingsCache.requestSettings();
 
 		const items = settingsCache.getItems();
 		expect(items).to.be.ownProperty(channel);
@@ -1068,7 +1069,6 @@ describe('#mocha promises', function () {
 	it('should clear settings cache', async () => {
 
 		const channel = 'clayman666'.toLowerCase();
-		const settingsCache = require('../src/api-interface/settings-cache');
 
 		const results = await databaseAPI.makeRequestChannelsSettings();
 		settingsCache.setItems(results);
@@ -1086,7 +1086,6 @@ describe('#mocha promises', function () {
 	it('should get a specific livestreams channel settings from cache', async () => {
 
 		const channel = 'callowcreation';
-		const settingsCache = require('../src/api-interface/settings-cache');
 		settingsCache.clear();
 
 		let item = settingsCache.getItem(channel);
@@ -1104,10 +1103,20 @@ describe('#mocha promises', function () {
 	});
 
 	it('should early out with channel enable transaction is false', async () => {
-		const settingsCache = require('../src/api-interface/settings-cache');
-		await settingsCache.requestSettings();
 
-		const target = '#callowcreation';
+		settingsCache.clear();
+
+		settingsCache.setItems([{
+			"minRainAmount": 1.00000000,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 0,
+			"ircTarget": '#wollac',
+			"txMessages": true,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": false
+		}]);
+
+		const target = '#wollac';
 		const user = { 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
 		let msg;
@@ -1133,8 +1142,8 @@ describe('#mocha promises', function () {
 	});
 
 	it('should not allow transaction for user without settings', async () => {
-		const settingsCache = require('../src/api-interface/settings-cache');
-		await settingsCache.requestSettings();
+
+		settingsCache.clear();
 
 		const target = '#wollac';
 		const user = { 'user-id': '120614707', username: 'naivebot' };
@@ -1154,8 +1163,9 @@ describe('#mocha promises', function () {
 	});
 
 	it('should get channel cooldown or set a default value', async () => {
-		const settingsCache = require('../src/api-interface/settings-cache');
-		await settingsCache.requestSettings();
+
+		settingsCache.clear();
+
 		const settingsHelper = require('../src/utils/settings-helper');
 
 		const target = '#wollac';
@@ -1175,6 +1185,6 @@ describe('#mocha promises', function () {
 		const command = commandsMap.get(commander.commandName('rain'));
 		const result = settingsHelper.getChannelCooldown(target, command.configs.cooldown);
 
-		expect(result).to.be.equal(20);
+		expect(result).to.be.equal(60000);
 	});
 });

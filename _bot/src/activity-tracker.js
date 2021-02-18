@@ -73,7 +73,7 @@ function getChatterActivity(target) {
 function init() {
 	activeChatters = activityTracker.getValues();
 
-	console.log({ activeChatters });
+	//console.log({ activeChatters });
 
 	return { success: true };
 }
