@@ -33,7 +33,7 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.disabledOutput({ irc_target, configs: this.configs });
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const rain_amount = cleanParams.amount(event.args.params[0]);
 		const rain_user_count = cleanParams.amount(event.args.params[1]);

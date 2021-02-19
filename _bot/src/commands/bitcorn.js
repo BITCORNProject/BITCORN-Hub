@@ -26,7 +26,7 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.disabledOutput({ irc_target, configs: this.configs });
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const result = await databaseAPI.request(event.twitchId, null).bitcorn();
 		if (result.status && result.status === 500) {
@@ -52,6 +52,11 @@ module.exports = {
 			message = util.format(`Howdy BITCORN Farmer! You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.cornAddy);
 		}
 
-		return { success: success, message: message, irc_target: irc_target, configs: this.configs };
+		return { 
+			success: success, 
+			message: message, 
+			irc_target: irc_target, 
+			configs: this.configs 
+		};
 	}
 };

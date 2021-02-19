@@ -13,7 +13,7 @@ let cache = {};
 {
 	"minRainAmount": 1.00000000,
 	"minTipAmount": 1.00000000,
-	"rainAlgorithm": 0,
+	"rainAlgorithm": 0, // 0=last chatters 1=random chatters
 	"ircTarget": "#callowcreation",
 	"txMessages": true,
 	"txCooldownPerUser": 0.00000000,

@@ -111,15 +111,17 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const result = await command.execute(event);
 
-	console.log({ event, result });
-	const data = result;
+	const data = JSON.parse(JSON.stringify(result));
+
+	data.configs.irc_out = settingsHelper.getIrcMessageTarget(target, data.configs.irc_out);
 	data.msg = msg;
 
-	if (data.success === true) {
+	if (data.success === true) {		
 		messenger.enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
 		data.result = await messenger.sendQueuedMessagesByType(data.configs.irc_out);
 	}
 
+	//console.log({ event, data });
 	return data;
 }
 
@@ -194,6 +196,8 @@ function hashReplace(channel) {
 }
 
 async function handleRewardEvent(type, channel, username, amount) {
+	if(settingsHelper.getIrcMessageTarget(channel, type) === MESSAGE_TYPE.irc_none) return settingsHelper.txMessageOutput();
+
 	messenger.enqueueReward(type, channel, username, amount);
 	const result = await messenger.sendQueuedRewards();
 

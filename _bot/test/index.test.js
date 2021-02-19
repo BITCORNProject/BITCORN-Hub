@@ -660,6 +660,7 @@ describe('#mocha promises', function () {
 		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
 		await tmi.joinChannel(target);
+		await _wait(1000);
 		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 		_error(obj);
 		_message(obj);
@@ -863,7 +864,9 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onCheer(channel, userstate, message);
 		expect(result.error).to.be.equal(null);
-		expect(result.success).to.be.equal(true);
+		if(result.message !== 'Tx Message Send Disabled') {
+			expect(result.success).to.be.equal(true);
+		}
 		await _wait(100);
 
 		userstate = { id: 'random-id-kappa' };
@@ -872,7 +875,9 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate);
 		expect(result.error).to.be.equal(null);
-		expect(result.success).to.be.equal(true);
+		if(result.message !== 'Tx Message Send Disabled') {
+			expect(result.success).to.be.equal(true);
+		}
 		await _wait(100);
 
 		userstate = { id: 'random-id-callowbruh' };
@@ -881,7 +886,9 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onSubscription(channel, username, methods, message, userstate);
 		expect(result.error).to.be.equal(null);
-		expect(result.success).to.be.equal(true);
+		if(result.message !== 'Tx Message Send Disabled') {
+			expect(result.success).to.be.equal(true);
+		}
 		await _wait(100);
 
 		userstate = { id: 'random-id-mttv420' };
@@ -890,7 +897,9 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onResub(channel, username, months, message, userstate, methods);
 		expect(result.error).to.be.equal(null);
-		expect(result.success).to.be.equal(true);
+		if(result.message !== 'Tx Message Send Disabled') {
+			expect(result.success).to.be.equal(true);
+		}
 	});
 
 	it('should send sub ticker payout request', async () => {
@@ -1164,12 +1173,11 @@ describe('#mocha promises', function () {
 
 	it('should get channel cooldown or set a default value', async () => {
 
-		settingsCache.clear();
-
 		const settingsHelper = require('../src/utils/settings-helper');
-
+		
 		const target = '#wollac';
-
+		
+		settingsCache.clear();
 		settingsCache.setItems([{
 			"minRainAmount": 1.00000000,
 			"minTipAmount": 1.00000000,
@@ -1186,5 +1194,77 @@ describe('#mocha promises', function () {
 		const result = settingsHelper.getChannelCooldown(target, command.configs.cooldown);
 
 		expect(result).to.be.equal(60000);
+	});
+
+	it('should get irc output enabled from settings', async () => {
+		
+		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const settingsHelper = require('../src/utils/settings-helper');
+		
+		const target = '#callowcreation';
+		
+		settingsCache.clear();
+		settingsCache.setItems([{
+			"minRainAmount": 1.00000000,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 0,
+			"ircTarget": target,
+			"txMessages": false,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": true
+		}]);
+		
+		const commandsMap = commander.createCommandsMap();
+		let command = commandsMap.get(commander.commandName('tipcorn'));
+
+		let result = settingsHelper.getIrcMessageTarget(target, command.configs.irc_out);
+
+		expect(result).to.be.equal(MESSAGE_TYPE.irc_none);
+
+		command = commandsMap.get(commander.commandName('bitcorn'));
+
+		result = settingsHelper.getIrcMessageTarget(target, command.configs.irc_out);
+
+		expect(result).to.be.equal(MESSAGE_TYPE.irc_whisper);
+	});
+
+	it('should not send tx messages for commands', async () => {
+
+		const MESSAGE_TYPE = require('../src/utils/message-type');
+		settingsCache.clear();
+
+		const target = '#callowcreation';
+		settingsCache.setItems([{
+			"minRainAmount": 1.00000000,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 0,
+			"ircTarget": target,
+			"txMessages": false,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": false
+		}]);
+
+		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const self = false;
+		let msg;
+		let obj;
+
+		msg = commander.commandName('$bitcorn');
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
+
+		msg = `${commander.commandName('$rain')} 4200 10`;
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
+
+		msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
+
+		user['message-type'] = 'whisper';
+
+		msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
+		obj = await tmi.onMessageHandler(target, user, msg, self);
+		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
 	});
 });
