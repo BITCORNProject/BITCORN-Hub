@@ -8,6 +8,7 @@ const databaseApi = require('./api-interface/database-api');
 const apiRequest = require('./api-interface/api-request');
 const { sendQueuedRewards } = require('./messenger');
 
+const SETTINGS_JOIN_LEAVE_INTERVAL_MS = 1000 * 60 * 0.5;
 const MAX_JOIN_RETRIES = 5;
 let retrieCount = 0;
 const queuedItems = new Queue();
@@ -95,8 +96,8 @@ module.exports = async (tmi) => {
 		} catch (error) {
 			console.log(error);
 		}
-
-	}, 1000 * 60 * 0.5);
+		
+	}, SETTINGS_JOIN_LEAVE_INTERVAL_MS);
 
 	return { addChannels, getJoinQueue, joinChannelsFromQueue };
 };
