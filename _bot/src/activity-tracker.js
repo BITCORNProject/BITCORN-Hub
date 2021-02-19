@@ -7,6 +7,7 @@
 const JsonFile = require('./utils/json-file');
 const serverSettings = require('../settings/server-settings');
 const allowedUsers = require('./utils/allowed-users');
+const settingsHelper = require('./utils/settings-helper');
 
 const MAX_RAIN_USER_CACHE = serverSettings.MAX_RAIN_USER_CACHE;
 const MAX_RAIN_USER_CACHE_WITH_PADDING = MAX_RAIN_USER_CACHE * 1.4;
@@ -57,15 +58,7 @@ function getChatterActivity(target) {
 
 	if (activeChatters[target] === undefined) return [];
 
-	let chatternamesArr = [];
-	chatternamesArr = chatternamesArr.concat(activeChatters[target]);
-	chatternamesArr.length = MAX_RAIN_USER_CACHE;
-
-	// INFO:    Comment below 'sort' to use most active
-	//          Uncomment to use most recent
-	//chatternamesArr.sort((a, b) => b.count - a.count);
-
-	chatternamesArr = chatternamesArr.filter(x => x).map(x => ({ id: x.id, username: x.username }));
+	const chatternamesArr = settingsHelper.getRainAlgorithmResult(target, activeChatters[target]);
 
 	return chatternamesArr;
 }
@@ -81,6 +74,7 @@ function init() {
 module.exports = {
 	init,
 	onChatMessage,
-	getChatterActivity
+	getChatterActivity,
+	getValues: () => activityTracker.getValues()
 };
 

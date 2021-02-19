@@ -6,6 +6,8 @@
 
 const settingsCache = require('../api-interface/settings-cache');
 const MESSAGE_TYPE = require('./message-type');
+const { shuffleArray } = require('./arrays');
+
 const math = require('./math');
 
 exports.transactionsDisabled = function (target) {
@@ -29,4 +31,14 @@ exports.getIrcMessageTarget = function (target, irc_out) {
 
 exports.txMessageOutput = function () {
 	return { success: false, message: 'Tx Message Send Disabled', error: null, result: null };;
+}
+
+exports.getRainAlgorithmResult = function (target, items) {
+	const item = settingsCache.getItem(target);
+	if (!item) return items;
+
+	return [
+		items.filter(x => x),
+		shuffleArray(JSON.parse(JSON.stringify(items.filter(x => x))))
+	][item.rainAlgorithm];
 }

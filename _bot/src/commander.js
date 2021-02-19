@@ -111,7 +111,7 @@ module.exports = {
 	expectedCommandsConfigs,
 	expectedOutProperties,
 
-	commands,
+	commands: () => commands,
 	commandName,
 
 	createCommandsMap,
