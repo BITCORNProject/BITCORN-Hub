@@ -38,14 +38,16 @@ module.exports = {
 		const rain_amount = cleanParams.amount(event.args.params[0]);
 		const rain_user_count = cleanParams.amount(event.args.params[1]);
 
+		const minRainAmount = settingsHelper.getRainMinAmount(event.channel, serverSettings.MIN_RAIN_AMOUNT);
+
 		if (cleanParams.isNumber(rain_amount) === false ||
 			cleanParams.isNumber(rain_user_count) === false ||
-			rain_amount < serverSettings.MIN_RAIN_AMOUNT ||
+			rain_amount < minRainAmount ||
 			rain_amount >= databaseAPI.MAX_WALLET_AMOUNT ||
 			rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS) {
-			if (rain_amount < serverSettings.MIN_RAIN_AMOUNT) {
+			if (rain_amount < minRainAmount) {
 				success = true;
-				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, serverSettings.MIN_RAIN_AMOUNT, this.configs.example);
+				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, minRainAmount, this.configs.example);
 			} else if (rain_user_count > databaseAPI.MAX_RAIN_USERS) {
 				success = true;
 				message = util.format(`Number of people you can %s to is 1 to %d`, this.configs.name, databaseAPI.MAX_RAIN_USERS);

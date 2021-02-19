@@ -42,3 +42,13 @@ exports.getRainAlgorithmResult = function (target, items) {
 		shuffleArray(JSON.parse(JSON.stringify(items.filter(x => x))))
 	][item.rainAlgorithm];
 }
+
+exports.getTipcornMinAmount = function (target, minTipAmount) {
+	const item = settingsCache.getItem(target);
+	return item ? item.minTipAmount : minTipAmount;
+}
+
+exports.getRainMinAmount = function (target, minRainAmount) {
+	const item = settingsCache.getItem(target);
+	return item ? item.minRainAmount : minRainAmount;
+}

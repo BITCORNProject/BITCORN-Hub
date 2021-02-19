@@ -40,15 +40,17 @@ module.exports = {
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
 
+		const minTipAmount = settingsHelper.getTipcornMinAmount(event.channel, serverSettings.MIN_TIPCORN_AMOUNT);
+
 		if(allowedUsers.activityTrackerOmitUsername(twitchUsername)) {
 			message = `${this.configs.name} used on omit username ${twitchUsername}`;
 		} else if (cleanParams.isNumber(amount) === false ||
-			amount < serverSettings.MIN_TIPCORN_AMOUNT ||
+			amount < minTipAmount ||
 			amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 
-			if (amount < serverSettings.MIN_TIPCORN_AMOUNT) {
+			if (amount < minTipAmount) {
 				success = true;
-				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, serverSettings.MIN_TIPCORN_AMOUNT, this.configs.example);
+				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, minTipAmount, this.configs.example);
 			} else if(amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 				success = true;
 				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);

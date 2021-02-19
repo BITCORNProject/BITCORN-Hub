@@ -667,6 +667,7 @@ describe('#mocha promises', function () {
 		await tmi.joinChannel(target);
 		await _wait(1000);
 		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
+		await _wait(1000);
 		_error(obj);
 		_message(obj);
 		expect(obj.success).to.be.equal(true);
@@ -1321,5 +1322,49 @@ describe('#mocha promises', function () {
 			const matched = _.isEqual(items, result);
 			expect(matched).to.be.equal(false);
 		}
+	});
+
+	it('should get tipcorn min amount from settings helper', async () => {
+		
+		const settingsHelper = require('../src/utils/settings-helper');
+		const target = '#callowcreation';
+		const minTipAmount = 16.55;
+
+		settingsCache.clear();
+		settingsCache.setItems([{
+			"minRainAmount": 1.00000000,
+			"minTipAmount": minTipAmount,
+			"rainAlgorithm": 1,
+			"ircTarget": target,
+			"txMessages": false,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": false
+		}]);
+
+		const result = settingsHelper.getTipcornMinAmount(target, serverSettings.MIN_TIPCORN_AMOUNT);
+
+		expect(result).to.be.equal(minTipAmount);
+	});
+
+	it('should get rain min amount from settings helper', async () => {
+		
+		const settingsHelper = require('../src/utils/settings-helper');
+		const target = '#callowcreation';
+		const minRainAmount = 5.55555;
+
+		settingsCache.clear();
+		settingsCache.setItems([{
+			"minRainAmount": minRainAmount,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 1,
+			"ircTarget": target,
+			"txMessages": false,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": false
+		}]);
+
+		const result = settingsHelper.getRainMinAmount(target, serverSettings.MIN_RAIN_AMOUNT);
+
+		expect(result).to.be.equal(minRainAmount);
 	});
 });
