@@ -7,8 +7,7 @@
 const settingsCache = require('../api-interface/settings-cache');
 const MESSAGE_TYPE = require('./message-type');
 const { shuffleArray } = require('./arrays');
-
-const math = require('./math');
+const { convertMinsToMs } = require('./math');
 
 exports.transactionsDisabled = function (target) {
 	const item = settingsCache.getItem(target);
@@ -21,7 +20,7 @@ exports.txDisabledOutput = function ({ irc_target, configs }) {
 
 exports.getChannelCooldown = function (target, cooldown) {
 	const item = settingsCache.getItem(target);
-	return item ? Math.max(math.convertMinsToMs(item.txCooldownPerUser), cooldown) : cooldown;
+	return item ? Math.max(convertMinsToMs(item.txCooldownPerUser), cooldown) : cooldown;
 }
 
 exports.getIrcMessageTarget = function (target, irc_out) {
@@ -51,4 +50,24 @@ exports.getTipcornMinAmount = function (target, minTipAmount) {
 exports.getRainMinAmount = function (target, minRainAmount) {
 	const item = settingsCache.getItem(target);
 	return item ? item.minRainAmount : minRainAmount;
+}
+
+exports.getIrcEventPayments = function (target, ircEventPayments) {
+	const item = settingsCache.getItem(target);
+	return item ? item.ircEventPayments : ircEventPayments;
+}
+
+exports.getBitcornhubFunded = function (target, bitcornhubFunded) {
+	const item = settingsCache.getItem(target);
+	return item ? item.bitcornhubFunded : bitcornhubFunded;
+}
+
+exports.getBitcornPerBit = function (target, bitcornPerBit) {
+	const item = settingsCache.getItem(target);
+	return item ? item.bitcornPerBit : bitcornPerBit;
+}
+
+exports.getBitcornPerDonation = function (target, bitcornPerDonation) {
+	const item = settingsCache.getItem(target);
+	return item ? item.bitcornPerDonation : bitcornPerDonation;
 }

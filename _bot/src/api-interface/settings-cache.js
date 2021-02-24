@@ -9,6 +9,8 @@ const databaseAPI = require('./database-api');
 const SETTINGS_POLL_INTERVAL_MS = 1000 * 20;// 1000 * 60 * 2;
 let cache = {};
 
+let interval = null;
+
 /*
 {
 	"minRainAmount": 1.00000000,
@@ -17,9 +19,15 @@ let cache = {};
 	"ircTarget": "#callowcreation",
 	"txMessages": true,
 	"txCooldownPerUser": 0.00000000,
-	"enableTransactions": false
+	"enableTransactions": false,
+
+	ircEventPayments(bool) = enable bit / sub / idle
+	bitcornhubFunded(bool) = irc payments through bitcornhub or own wallet
+	bitcornPerBit(decimal) = how many corn to send for each bit
+	bitcornPerDonation(decimal) = how many corn to send for donation
 }
 */
+
 function cleanChannelName(channel) {
 	return channel.toLowerCase().replace(/#/g, '');
 }
@@ -51,8 +59,6 @@ async function requestSettings() {
 	clear();
 	setItems(results);
 }
-
-let interval = null;
 
 function startPolling() {
 	interval = setInterval(async () => {

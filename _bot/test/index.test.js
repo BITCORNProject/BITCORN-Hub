@@ -63,6 +63,30 @@ describe('#mocha promises', function () {
 
 	let broadcaster;
 
+	function mockSettingsCacheResponse(sobj) {
+		const items = {
+			"minRainAmount": 1.00000000,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 1,
+			"ircTarget": '#callowcreation',
+			"txMessages": true,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": false,
+
+			"ircEventPayments": false, 
+			"bitcornhubFunded": false,
+			"bitcornPerBit": 0.10000000,
+			"bitcornPerDonation": 420.00000000
+		};
+
+		for (const key in items) {
+			if (sobj.hasOwnProperty(key)) {
+				items[key] = sobj[key];
+			}
+		}
+		return items;
+	}
+
 	async function mockEvent(msg, twitchUsername, channel, irc_target) {
 
 		const { data: [user] } = await getUsers([twitchUsername, channel.replace('#', '')]);
@@ -1086,17 +1110,15 @@ describe('#mocha promises', function () {
 
 		settingsCache.clear();
 
-		settingsCache.setItems([{
-			"minRainAmount": 1.00000000,
-			"minTipAmount": 1.00000000,
-			"rainAlgorithm": 0,
-			"ircTarget": '#wollac',
-			"txMessages": true,
-			"txCooldownPerUser": 1.00000000,
-			"enableTransactions": false
-		}]);
-
 		const target = '#wollac';
+		const sitems = mockSettingsCacheResponse({
+			"ircTarget": target,
+			"enableTransactions": false
+		});
+
+		console.log(sitems);
+		settingsCache.setItems([sitems]);
+
 		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
 		let msg;
@@ -1125,26 +1147,22 @@ describe('#mocha promises', function () {
 
 		settingsCache.clear();
 
-		const target = '#wollac';
+		const target = '#callowcreation';
 
-		settingsCache.setItems([{
-			"minRainAmount": 1.00000000,
-			"minTipAmount": 1.00000000,
-			"rainAlgorithm": 0,
+		const sitems = mockSettingsCacheResponse({
 			"ircTarget": target,
-			"txMessages": true,
-			"txCooldownPerUser": 1.00000000,
-			"enableTransactions": false
-		}]);
+			"enableTransactions": true
+		});
+		settingsCache.setItems([sitems]);
 		
-		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
+		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'wollac' };
 		const self = false;
 		let msg;
 		let obj;
 
 		msg = commander.commandName('$bitcorn');
 		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.message).to.be.equal('Transactions not enabled');
+		expect(obj.message).to.be.equal('User not allowed');
 	});
 
 	it('should convert minutes to ms', () => {
@@ -1160,15 +1178,13 @@ describe('#mocha promises', function () {
 		const target = '#wollac';
 
 		settingsCache.clear();
-		settingsCache.setItems([{
-			"minRainAmount": 1.00000000,
-			"minTipAmount": 1.00000000,
-			"rainAlgorithm": 0,
+
+		const sitems = mockSettingsCacheResponse({
 			"ircTarget": target,
-			"txMessages": true,
 			"txCooldownPerUser": 1.00000000,
 			"enableTransactions": false
-		}]);
+		});
+		settingsCache.setItems([sitems]);
 
 		const commandsMap = commander.createCommandsMap();
 
@@ -1186,15 +1202,12 @@ describe('#mocha promises', function () {
 		const target = '#callowcreation';
 
 		settingsCache.clear();
-		settingsCache.setItems([{
-			"minRainAmount": 1.00000000,
-			"minTipAmount": 1.00000000,
-			"rainAlgorithm": 0,
+
+		const sitems = mockSettingsCacheResponse({
 			"ircTarget": target,
-			"txMessages": false,
-			"txCooldownPerUser": 1.00000000,
-			"enableTransactions": true
-		}]);
+			"txMessages": false
+		});
+		settingsCache.setItems([sitems]);
 
 		const commandsMap = commander.createCommandsMap();
 		let command = commandsMap.get(commander.commandName('tipcorn'));
@@ -1217,15 +1230,12 @@ describe('#mocha promises', function () {
 		const target = '#callowcreation';
 
 		settingsCache.clear();
-		settingsCache.setItems([{
-			"minRainAmount": 1.00000000,
-			"minTipAmount": 1.00000000,
-			"rainAlgorithm": 0,
+		
+		const sitems = mockSettingsCacheResponse({
 			"ircTarget": target,
-			"txMessages": false,
-			"txCooldownPerUser": 1.00000000,
-			"enableTransactions": false
-		}]);
+			"txMessages": false
+		});
+		settingsCache.setItems([sitems]);
 
 		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
@@ -1261,15 +1271,13 @@ describe('#mocha promises', function () {
 
 		{ // algo 0
 			settingsCache.clear();
-			settingsCache.setItems([{
-				"minRainAmount": 1.00000000,
-				"minTipAmount": 1.00000000,
-				"rainAlgorithm": 0,
+
+			const sitems = mockSettingsCacheResponse({
 				"ircTarget": target,
-				"txMessages": false,
-				"txCooldownPerUser": 1.00000000,
-				"enableTransactions": false
-			}]);
+				"rainAlgorithm": 0,
+				"txMessages": false
+			});
+			settingsCache.setItems([sitems]);
 
 			const activeChatters = activityTracker.getValues();
 			const items = activeChatters[target].filter(x => x);
@@ -1281,15 +1289,13 @@ describe('#mocha promises', function () {
 		}
 		{ // algo 1
 			settingsCache.clear();
-			settingsCache.setItems([{
-				"minRainAmount": 1.00000000,
-				"minTipAmount": 1.00000000,
-				"rainAlgorithm": 1,
+
+			const sitems = mockSettingsCacheResponse({
 				"ircTarget": target,
-				"txMessages": false,
-				"txCooldownPerUser": 1.00000000,
-				"enableTransactions": false
-			}]);
+				"rainAlgorithm": 1,
+				"txMessages": false
+			});
+			settingsCache.setItems([sitems]);
 
 			const activeChatters = activityTracker.getValues();
 			const items = activeChatters[target].filter(x => x);
@@ -1310,15 +1316,12 @@ describe('#mocha promises', function () {
 		const minTipAmount = 16.55;
 
 		settingsCache.clear();
-		settingsCache.setItems([{
-			"minRainAmount": 1.00000000,
+
+		const sitems = mockSettingsCacheResponse({
 			"minTipAmount": minTipAmount,
-			"rainAlgorithm": 1,
-			"ircTarget": target,
-			"txMessages": false,
-			"txCooldownPerUser": 1.00000000,
-			"enableTransactions": false
-		}]);
+			"ircTarget": target
+		});
+		settingsCache.setItems([sitems]);
 
 		const result = settingsHelper.getTipcornMinAmount(target, serverSettings.MIN_TIPCORN_AMOUNT);
 
@@ -1332,18 +1335,104 @@ describe('#mocha promises', function () {
 		const minRainAmount = 5.55555;
 
 		settingsCache.clear();
-		settingsCache.setItems([{
+
+		const sitems = mockSettingsCacheResponse({
 			"minRainAmount": minRainAmount,
-			"minTipAmount": 1.00000000,
-			"rainAlgorithm": 1,
-			"ircTarget": target,
-			"txMessages": false,
-			"txCooldownPerUser": 1.00000000,
-			"enableTransactions": false
-		}]);
+			"ircTarget": target
+		});
+		settingsCache.setItems([sitems]);
 
 		const result = settingsHelper.getRainMinAmount(target, serverSettings.MIN_RAIN_AMOUNT);
 
 		expect(result).to.be.equal(minRainAmount);
+	});
+	
+	it('should get irc event payments from settings helper', async () => {
+
+		const settingsHelper = require('../src/utils/settings-helper');
+		const target = '#callowcreation';
+		const minRainAmount = 5.55555;
+
+		settingsCache.clear();
+
+		const sitems = mockSettingsCacheResponse({
+			"ircEventPayments": false
+		});
+		settingsCache.setItems([sitems]);
+
+		const result = settingsHelper.getRainMinAmount(target, serverSettings.MIN_RAIN_AMOUNT);
+
+		expect(result).to.be.equal(minRainAmount);
+	});
+
+	it('should get irc event payments from settings helper', async () => {
+
+		const settingsHelper = require('../src/utils/settings-helper');
+		const target = '#callowcreation';
+
+		settingsCache.clear();
+
+		const sitems = mockSettingsCacheResponse({
+			"ircEventPayments": true
+		});
+		settingsCache.setItems([sitems]);
+
+		const result = settingsHelper.getIrcEventPayments(target, false);
+
+		expect(result).to.be.equal(true);
+	});
+
+	it('should get bitcornhub funded from settings helper', async () => {
+
+		const settingsHelper = require('../src/utils/settings-helper');
+		const target = '#callowcreation';
+
+		settingsCache.clear();
+
+		const sitems = mockSettingsCacheResponse({
+			"bitcornhubFunded": true
+		});
+		settingsCache.setItems([sitems]);
+
+		const result = settingsHelper.getBitcornhubFunded(target, false);
+
+		expect(result).to.be.equal(true);
+	});
+
+	it('should get bitcorn per bit from settings helper', async () => {
+
+		const settingsHelper = require('../src/utils/settings-helper');
+		const target = '#callowcreation';
+		const bitcornPerBit = 6.66;
+
+		settingsCache.clear();
+
+		const sitems = mockSettingsCacheResponse({
+			"bitcornPerBit": bitcornPerBit
+		});
+		settingsCache.setItems([sitems]);
+
+		const result = settingsHelper.getBitcornPerBit(target, 1.000000);
+
+		expect(result).to.be.equal(bitcornPerBit);
+	});
+
+	it('should get bitcorn per donation from settings helper', async () => {
+
+		const settingsHelper = require('../src/utils/settings-helper');
+		const target = '#clayman666';
+		const bitcornPerDonation = 4.20;
+
+		settingsCache.clear();
+
+		const sitems = mockSettingsCacheResponse({
+			"ircTarget": target,
+			"bitcornPerDonation": bitcornPerDonation
+		});
+		settingsCache.setItems([sitems]);
+
+		const result = settingsHelper.getBitcornPerDonation(target, 4.000000);
+
+		expect(result).to.be.equal(bitcornPerDonation);
 	});
 });
