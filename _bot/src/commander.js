@@ -18,6 +18,7 @@ const expectedCommandsConfigs = {
 };
 
 const expectedEventFields = {
+	channelId: '',
 	twitchId: '',
 	twitchUsername: '',
 	args: {},

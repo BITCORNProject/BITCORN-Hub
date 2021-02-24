@@ -146,7 +146,6 @@
                 <div style="display: flex; flex-direction: column; height: 100%">
                     <div id="display-control-dashboard">
                         <div><span>Dashboard</span>
-                            <input id="control-dashboard-login-kraken" type="button" value="Login Kraken" />
                             <input id="control-dashboard-login-helix" type="button" value="Login Helix" />
                         </div>
                         <div style="display: flex; flex: 2;">
@@ -227,10 +226,6 @@
                         </div>
                     </div>
                     <div id="display-control-subscription" style="display: flex; flex-direction: column; height: 100%">
-                        <div>
-                            <span>Subscription</span>
-                            <input id="control-subscription-login-kraken" type="button" value="Login Kraken" />
-                        </div>
                         <div id="control-subscription-list-container" style="height: 500px; overflow: auto;">
                             <ul id="control-subscription-list">
 
@@ -304,26 +299,8 @@
                                                 class="item-label">OAUTH_TOKEN</label><input class="item-input"
                                                 type="password" value="" placeholder="IRC Bot Token"
                                                 name="OAUTH_TOKEN" />
-                                        </div>
-
-                                        <div id="control-settings-auth-kraken-client-id" class="item-container"><label
-                                                class="item-label">KRAKEN_CLIENT_ID</label><input class="item-input"
-                                                type="password" value="" placeholder="Twitch V5 Client ID"
-                                                name="KRAKEN_CLIENT_ID" />
-                                        </div>
-
-                                        <div id="control-settings-auth-kraken-secret" class="item-container"><label
-                                                class="item-label">KRAKEN_SECRET</label><input class="item-input"
-                                                type="password" value="lkjlklfvb9085klmndf9d78b908590ojkl"
-                                                name="KRAKEN_SECRET" />
-                                        </div>
-
-                                        <div id="control-settings-auth-kraken-callback-url" class="item-container">
-                                            <label class="item-label">KRAKEN_CALLBACK_URL</label><input
-                                                class="item-input" type="text" value="http://localhost"
-                                                name="KRAKEN_CALLBACK_URL" />
-                                        </div>
-
+										</div>
+										
                                         <div id="control-settings-auth-helix-client-id" class="item-container"><label
                                                 class="item-label">HELIX_CLIENT_ID</label><input class="item-input"
                                                 type="password" value="lkjlklfvb9085klmndf9d78b908590ojkl"
@@ -477,9 +454,6 @@
                         jchannelname: $('#control-settings-auth-channel-name input'),
                         jbotusername: $('#control-settings-auth-bot-username input'),
                         joauthtoken: $('#control-settings-auth-oauth-token input'),
-                        jkrakenclientid: $('#control-settings-auth-kraken-client-id input'),
-                        jkrakensecret: $('#control-settings-auth-kraken-secret input'),
-                        jkrakencallbackurl: $('#control-settings-auth-kraken-callback-url input'),
                         jhelixclientid: $('#control-settings-auth-helix-client-id input'),
                         jhelixsecret: $('#control-settings-auth-helix-secret input'),
                         jhelixcallbackurl: $('#control-settings-auth-helix-callback-url input')
@@ -864,21 +838,8 @@
                 setThemeFromIndex(themeIndex);
             });
 
-            $('#control-dashboard-login-kraken').click((e) => {
-                window.location = `./login-kraken`;
-            });
-            $('#control-subscription-login-kraken').click((e) => {
-                window.location = `./login-kraken`;
-            });
             $('#control-dashboard-login-helix').click((e) => {
                 window.location = `./login-helix`;
-            });
-            socket.on('login-kraken', (data) => {
-                console.log(data);
-                if (data.authenticated) {
-                    $('#control-dashboard-login-kraken').hide();
-                    $('#control-subscription-login-kraken').hide();
-                }
             });
             socket.on('login-helix', (data) => {
                 console.log(data);

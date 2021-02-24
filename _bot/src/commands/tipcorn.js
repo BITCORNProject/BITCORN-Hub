@@ -11,6 +11,7 @@ const auth = require('../../settings/auth');
 const serverSettings = require('../../settings/server-settings');
 
 const databaseAPI = require('../api-interface/database-api');
+const { getUsers } = require('../api-interface/twitch-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
@@ -42,7 +43,7 @@ module.exports = {
 
 		const minTipAmount = settingsHelper.getTipcornMinAmount(event.channel, serverSettings.MIN_TIPCORN_AMOUNT);
 
-		if(allowedUsers.activityTrackerOmitUsername(twitchUsername)) {
+		if (allowedUsers.activityTrackerOmitUsername(twitchUsername)) {
 			message = `${this.configs.name} used on omit username ${twitchUsername}`;
 		} else if (cleanParams.isNumber(amount) === false ||
 			amount < minTipAmount ||
@@ -51,7 +52,7 @@ module.exports = {
 			if (amount < minTipAmount) {
 				success = true;
 				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, minTipAmount, this.configs.example);
-			} else if(amount >= databaseAPI.MAX_WALLET_AMOUNT) {
+			} else if (amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 				success = true;
 				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);
 			} else {
@@ -59,13 +60,14 @@ module.exports = {
 			}
 		} else {
 
-			const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+			const { data: [user] } = await getUsers([twitchUsername]);
 
-			if (!user.success || user.error) {
+			if (user.error) {
 				success = true;
 				message = util.format(`%s - mttvMOONMAN Here's a tip for you: %s who? mttvMOONMAN`, twitchUsername);
 			} else {
 				const body = {
+					ircTarget: event.channelId,
 					from: `twitch|${event.twitchId}`,
 					to: `twitch|${user.id}`,
 					platform: 'twitch',

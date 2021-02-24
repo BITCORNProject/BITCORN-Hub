@@ -98,6 +98,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	}
 
 	const event = {
+		channelId: user['room-id'],
 		twitchId: user['user-id'],
 		twitchUsername: user.username,
 		args: args,

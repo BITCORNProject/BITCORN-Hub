@@ -6,7 +6,6 @@
 
 const orderedRequires = [];
 
-orderedRequires.push(require('./source/config/authorize/kraken'));
 orderedRequires.push(require('./source/config/authorize/helix'));
 
 const app = require('./source/config/express');

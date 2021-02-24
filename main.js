@@ -16,7 +16,6 @@ exports.io = () => io;
         const orderedRequires = [];
 
         orderedRequires.push(require('./source/config/tmi'));
-        orderedRequires.push(require('./source/config/authorize/kraken'));
         orderedRequires.push(require('./source/config/authorize/helix'));
         orderedRequires.push(require('./source/control-panel'));
         orderedRequires.push(require('./source/activity-tracker'));

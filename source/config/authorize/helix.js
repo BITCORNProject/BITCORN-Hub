@@ -151,6 +151,12 @@ async function getEndpoint(url) {
     return { success: false, message: `Fetch endpoint ${url} failed.` };
 }
 
+async function getRawEndpoint(url) {
+    return fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
+        .then(res => res.json())
+        .catch(error => { error });
+}
+
 async function getUserLogin(user_name) {
     return getEndpoint(`https://api.twitch.tv/helix/users?login=${user_name}`);
 }
@@ -175,6 +181,11 @@ async function getGame(game_id) {
     return getEndpoint(`https://api.twitch.tv/helix/games?id=${game_id}`);
 }
 
+async function getUsersByName(usernames) {
+	const params = usernames.map(x => `login=${x}`).join('&');
+    return getRawEndpoint(`https://api.twitch.tv/helix/users?${params}`);
+}
+
 async function init(app) {
     app.on('connection', (socket) => {
         const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
@@ -193,6 +204,7 @@ exports.authUrl = authUrl;
 exports.authenticateCode = authenticateCode;
 exports.getUser = getUser;
 exports.getUserLogin = getUserLogin;
+exports.getUsersByName = getUsersByName;
 exports.getStream = getStream;
 exports.getStreamById = getStreamById;
 exports.getUserFollows = getUserFollows;

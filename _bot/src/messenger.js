@@ -26,22 +26,22 @@ const whisperQueue = new _Queue();
 const rewardQueue = new _Queue();
 
 function enqueueReward(type, channel, username, amount) {
-	rewardQueue.enqueue({type, channel, username, amount});
+	rewardQueue.enqueue({ type, channel, username, amount });
 }
-	/* w3rk
-	c = 0; 
-	n = time.now(); 
-	for { 
-		if c < 100 {
-		 msg<- deque(msg) 
-		dosmth(msg) 
-		timeToSleep = 31 - time.now() - n; 
+/* w3rk
+c = 0; 
+n = time.now(); 
+for { 
+	if c < 100 {
+	 msg<- deque(msg) 
+	dosmth(msg) 
+	timeToSleep = 31 - time.now() - n; 
 
-		if timeToSleep > 0 { sleep(timeToSleep); } 
-		c++;
-	}else { 
-		c=0; 
-	}}*/
+	if timeToSleep > 0 { sleep(timeToSleep); } 
+	c++;
+}else { 
+	c=0; 
+}}*/
 
 async function sendQueuedRewards() {
 
@@ -88,7 +88,7 @@ async function sendQueuedRewards() {
 	}
 	let outMessage = error ? `Failed to send message type for reward on ${queue.attempts} attempts` : `Sent message: ${result.message}`;
 
-	if(queue.attempts >= MAX_QUEUE_RETRIES) {
+	if (queue.attempts >= MAX_QUEUE_RETRIES) {
 		queue.dequeue();
 		outMessage = `${outMessage} **** ${MAX_QUEUE_RETRIES} MAX_QUEUE_RETRIES ${JSON.stringify(item)}`;
 	}
@@ -105,10 +105,10 @@ async function handleTipRewards(type, channel, username, amount) {
 
 	const commandHelper = require('./shared-lib/command-helper');
 	const databaseAPI = require('./api-interface/database-api');
+	const { getUsers } = require('./api-interface/twitch-api');
 
 	const authValues = auth;
-	const fromUser = await fetch(`http://localhost:${authValues.PORT}/user?username=${authValues.BOT_USERNAME}`).then(res => res.json());
-	const toUser = await fetch(`http://localhost:${authValues.PORT}/user?username=${username}`).then(res => res.json());
+	const { data: [fromUser, toUser] } = await getUsers([authValues.BOT_USERNAME, username]);
 
 	const body = {
 		from: `twitch|${fromUser.id}`,
@@ -205,8 +205,8 @@ async function sendQueuedMessagesByType(type) {
 		queue.attempts = 0;
 	}
 	let outMessage = error ? `Failed to send message type ${type} on ${queue.attempts} attempts` : `Sent message: ${item.message}`;
-	
-	if(queue.attempts >= MAX_QUEUE_RETRIES) {
+
+	if (queue.attempts >= MAX_QUEUE_RETRIES) {
 		queue.dequeue();
 		outMessage = `${outMessage} **** ${MAX_QUEUE_RETRIES} MAX_QUEUE_RETRIES ${JSON.stringify(item)}`;
 	}

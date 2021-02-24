@@ -6,7 +6,7 @@
 "use strict";
 
 const databaseAPI = require('./database-api');
-
+const SETTINGS_POLL_INTERVAL_MS = 1000 * 20;// 1000 * 60 * 2;
 let cache = {};
 
 /*
@@ -52,10 +52,19 @@ async function requestSettings() {
 	setItems(results);
 }
 
+let interval = null;
+
+function startPolling() {
+	interval = setInterval(async () => {
+		await requestSettings();
+	}, SETTINGS_POLL_INTERVAL_MS);
+}
+
 module.exports = {
 	setItems,
 	getItems,
 	clear,
 	getItem,
-	requestSettings
+	requestSettings,
+	startPolling
 };

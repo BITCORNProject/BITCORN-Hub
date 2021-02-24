@@ -4,7 +4,6 @@ const auth = require('../settings/auth');
 const serverSettings = require('../settings/server-settings');
 
 const tmi = require('./config/tmi');
-const kraken = require('./config/authorize/kraken');
 const helix = require('./config/authorize/helix');
 const tmiCommands = require('./tmi-commands');
 
@@ -40,12 +39,7 @@ controlActions.set('control-commands', async (data) => {
     }
     return { commands: commandConfigs, prefixes: prefixes };
 });
-controlActions.set('control-subscription', async (data) => {
-    const user = await helix.getUserLogin(tmi.mainChannel());
 
-    const offset = data.index * data.limit;
-    return kraken.getLimitedSubscribersById(user.id, data.limit, offset);
-});
 controlActions.set('control-polls', async (data) => { });
 controlActions.set('control-give-aways', async (data) => { });
 controlActions.set('control-settings', async (data) => {

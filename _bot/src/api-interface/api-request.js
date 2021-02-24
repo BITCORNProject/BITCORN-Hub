@@ -16,6 +16,8 @@ function Cached() {
 const cached = new Cached();
 
 async function getCachedToken(client_credentials) {
+	if (process.env.NODE_ENV === 'development') return { access_token: 'fake_corn_token' };
+
 	const d = new Date();
 	const seconds = Math.round(d.getTime() / 1000);
 	const secondsOff = 60;

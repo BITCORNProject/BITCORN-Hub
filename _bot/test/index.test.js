@@ -44,6 +44,8 @@ describe('#mocha promises', function () {
 
 	const serverSettings = require('../settings/server-settings');
 
+	const { getUsers, getChatters } = require('../src/api-interface/twitch-api');
+
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
 			return {
@@ -61,9 +63,10 @@ describe('#mocha promises', function () {
 
 	async function mockEvent(msg, twitchUsername, channel, irc_target) {
 
-		const auth = require('../settings/auth');
-		const user = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [user, broadcaster] } = await getUsers([twitchUsername, channel.replace('#', '')]);
+
 		return {
+			channelId: broadcaster ? broadcaster.id : user.id,
 			twitchId: user.id,
 			twitchUsername: user.login,
 			args: commander.messageAsCommand(msg),
@@ -80,8 +83,10 @@ describe('#mocha promises', function () {
 		messenger.whisperQueue.client = tmi.whisperClient;
 
 		activityTracker.init();
+		
+		await tmi.connectToChat();
 
-		return tmi.connectToChat();
+		return tmi.joinChannel('#callowcreation');
 	});
 
 	after(() => {
@@ -91,19 +96,6 @@ describe('#mocha promises', function () {
 
 	it('should have connectToChat property', () => {
 		expect(tmi).to.be.ownProperty('connectToChat');
-	});
-
-	it('should have tmi join channel', async () => {
-		await _wait(500);
-		const channel = '#callowcreation';
-		const data = await tmi.joinChannel(channel);
-		expect(data[0]).to.be.equal(channel);
-	});
-
-	it('should handle tmi join errors', async () => {
-		await _wait(500);
-		const channel = null;
-		return assert.isRejected(tmi.joinChannel(channel));
 	});
 
 	it('should handle tmi part errors', () => {
@@ -434,8 +426,7 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn successfully with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'user-id': user_id, username: user_login };
 
 		const target = '#callowcreation';
@@ -456,8 +447,7 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn insufficient funds with message handler ', async () => {
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'user-id': user_id, username: user_login };
 
 		const target = '#callowcreation';
@@ -477,9 +467,8 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn success for unregistered users with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
-		const user = { 'user-id': user_id, username: user_login };
+		const { data: [{ id: user_id, login: user_login }, { id: channel_id }] } = await getUsers([twitchUsername, 'callowcreation']);
+		const user = {'room-id': channel_id, 'user-id': user_id, username: user_login };
 
 		const target = '#callowcreation';
 		const msg = `${commander.commandName('$tipcorn')} @3412q 103`;
@@ -516,8 +505,7 @@ describe('#mocha promises', function () {
 		const target = '#callowcreation';
 
 		const twitchUsername = 'd4rkcide';
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'user-id': user_id, username: user_login };
 
 		const msg = `${commander.commandName('$tipcorn')} @biteastwood 102`;
@@ -535,8 +523,7 @@ describe('#mocha promises', function () {
 		const target = '#callowcreation';
 
 		const twitchUsername = 'callowcreation';
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'user-id': user_id, username: user_login };
 
 		const msg = `${commander.commandName('$withdraw')} 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
@@ -560,8 +547,7 @@ describe('#mocha promises', function () {
 		const target = '#callowcreation';
 
 		const twitchUsername = 'callowcreation';
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'user-id': user_id, username: user_login };
 
 		const msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
@@ -643,8 +629,6 @@ describe('#mocha promises', function () {
 		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
 		await _wait(500);
-		await tmi.joinChannel(target);
-
 		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 		_error(obj);
 		_message(obj);
@@ -664,7 +648,6 @@ describe('#mocha promises', function () {
 		message = 'Seen ' + Date.now();
 		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 
-		await tmi.joinChannel(target);
 		await _wait(1000);
 		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 		await _wait(1000);
@@ -734,9 +717,7 @@ describe('#mocha promises', function () {
 	it('should execute $rain successfully with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
-
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
 		const user = { 'user-id': user_id, username: user_login };
@@ -757,9 +738,7 @@ describe('#mocha promises', function () {
 	it('should execute $rain insufficient funds with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
-
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
 		const user = { 'user-id': user_id, username: user_login };
@@ -870,7 +849,7 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onCheer(channel, userstate, message);
 		expect(result.error).to.be.equal(null);
-		if(result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 		await _wait(100);
@@ -881,7 +860,7 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate);
 		expect(result.error).to.be.equal(null);
-		if(result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 		await _wait(100);
@@ -892,7 +871,7 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onSubscription(channel, username, methods, message, userstate);
 		expect(result.error).to.be.equal(null);
-		if(result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 		await _wait(100);
@@ -903,7 +882,7 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onResub(channel, username, months, message, userstate, methods);
 		expect(result.error).to.be.equal(null);
-		if(result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 	});
@@ -916,9 +895,7 @@ describe('#mocha promises', function () {
 		let viewers = [];
 
 		const channel = 'markettraderstv';
-		const url = `https://tmi.twitch.tv/group/user/${channel}/chatters`;
-		const chatters_result = await fetch(url);
-		const chatters_json = await chatters_result.json();
+		const { chatters: chatters_json } = await getChatters(channel);
 		viewers = [];
 		for (const key in chatters_json) {
 			const chatters = chatters_json[key];
@@ -933,11 +910,10 @@ describe('#mocha promises', function () {
 		const promises = [];
 		let chatters = [];
 		while (viewers.length > 0) {
-			const chunked = viewers.splice(0, 100);
+			const usernames = viewers.splice(0, 100);
 			promises.push(new Promise(async (resolve) => {
-				const usernames = chunked.join(',');
-				const users = await fetch(`http://localhost:${auth.PORT}/users?usernames=${usernames}`).then(res => res.json());
-				resolve(users.result.users.map(x => x._id));
+				const { data } = await getUsers(usernames);
+				resolve(data.map(x => x.id));
 			}));
 		}
 		const presults = await Promise.all(promises);
@@ -952,7 +928,7 @@ describe('#mocha promises', function () {
 			chatters: chatters,
 			minutes: MINUTE_AWARD_MULTIPLIER
 		};
-		const { result: { users: [{ _id: senderId }] } } = await fetch(`http://localhost:${auth.PORT}/users?usernames=${auth.BOT_USERNAME}`).then(res => res.json());
+		const { data: [{ id: senderId }] } = await getUsers([auth.BOT_USERNAME]);
 
 		console.log(`---------------> ${senderId}`);
 
@@ -994,9 +970,7 @@ describe('#mocha promises', function () {
 	it('should envoke a command as test in a development state', async () => {
 
 		const twitchUsername = 'd4rkcide';
-
-		const auth = require('../settings/auth');
-		const { id: user_id, login: user_login } = await fetch(`http://localhost:${auth.PORT}/user?username=${twitchUsername}`).then(res => res.json());
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
 		const user = { 'user-id': user_id, username: user_login };
@@ -1180,9 +1154,9 @@ describe('#mocha promises', function () {
 	it('should get channel cooldown or set a default value', async () => {
 
 		const settingsHelper = require('../src/utils/settings-helper');
-		
+
 		const target = '#wollac';
-		
+
 		settingsCache.clear();
 		settingsCache.setItems([{
 			"minRainAmount": 1.00000000,
@@ -1203,12 +1177,12 @@ describe('#mocha promises', function () {
 	});
 
 	it('should get irc output enabled from settings', async () => {
-		
+
 		const MESSAGE_TYPE = require('../src/utils/message-type');
 		const settingsHelper = require('../src/utils/settings-helper');
-		
+
 		const target = '#callowcreation';
-		
+
 		settingsCache.clear();
 		settingsCache.setItems([{
 			"minRainAmount": 1.00000000,
@@ -1219,7 +1193,7 @@ describe('#mocha promises', function () {
 			"txCooldownPerUser": 1.00000000,
 			"enableTransactions": true
 		}]);
-		
+
 		const commandsMap = commander.createCommandsMap();
 		let command = commandsMap.get(commander.commandName('tipcorn'));
 
@@ -1237,7 +1211,7 @@ describe('#mocha promises', function () {
 	it('should not send tx messages for commands', async () => {
 
 		const MESSAGE_TYPE = require('../src/utils/message-type');
-		
+
 		const target = '#callowcreation';
 
 		settingsCache.clear();
@@ -1276,7 +1250,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should user correct $rain algorithm', async () => {
-		
+
 		const settingsHelper = require('../src/utils/settings-helper');
 		const target = '#callowcreation';
 
@@ -1291,12 +1265,12 @@ describe('#mocha promises', function () {
 				"txCooldownPerUser": 1.00000000,
 				"enableTransactions": false
 			}]);
-	
+
 			const activeChatters = activityTracker.getValues();
 			const items = activeChatters[target].filter(x => x);
-	
+
 			const result = settingsHelper.getRainAlgorithmResult(target, items);
-			
+
 			const matched = _.isEqual(items, result);
 			expect(matched).to.be.equal(true);
 		}
@@ -1311,21 +1285,21 @@ describe('#mocha promises', function () {
 				"txCooldownPerUser": 1.00000000,
 				"enableTransactions": false
 			}]);
-	
+
 			const activeChatters = activityTracker.getValues();
 			const items = activeChatters[target].filter(x => x);
 
 			console.log(items);
-			
+
 			const result = settingsHelper.getRainAlgorithmResult(target, items);
-			
+
 			const matched = _.isEqual(items, result);
 			expect(matched).to.be.equal(false);
 		}
 	});
 
 	it('should get tipcorn min amount from settings helper', async () => {
-		
+
 		const settingsHelper = require('../src/utils/settings-helper');
 		const target = '#callowcreation';
 		const minTipAmount = 16.55;
@@ -1347,7 +1321,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should get rain min amount from settings helper', async () => {
-		
+
 		const settingsHelper = require('../src/utils/settings-helper');
 		const target = '#callowcreation';
 		const minRainAmount = 5.55555;

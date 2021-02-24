@@ -66,6 +66,7 @@ module.exports = {
 			const recipients = items.map(x => `twitch|${x.id}`);
 
 			const body = {
+				ircTarget: event.channelId,
 				from: `twitch|${event.twitchId}`,
 				to: recipients,
 				platform: 'twitch',

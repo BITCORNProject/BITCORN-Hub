@@ -4,8 +4,7 @@ custom sub-rewards
 channelpoints -> bitcorn auto-payout(redeem)
 
 
- u have the watch file function there, instead of doing that u have request going every 2 minutes asking for the channels
+BlessCards
+!! no i would just want one - right now, i manually reward people who redeem 100,000 channel points for 1,000 BITCORN, by $tipcorn each person that redeems. i need this to happen automatically like your redeem works
 
-if the result is not http 200, dont do anything
-
-the endpoint returns a string array of the channels to join
+!! things i would want for MTTV: a. text to speech like this for auth/vip+ users, b. auto redemption for corn, c. youtube popup for authorized vip+ users, d. voice to text scroll on bottom - whatever is easiest for this

@@ -9,7 +9,6 @@ const assert = require('assert');
 const fetch = require('node-fetch');
 
 const math = require('../source/utils/math');
-const kraken = require('../source/config/authorize/kraken');
 const helix = require('../source/config/authorize/helix');
 const tmi = require('../source/config/tmi');
 const activityTracker = require('../source/activity-tracker');

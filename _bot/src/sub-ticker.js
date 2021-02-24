@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const auth = require('../settings/auth');
 const serverSettings = require('../settings/server-settings');
 const databaseAPI = require('./api-interface/database-api');
+const { getUsers, getChatters } = require('./api-interface/twitch-api');
 
 const timeValues = {
 	SECOND: 1000,
@@ -16,10 +17,7 @@ async function performPayout(channel) {
 
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
-	const url = `https://tmi.twitch.tv/group/user/${channel}/chatters`;
-
-	const chatters_result = await fetch(url);
-	const chatters_json = await chatters_result.json();
+	const { chatters: chatters_json } = await getChatters(channel);
 
 	viewers = [];
 	for (const key in chatters_json) {
@@ -29,15 +27,14 @@ async function performPayout(channel) {
 			viewers = viewers.concat(chatters[k]);
 		}
 	}
-	
+
 	const promises = [];
 	let chatters = [];
 	while (viewers.length > 0) {
-		const chunked = viewers.splice(0, 100);
+		const usernames = viewers.splice(0, 100);
 		promises.push(new Promise(async (resolve) => {
-			const usernames = chunked.join(',');
-			const users = await fetch(`http://localhost:${auth.PORT}/users?usernames=${usernames}`).then(res => res.json());
-			resolve(users.result.users.map(x => x._id));
+			const { data } = await getUsers(usernames);
+			resolve(data.map(x => x.id));
 		}));
 	}
 	const presults = await Promise.all(promises);
@@ -47,7 +44,7 @@ async function performPayout(channel) {
 		chatters: chatters,
 		minutes: MINUTE_AWARD_MULTIPLIER
 	};
-	const { result: { users: [{ _id: senderId }] } } = await fetch(`http://localhost:${auth.PORT}/users?usernames=${auth.BOT_USERNAME}`).then(res => res.json());
+	const { data: [{ id: senderId }] } = await getUsers([auth.BOT_USERNAME]);
 
 	return databaseAPI.requestPayout(senderId, body);
 }
