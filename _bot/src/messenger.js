@@ -143,7 +143,7 @@ function enqueueMessageByType(type, target, message) {
 			console.error(`Bot ${auth.BOT_USERNAME} attempt to whisper self`);
 		}
 	} else {
-		console.log(`${type} ${target} ${message}`);
+		//console.log(`${type} ${target} ${message}`);
 	}
 }
 

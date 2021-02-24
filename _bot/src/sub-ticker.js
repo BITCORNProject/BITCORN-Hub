@@ -56,7 +56,7 @@ async function init() {
 	setInterval(async () => {
 		const channel = auth.CHANNEL_NAME.split(',')[0];
 		const result = await performPayout(channel);
-		console.log({ result });
+		//console.log({ result });
 
 	}, timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
 

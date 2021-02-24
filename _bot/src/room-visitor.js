@@ -63,7 +63,7 @@ async function joinChannelsFromQueue(tmi) {
 	}
 	joinChannelsFromQueue(tmi);
 
-	console.log(result);
+	//console.log(result);
 
 	await new Promise(resolve => setTimeout(resolve, 500));
 	return result;
@@ -78,7 +78,7 @@ module.exports = async (tmi) => {
 		joinChannelsFromQueue(tmi);
 
 	} catch (error) {
-		console.log(error);
+		console.error(error);
 	}
 
 	setInterval(async () => {
@@ -94,7 +94,7 @@ module.exports = async (tmi) => {
 			joinChannelsFromQueue(tmi);
 			
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 		
 	}, SETTINGS_JOIN_LEAVE_INTERVAL_MS);

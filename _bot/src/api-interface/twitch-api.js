@@ -12,7 +12,7 @@ const auth = require('../../settings/auth');
 async function getRequest(url) {
 	return fetch(url)
 		.then(res => res.json())
-		.catch(err => console.log(err));
+		.catch(err => console.error(err));
 }
 
 async function getUsers(usernames) {

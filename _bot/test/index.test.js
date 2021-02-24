@@ -9,7 +9,7 @@ const fetch = require('node-fetch');
 const _ = require('lodash');
 
 function log(...value) {
-	console.log(value);
+	//console.log(value);
 }
 
 function _error(obj) {
@@ -70,7 +70,7 @@ describe('#mocha promises', function () {
 			"rainAlgorithm": 1,
 			"ircTarget": '#callowcreation',
 			"txMessages": true,
-			"txCooldownPerUser": 1.00000000,
+			"txCooldownPerUser": 0.00000000,
 			"enableTransactions": false,
 
 			"ircEventPayments": false, 
@@ -102,8 +102,8 @@ describe('#mocha promises', function () {
 	}
 
 	before(async () => {
-
-		broadcaster = await getUsers(['callowcreation']);
+		
+		({ data: [broadcaster] } = await getUsers(['callowcreation']));
 
 		await settingsCache.requestSettings();
 
@@ -124,11 +124,6 @@ describe('#mocha promises', function () {
 
 	it('should have connectToChat property', () => {
 		expect(tmi).to.be.ownProperty('connectToChat');
-	});
-
-	it('should handle tmi part errors', () => {
-		const channel = -1;
-		return assert.isRejected(tmi.partChannel(channel));
 	});
 
 	it('should load commands from file system', () => {
@@ -635,20 +630,6 @@ describe('#mocha promises', function () {
 		messenger.chatQueue.dequeue();
 	});
 
-	it('should send chat message from queue', async () => {
-		const MESSAGE_TYPE = require('../src/utils/message-type');
-
-		let target = '#callowcreation';
-		let message = 'should send chat message from queue ' + Date.now();
-		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
-
-		await _wait(500);
-		const obj = await messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
-		_error(obj);
-		_message(obj);
-		expect(obj.success).to.be.equal(true);
-	});
-
 	it('should send many message from chat queue', async () => {
 
 		await _wait(500);
@@ -716,6 +697,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should get $rain response from invoking execute', async () => {
+		await _wait(1000);
 		const command = isMock ? {
 			execute(event) {
 				return Promise.resolve({ success: true });
@@ -945,7 +927,7 @@ describe('#mocha promises', function () {
 			ircTarget: senderId
 		};
 
-		console.log(`---------------> ${senderId}`);
+		log(`---------------> ${senderId}`);
 
 		const results = await databaseAPI.requestPayout(senderId, body);
 
@@ -1014,18 +996,7 @@ describe('#mocha promises', function () {
 		expect(results.length).to.not.be.equal(0);
 	});
 
-	it('should populate join queue', async () => {
-
-		const roomVisitor = require('../src/room-visitor');
-
-		const { addChannels, getJoinQueue } = await roomVisitor(tmi);
-		const queue = getJoinQueue();
-		queue.empty();
-		addChannels(['callowcreation']);
-		expect(queue.size()).to.be.equal(1);
-	});
-
-	it('should join via queue', async () => {
+	it('should populate and join via queue', async () => {
 
 		const roomVisitor = require('../src/room-visitor');
 
@@ -1033,7 +1004,6 @@ describe('#mocha promises', function () {
 
 		const queue = getJoinQueue();
 		queue.empty();
-
 		addChannels(['callowcreation']);
 		expect(queue.size()).to.be.equal(1);
 
@@ -1054,7 +1024,7 @@ describe('#mocha promises', function () {
 
 		const isNum = isNumber(results.length);
 
-		console.log(results);
+		log(results);
 
 		expect(isNum).to.be.equal(true);
 		expect(results.length).to.not.be.equal(0);
@@ -1074,8 +1044,13 @@ describe('#mocha promises', function () {
 
 		const channel = 'clayman666'.toLowerCase();
 
-		const results = await databaseAPI.makeRequestChannelsSettings();
-		settingsCache.setItems(results);
+		const sitems = mockSettingsCacheResponse({
+			"ircTarget": `#${channel}`
+		});
+		settingsCache.setItems([sitems]);
+		
+		// const results = await databaseAPI.makeRequestChannelsSettings();
+		// settingsCache.setItems(results);
 
 		let items = settingsCache.getItems();
 		expect(items).to.be.ownProperty(channel);
@@ -1096,8 +1071,10 @@ describe('#mocha promises', function () {
 
 		expect(item).to.be.equal(undefined);
 
-		const results = await databaseAPI.makeRequestChannelsSettings();
-		settingsCache.setItems(results);
+		const sitems = mockSettingsCacheResponse({
+			"ircTarget": `#${channel}`
+		});
+		settingsCache.setItems([sitems]);
 
 		item = settingsCache.getItem(channel);
 
@@ -1116,7 +1093,7 @@ describe('#mocha promises', function () {
 			"enableTransactions": false
 		});
 
-		console.log(sitems);
+		log(sitems);
 		settingsCache.setItems([sitems]);
 
 		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
@@ -1181,7 +1158,7 @@ describe('#mocha promises', function () {
 
 		const sitems = mockSettingsCacheResponse({
 			"ircTarget": target,
-			"txCooldownPerUser": 1.00000000,
+			"txCooldownPerUser": 0.10000000,
 			"enableTransactions": false
 		});
 		settingsCache.setItems([sitems]);
@@ -1191,7 +1168,7 @@ describe('#mocha promises', function () {
 		const command = commandsMap.get(commander.commandName('rain'));
 		const result = settingsHelper.getChannelCooldown(target, command.configs.cooldown);
 
-		expect(result).to.be.equal(60000);
+		expect(result).to.be.equal(6000);
 	});
 
 	it('should get irc output enabled from settings', async () => {
@@ -1225,6 +1202,8 @@ describe('#mocha promises', function () {
 
 	it('should not send tx messages for commands', async () => {
 
+		await _wait(1000);
+
 		const MESSAGE_TYPE = require('../src/utils/message-type');
 
 		const target = '#callowcreation';
@@ -1243,16 +1222,19 @@ describe('#mocha promises', function () {
 		{
 			const msg = commander.commandName('$bitcorn');
 			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			log(obj);
 			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
 		}
 		{
 			const msg = `${commander.commandName('$rain')} 4200 10`;
 			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			log(obj);
 			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
 		}
 		{
 			const msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
 			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			log(obj);
 			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
 		}
 		{
@@ -1260,6 +1242,7 @@ describe('#mocha promises', function () {
 
 			const msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
 			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			log(obj);
 			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
 		}
 	});
@@ -1300,7 +1283,7 @@ describe('#mocha promises', function () {
 			const activeChatters = activityTracker.getValues();
 			const items = activeChatters[target].filter(x => x);
 
-			console.log(items);
+			log(items);
 
 			const result = settingsHelper.getRainAlgorithmResult(target, items);
 
@@ -1346,24 +1329,7 @@ describe('#mocha promises', function () {
 
 		expect(result).to.be.equal(minRainAmount);
 	});
-	
-	it('should get irc event payments from settings helper', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
-		const target = '#callowcreation';
-		const minRainAmount = 5.55555;
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"ircEventPayments": false
-		});
-		settingsCache.setItems([sitems]);
-
-		const result = settingsHelper.getRainMinAmount(target, serverSettings.MIN_RAIN_AMOUNT);
-
-		expect(result).to.be.equal(minRainAmount);
-	});
 
 	it('should get irc event payments from settings helper', async () => {
 

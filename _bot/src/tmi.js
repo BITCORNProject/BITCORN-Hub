@@ -6,8 +6,8 @@ const messenger = require('./messenger');
 const commander = require('./commander');
 const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
-const MESSAGE_TYPE = require('./utils/message-type');	
-const settingsHelper = require('./utils/settings-helper');	
+const MESSAGE_TYPE = require('./utils/message-type');
+const settingsHelper = require('./utils/settings-helper');
 
 
 const commandsMap = commander.createCommandsMap();
@@ -86,7 +86,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
 	const selectedCooldownId = command.configs.global_cooldown === true ? target : user['user-id'];
-	
+
 	const settingsConfigs = {
 		name: command.configs.name,
 		cooldown: settingsHelper.getChannelCooldown(target, command.configs.cooldown),
@@ -117,7 +117,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	data.configs.irc_out = settingsHelper.getIrcMessageTarget(target, data.configs.irc_out);
 	data.msg = msg;
 
-	if (data.success === true) {		
+	if (data.success === true) {
 		messenger.enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
 		data.result = await messenger.sendQueuedMessagesByType(data.configs.irc_out);
 	}
@@ -197,7 +197,7 @@ function hashReplace(channel) {
 }
 
 async function handleRewardEvent(type, channel, username, amount) {
-	if(settingsHelper.getIrcMessageTarget(channel, type) === MESSAGE_TYPE.irc_none) return settingsHelper.txMessageOutput();
+	if (settingsHelper.getIrcMessageTarget(channel, type) === MESSAGE_TYPE.irc_none) return settingsHelper.txMessageOutput();
 
 	messenger.enqueueReward(type, channel, username, amount);
 	const result = await messenger.sendQueuedRewards();
