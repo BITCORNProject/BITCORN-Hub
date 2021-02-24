@@ -2,7 +2,7 @@
 
 function brackets(value) {
 	if(isNumber(value)) return value;
-    return value ? value.replace('<', '').replace('>', '') : ''
+    return value ? value.replace(/[\<\>]+/g, '') : '';
 }
 
 function at(value) {

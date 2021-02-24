@@ -61,9 +61,11 @@ describe('#mocha promises', function () {
 	const activityTracker = require('../src/activity-tracker');
 	const allowedUsers = require('../src/utils/allowed-users');
 
+	let broadcaster;
+
 	async function mockEvent(msg, twitchUsername, channel, irc_target) {
 
-		const { data: [user, broadcaster] } = await getUsers([twitchUsername, channel.replace('#', '')]);
+		const { data: [user] } = await getUsers([twitchUsername, channel.replace('#', '')]);
 
 		return {
 			channelId: broadcaster ? broadcaster.id : user.id,
@@ -77,13 +79,15 @@ describe('#mocha promises', function () {
 
 	before(async () => {
 
+		broadcaster = await getUsers(['callowcreation']);
+
 		await settingsCache.requestSettings();
 
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
 		activityTracker.init();
-		
+
 		await tmi.connectToChat();
 
 		return tmi.joinChannel('#callowcreation');
@@ -102,20 +106,6 @@ describe('#mocha promises', function () {
 		const channel = -1;
 		return assert.isRejected(tmi.partChannel(channel));
 	});
-
-	/*it('should confirm message received from channel', () => {
-		const should = chai.should();
-		return new Promise((resolve, reject) => {
-			tmi.chatClient.on('message', (target, user, msg, self) => {
-				tmi.onMessageHandler(target, user, msg, self)
-					.then(obj => {
-						expect(obj.msg).to.be.equal('Terra native');
-						resolve();
-					}).catch(e => reject(e));
-			});
-			tmi.chatClient.say('#callowcreation', 'Terra native');
-		}).should.eventually.fulfilled;
-	});*/
 
 	it('should load commands from file system', () => {
 		const moduleloader = require('../src/utils/moduleloader');
@@ -145,7 +135,7 @@ describe('#mocha promises', function () {
 			const command = commands[i];
 
 			const target = '#callowcreation';
-			const user = { 'user-id': '120524051', username: 'naivebot' };
+			const user = { 'room-id': broadcaster.id, 'user-id': '120524051', username: 'naivebot' };
 			const msg = command.configs.example;
 			const self = false;
 
@@ -334,7 +324,7 @@ describe('#mocha promises', function () {
 	it('should execute $bitcorn successfully with message handler', async () => {
 
 		const target = '#callowcreation';
-		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
 		const msg = commander.commandName('$bitcorn');
 		const self = false;
 
@@ -427,7 +417,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'd4rkcide';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
 		const target = '#callowcreation';
 		const msg = `${commander.commandName('$tipcorn')} @mattras007 101`;
@@ -448,7 +438,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'd4rkcide';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
 		const target = '#callowcreation';
 		const msg = `${commander.commandName('$tipcorn')} @mattras007 4200000001`;
@@ -467,8 +457,8 @@ describe('#mocha promises', function () {
 	it('should execute $tipcorn success for unregistered users with message handler', async () => {
 
 		const twitchUsername = 'd4rkcide';
-		const { data: [{ id: user_id, login: user_login }, { id: channel_id }] } = await getUsers([twitchUsername, 'callowcreation']);
-		const user = {'room-id': channel_id, 'user-id': user_id, username: user_login };
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
 		const target = '#callowcreation';
 		const msg = `${commander.commandName('$tipcorn')} @3412q 103`;
@@ -506,7 +496,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'd4rkcide';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
 		const msg = `${commander.commandName('$tipcorn')} @biteastwood 102`;
 		const self = false;
@@ -524,7 +514,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'callowcreation';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
 		const msg = `${commander.commandName('$withdraw')} 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
 		const self = false;
@@ -548,7 +538,7 @@ describe('#mocha promises', function () {
 
 		const twitchUsername = 'callowcreation';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
 		const msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
 		const self = false;
@@ -672,7 +662,7 @@ describe('#mocha promises', function () {
 	it('should invoke help with message handler', async () => {
 
 		const target = '#callowcreation';
-		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
 		const msg = commander.commandName('$help');
 		const self = false;
 
@@ -720,7 +710,7 @@ describe('#mocha promises', function () {
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 		const msg = `${commander.commandName('$rain')} 24.999999999999999 10`;
 		const self = false;
 
@@ -741,7 +731,7 @@ describe('#mocha promises', function () {
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 		const msg = `${commander.commandName('$rain')} 4200000024.999999999999999 10`;
 		const self = false;
 
@@ -887,14 +877,14 @@ describe('#mocha promises', function () {
 		}
 	});
 
-	it('should send sub ticker payout request', async () => {
+	it.skip('should send sub ticker payout request', async () => {
 
 		const auth = require('../settings/auth');
 
 		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 		let viewers = [];
 
-		const channel = 'markettraderstv';
+		const channel = 'callowcreation';
 		const { chatters: chatters_json } = await getChatters(channel);
 		viewers = [];
 		for (const key in chatters_json) {
@@ -920,15 +910,16 @@ describe('#mocha promises', function () {
 		chatters = [].concat.apply([], presults);
 
 		//log(chatters.length);
-		chatters.length = 5;
+		//chatters.length = 5;
 
 		//log(chatters);
 
+		const { data: [{ id: senderId }] } = await getUsers([channel]);
 		const body = {
 			chatters: chatters,
-			minutes: MINUTE_AWARD_MULTIPLIER
+			minutes: MINUTE_AWARD_MULTIPLIER,
+			ircTarget: senderId
 		};
-		const { data: [{ id: senderId }] } = await getUsers([auth.BOT_USERNAME]);
 
 		console.log(`---------------> ${senderId}`);
 
@@ -939,7 +930,7 @@ describe('#mocha promises', function () {
 		expect(results).to.be.greaterThan(0);
 	});
 
-	it('should perform sub ticker after init', async () => {
+	it.skip('should perform sub ticker after init', async () => {
 		const subTicker = require('../src/sub-ticker');
 
 		const channel = 'markettraderstv';
@@ -973,7 +964,7 @@ describe('#mocha promises', function () {
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
-		const user = { 'user-id': user_id, username: user_login };
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 		const msg = '$raintest 24.999999999999999 10';
 		const self = false;
 
@@ -1106,7 +1097,7 @@ describe('#mocha promises', function () {
 		}]);
 
 		const target = '#wollac';
-		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
 		let msg;
 		let obj;
@@ -1135,7 +1126,18 @@ describe('#mocha promises', function () {
 		settingsCache.clear();
 
 		const target = '#wollac';
-		const user = { 'user-id': '120614707', username: 'naivebot' };
+
+		settingsCache.setItems([{
+			"minRainAmount": 1.00000000,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 0,
+			"ircTarget": target,
+			"txMessages": true,
+			"txCooldownPerUser": 1.00000000,
+			"enableTransactions": false
+		}]);
+		
+		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
 		let msg;
 		let obj;
@@ -1225,28 +1227,31 @@ describe('#mocha promises', function () {
 			"enableTransactions": false
 		}]);
 
-		const user = { 'user-id': '120614707', username: 'naivebot' };
+		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
 		const self = false;
-		let msg;
-		let obj;
 
-		msg = commander.commandName('$bitcorn');
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
+		{
+			const msg = commander.commandName('$bitcorn');
+			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
+		}
+		{
+			const msg = `${commander.commandName('$rain')} 4200 10`;
+			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
+		}
+		{
+			const msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
+			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
+		}
+		{
+			user['message-type'] = 'whisper';
 
-		msg = `${commander.commandName('$rain')} 4200 10`;
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
-
-		msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
-
-		user['message-type'] = 'whisper';
-
-		msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
+			const msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
+			const obj = await tmi.onMessageHandler(target, user, msg, self);
+			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
+		}
 	});
 
 	it('should user correct $rain algorithm', async () => {
