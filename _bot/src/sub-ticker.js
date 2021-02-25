@@ -5,6 +5,8 @@ const auth = require('../settings/auth');
 const serverSettings = require('../settings/server-settings');
 const databaseAPI = require('./api-interface/database-api');
 const { getUsers, getChatters } = require('./api-interface/twitch-api');
+const { getChannelId } = require('./api-interface/settings-cache');
+const settingsCache = require('./api-interface/settings-cache');
 
 const timeValues = {
 	SECOND: 1000,
@@ -40,13 +42,14 @@ async function performPayout(channel) {
 	const presults = await Promise.all(promises);
 	chatters = [].concat.apply([], presults);
 
+	const channelId = await getChannelId(channel);
 	const body = {
+		ircTarget: channelId,
 		chatters: chatters,
 		minutes: MINUTE_AWARD_MULTIPLIER
 	};
-	const { data: [{ id: senderId }] } = await getUsers([auth.BOT_USERNAME]);
 
-	return databaseAPI.requestPayout(senderId, body);
+	return databaseAPI.requestPayout(body);
 }
 
 async function init() {
@@ -54,10 +57,10 @@ async function init() {
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
-		const channel = auth.CHANNEL_NAME.split(',')[0];
-		const result = await performPayout(channel);
-		//console.log({ result });
-
+		const channels = Object.keys(settingsCache.getItems());
+		const promises = channels.map(performPayout);
+		const result = await Promise.all(promises);
+		console.log({ result });
 	}, timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
 
 	return { success: true };

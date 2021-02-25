@@ -4,19 +4,15 @@
 
 "use strict";
 
-const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../settings/auth');
 const serverSettings = require('../../settings/server-settings');
-
 const databaseAPI = require('../api-interface/database-api');
 const { getUsers } = require('../api-interface/twitch-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
 const settingsHelper = require('../utils/settings-helper');
-
 const commandHelper = require('../shared-lib/command-helper');
 
 module.exports = {

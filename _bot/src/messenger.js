@@ -1,10 +1,12 @@
 "use strict";
-const fetch = require('node-fetch');
 
 const serverSettings = require('../settings/server-settings');
 const auth = require('../settings/auth');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
+const settingsHelper = require('./utils/settings-helper');
+
+const { getChannelId, cleanChannelName } = require('./api-interface/settings-cache');
 
 function _Queue() {
 	this.items = new Queue();
@@ -107,19 +109,24 @@ async function handleTipRewards(type, channel, username, amount) {
 	const databaseAPI = require('./api-interface/database-api');
 	const { getUsers } = require('./api-interface/twitch-api');
 
-	const authValues = auth;
-	const { data: [fromUser, toUser] } = await getUsers([authValues.BOT_USERNAME, username]);
+	const { data: [toUser] } = await getUsers([username]);
 
+	const fromUserId = await getChannelId(channel);
 	const body = {
-		from: `twitch|${fromUser.id}`,
+		ircTarget: fromUserId,
+		from: `twitch|${fromUserId}`,
 		to: `twitch|${toUser.id}`,
 		platform: 'twitch',
 		amount: amount,
 		columns: ['balance', 'twitchusername', 'isbanned']
 	};
 
-	const result = await databaseAPI.request(fromUser.id, body).tipcorn();
-	const { success, message } = commandHelper.handelTipResponse(result, fromUser.login, toUser.login, amount);
+	const result = await databaseAPI.request(fromUserId, body).tipcorn();
+	const { success, message } = commandHelper.handelTipResponse(result, cleanChannelName(channel), toUser.login, amount);
+	
+	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat) === MESSAGE_TYPE.irc_none) {
+		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.tipEvent);
+	}
 
 	if (success === true) {
 		enqueueMessageByType(MESSAGE_TYPE.irc_chat, channel, message);

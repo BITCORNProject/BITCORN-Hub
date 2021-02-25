@@ -73,7 +73,7 @@ describe('#mocha promises', function () {
 			"txCooldownPerUser": 0.00000000,
 			"enableTransactions": false,
 
-			"ircEventPayments": false, 
+			"ircEventPayments": false,
 			"bitcornhubFunded": false,
 			"bitcornPerBit": 0.10000000,
 			"bitcornPerDonation": 420.00000000
@@ -102,7 +102,7 @@ describe('#mocha promises', function () {
 	}
 
 	before(async () => {
-		
+
 		({ data: [broadcaster] } = await getUsers(['callowcreation']));
 
 		await settingsCache.requestSettings();
@@ -765,10 +765,14 @@ describe('#mocha promises', function () {
 
 	it('should send chat message from reward tip', async () => {
 		const channel = '#callowcreation';
-		const username = 'callowcreation';
-		const amount = 10;
+		const username = 'wollac';
+		const amount = 50;
 		const result = await messenger.handleTipRewards('Subscribing', channel, username, amount);
-		expect(result.success).to.be.equal(true);
+		if(result.success === false) {
+			expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+		} else {
+			expect(result.success).to.be.equal(true);
+		}
 	});
 
 	it('should send message tyo chat from rewards queue', async () => {
@@ -845,7 +849,7 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onCheer(channel, userstate, message);
 		expect(result.error).to.be.equal(null);
-		if (result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Reward Event Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 		await _wait(100);
@@ -856,7 +860,7 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onSubGift(channel, username, streakMonths, recipient, methods, userstate);
 		expect(result.error).to.be.equal(null);
-		if (result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Reward Event Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 		await _wait(100);
@@ -867,7 +871,7 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onSubscription(channel, username, methods, message, userstate);
 		expect(result.error).to.be.equal(null);
-		if (result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Reward Event Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 		await _wait(100);
@@ -878,12 +882,12 @@ describe('#mocha promises', function () {
 		username = 'callowcreation';
 		result = await tmi.onResub(channel, username, months, message, userstate, methods);
 		expect(result.error).to.be.equal(null);
-		if (result.message !== 'Tx Message Send Disabled') {
+		if (result.message !== 'Tx Reward Event Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
 	});
 
-	it.skip('should send sub ticker payout request', async () => {
+	it('should send sub ticker payout request', async () => {
 
 		const auth = require('../settings/auth');
 
@@ -922,24 +926,24 @@ describe('#mocha promises', function () {
 
 		const { data: [{ id: senderId }] } = await getUsers([channel]);
 		const body = {
+			ircTarget: senderId,
 			chatters: chatters,
 			minutes: MINUTE_AWARD_MULTIPLIER,
-			ircTarget: senderId
 		};
 
 		log(`---------------> ${senderId}`);
 
-		const results = await databaseAPI.requestPayout(senderId, body);
+		const results = await databaseAPI.requestPayout(body);
 
 		log(body, { results });
 
 		expect(results).to.be.greaterThan(0);
 	});
 
-	it.skip('should perform sub ticker after init', async () => {
+	it('should perform sub ticker after init', async () => {
 		const subTicker = require('../src/sub-ticker');
 
-		const channel = 'markettraderstv';
+		const channel = 'callowcreation';
 
 		const initResult = await subTicker.init();
 		expect(initResult.success).to.be.equal(true);
@@ -1048,7 +1052,7 @@ describe('#mocha promises', function () {
 			"ircTarget": `#${channel}`
 		});
 		settingsCache.setItems([sitems]);
-		
+
 		// const results = await databaseAPI.makeRequestChannelsSettings();
 		// settingsCache.setItems(results);
 
@@ -1131,7 +1135,7 @@ describe('#mocha promises', function () {
 			"enableTransactions": true
 		});
 		settingsCache.setItems([sitems]);
-		
+
 		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'wollac' };
 		const self = false;
 		let msg;
@@ -1209,7 +1213,7 @@ describe('#mocha promises', function () {
 		const target = '#callowcreation';
 
 		settingsCache.clear();
-		
+
 		const sitems = mockSettingsCacheResponse({
 			"ircTarget": target,
 			"txMessages": false
@@ -1401,4 +1405,45 @@ describe('#mocha promises', function () {
 
 		expect(result).to.be.equal(bitcornPerDonation);
 	});
+
+	it('should populate channel id map store channel in cache', async () => {
+
+		settingsCache.clear();
+
+		settingsCache.setItems([
+			mockSettingsCacheResponse({ "ircTarget": '#clayman666' }),
+			mockSettingsCacheResponse({ "ircTarget": '#callowcreation' })
+		]);
+
+		const clayman666Id = await settingsCache.getChannelId('#clayman666');
+		const callowcreationId = await settingsCache.getChannelId('#callowcreation');
+
+		expect(callowcreationId).to.be.equal('75987197');
+		expect(clayman666Id).to.be.equal('120524051');
+	});
+
+	it('should set channel id(s) to settings cache', async () => {
+		settingsCache.clear();
+
+		settingsCache.setItems([
+			mockSettingsCacheResponse({ "ircTarget": '#clayman666' })
+		]);
+
+		const target = '#callowcreation';
+		settingsCache.setItems([
+			mockSettingsCacheResponse({ "ircTarget": target })
+		]);
+
+		await settingsCache.setChannelsIds([target]);
+
+		const clayman666Id = await settingsCache.getChannelId('#clayman666');
+		const callowcreationId = await settingsCache.getChannelId('#callowcreation');
+		const nonameId = await settingsCache.getChannelId('#no-name');
+
+		expect(callowcreationId).to.be.equal('75987197');
+		expect(clayman666Id).to.be.equal('120524051');
+		expect(nonameId).to.be.equal(undefined);
+
+	});
+
 });

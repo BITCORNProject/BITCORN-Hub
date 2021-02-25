@@ -1,12 +1,9 @@
 "use strict";
 
-const fetch = require('node-fetch');
 const _ = require('lodash');
-const auth = require('../../settings/auth');
 const Queue = require('./utils/queue');
 const databaseApi = require('./api-interface/database-api');
-const apiRequest = require('./api-interface/api-request');
-const { sendQueuedRewards } = require('./messenger');
+const { setChannelsIds } = require('./api-interface/settings-cache');
 
 const SETTINGS_JOIN_LEAVE_INTERVAL_MS = 1000 * 60 * 0.5;
 const MAX_JOIN_RETRIES = 5;
@@ -48,6 +45,7 @@ async function joinChannelsFromQueue(tmi) {
 	let result = null;
 	try {
 		const joined = await joinChannels(tmi, item);
+		console.log({ joined });
 		retrieCount = 0;
 		queuedItems.dequeue();
 
@@ -74,6 +72,9 @@ module.exports = async (tmi) => {
 	try {
 
 		const channels = await databaseApi.makeRequestChannels();
+
+		await setChannelsIds(channels);
+
 		addChannels(channels);
 		joinChannelsFromQueue(tmi);
 
@@ -88,15 +89,17 @@ module.exports = async (tmi) => {
 			const leaves = _.difference(joinedChannels, channels);
 			const joins = _.difference(channels, joinedChannels);
 
+			await setChannelsIds(joins);
+
 			await partChannels(tmi, leaves);
 
 			addChannels(joins);
 			joinChannelsFromQueue(tmi);
-			
+
 		} catch (error) {
 			console.error(error);
 		}
-		
+
 	}, SETTINGS_JOIN_LEAVE_INTERVAL_MS);
 
 	return { addChannels, getJoinQueue, joinChannelsFromQueue };

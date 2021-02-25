@@ -12,6 +12,7 @@ if (module === require.main) {
 		const roomVisitor = require('./src/room-visitor');		
 		
 		await settingsCache.requestSettings();
+		
 		settingsCache.startPolling();
 
 		tmi.registerEvents();

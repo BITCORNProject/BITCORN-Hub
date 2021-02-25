@@ -28,7 +28,7 @@ async function getCachedToken(client_credentials) {
 		cached.expires_in = result.expires_in;
 		cached.expires_time = (seconds + cached.expires_in) - secondsOff;
 	}
-	
+
 	return { access_token: cached.access_token };
 }
 
@@ -73,8 +73,8 @@ async function _request(method, url, twitchId, access_token, data) {
 		method: method,
 		headers: getHeaders(access_token, twitchId)
 	};
-	if (data) { 
-		options.body = JSON.stringify(data) 
+	if (data) {
+		options.body = JSON.stringify(data);
 	}
 	return fetch(url, options).then(res => {
 		if (res.status !== 200) return res;

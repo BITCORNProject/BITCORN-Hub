@@ -4,12 +4,9 @@
 
 "use strict";
 
-const fetch = require('node-fetch');
 const util = require('util');
 
-const auth = require('../../settings/auth');
 const serverSettings = require('../../settings/server-settings');
-
 const databaseAPI = require('../api-interface/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');

@@ -6,8 +6,11 @@
 "use strict";
 
 const databaseAPI = require('./database-api');
+
+const { getUsers } = require('./twitch-api');
 const SETTINGS_POLL_INTERVAL_MS = 1000 * 20;// 1000 * 60 * 2;
 let cache = {};
+let idMap = {};
 
 let interval = null;
 
@@ -36,7 +39,7 @@ function setItems(items) {
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
 		const channel = cleanChannelName(item.ircTarget);
-		if(cache[channel]) continue;
+		if (cache[channel]) continue;
 		cache[channel] = item;
 	}
 }
@@ -60,17 +63,47 @@ async function requestSettings() {
 	setItems(results);
 }
 
+async function setChannelsIds(channels) {
+	const items = channels.filter(x => x);
+	const promises = [];
+	while (items.length > 0) {
+		const usernames = items.splice(0, 100);
+		promises.push(new Promise(async (resolve) => {
+			const { data } = await getUsers(usernames.map(x => cleanChannelName(x)));
+			resolve(data.map(x => ({ id: x.id, login: x.login })));
+		}));
+	}
+	const presults = await Promise.all(promises);
+	const results = [].concat.apply([], presults);
+
+	for (let i = 0; i < results.length; i++) {
+		const item = results[i];
+		idMap[item.login] = item.id;
+	}
+}
+
 function startPolling() {
 	interval = setInterval(async () => {
 		await requestSettings();
 	}, SETTINGS_POLL_INTERVAL_MS);
 }
 
+async function getChannelId(channel) {
+	channel = cleanChannelName(channel);
+	if(!idMap[channel]) {
+		await setChannelsIds([channel]);
+	}
+	return idMap[channel];
+}
+
 module.exports = {
+	cleanChannelName,
 	setItems,
 	getItems,
 	clear,
 	getItem,
 	requestSettings,
-	startPolling
+	startPolling,
+	getChannelId,
+	setChannelsIds
 };

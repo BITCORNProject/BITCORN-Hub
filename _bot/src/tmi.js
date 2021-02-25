@@ -197,7 +197,9 @@ function hashReplace(channel) {
 }
 
 async function handleRewardEvent(type, channel, username, amount) {
-	if (settingsHelper.getIrcMessageTarget(channel, type) === MESSAGE_TYPE.irc_none) return settingsHelper.txMessageOutput();
+	if (settingsHelper.getIrcMessageTarget(channel, type) === MESSAGE_TYPE.irc_none) {
+		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.rewardEvent);
+	}
 
 	messenger.enqueueReward(type, channel, username, amount);
 	const result = await messenger.sendQueuedRewards();
