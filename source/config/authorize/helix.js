@@ -29,7 +29,9 @@ const appOptions = {
         'user:edit',
         'user:read:email',
         'analytics:read:games',
-        'bits:read'
+		'bits:read',
+		'channel:read:redemptions',
+		'channel:manage:redemptions'
     ].join(' ')
 };
 
@@ -157,6 +159,17 @@ async function getRawEndpoint(url) {
         .catch(error => { error });
 }
 
+async function postRawEndpoint(url, data) {
+	const options = getAuthorizedOptions(appOptions.client_id, authenticated.access_token);
+	options.method = 'POST';
+	if(data) {
+		options.body = JSON.stringify(data);
+	}
+    return fetch(url, options)
+        .then(res => res.json())
+        .catch(error => { error });
+}
+
 async function getUserLogin(user_name) {
     return getEndpoint(`https://api.twitch.tv/helix/users?login=${user_name}`);
 }
@@ -186,6 +199,10 @@ async function getUsersByName(usernames) {
     return getRawEndpoint(`https://api.twitch.tv/helix/users?${params}`);
 }
 
+async function createCustomReward(broadcaster_id, data) {
+	return postRawEndpoint(`https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`, data);
+}
+
 async function init(app) {
     app.on('connection', (socket) => {
         const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
@@ -199,13 +216,17 @@ async function init(app) {
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
 
-exports.init = init;
-exports.authUrl = authUrl;
-exports.authenticateCode = authenticateCode;
-exports.getUser = getUser;
-exports.getUserLogin = getUserLogin;
-exports.getUsersByName = getUsersByName;
-exports.getStream = getStream;
-exports.getStreamById = getStreamById;
-exports.getUserFollows = getUserFollows;
-exports.getGame = getGame;
+module.exports = {
+	init,
+	authUrl,
+	authenticateCode,
+	getAuthenticated: () => authenticated,
+	getUser,
+	getUserLogin,
+	getUsersByName,
+	getStream,
+	getStreamById,
+	getUserFollows,
+	getGame,
+	createCustomReward
+};
