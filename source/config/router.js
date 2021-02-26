@@ -6,8 +6,10 @@
 
 const qs = require('querystring');
 const helix = require('./authorize/helix');
+const pubSub = require('./pubsub');
 const controllers = require('../controllers');
 const auth = require('../../settings/auth');
+const e = require('express');
 const login = controllers.login;
 const callback = controllers.callback;
 
@@ -71,9 +73,27 @@ exports.init = async (app) => {
 
 			const results = await Promise.all(promises);
 
-
-			//console.log({ results });
 			helix.storeTokens(results.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
+
+			for (let i = 0; i < results.length; i++) {
+				const { authenticated, ircTarget: channelId } = results[i];
+
+				const data = {
+					title: 'BITCORNx420-TEST', // maybe title in dashboard settings
+					cost: 420, // to be replaced by dashboard settings from the api
+					prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
+					should_redemptions_skip_request_queue: true
+				};
+				const result = await helix.createCustomReward(channelId, data);
+
+				if (authenticated.access_token) {
+					pubSub.listen(channelId, authenticated.access_token);
+
+					console.log(`listening: ${channelId}`);
+				} else {
+					console.log({ result });
+				}
+			}
 
 			res.status(200).json(results.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })));
 		} catch (error) {

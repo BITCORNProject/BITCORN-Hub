@@ -51,17 +51,6 @@ if (module === require.main) {
 				console.log(await item.init(app));
 			}
 
-			const channelId = '75987197';
-			const data = {
-				title: 'BITCORNx420-TEST',
-				cost: 420,
-				prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
-				should_redemptions_skip_request_queue: true
-			};
-			const result = await orderedRequires[0].createCustomReward(channelId, data);
-			console.log({ result });
-			orderedRequires[1].listen(channelId, orderedRequires[0].getTokenStore(channelId).access_token);
-
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in main` });
 			console.error(error);
