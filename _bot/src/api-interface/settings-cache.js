@@ -116,6 +116,10 @@ function getChannelId(channel) {
 	return idMap[channel];
 }
 
+function getChannels() {
+	return Object.keys(idMap);
+}
+
 module.exports = {
 	cleanChannelName,
 	setItems,
@@ -125,5 +129,6 @@ module.exports = {
 	requestSettings,
 	startPolling,
 	getChannelId,
-	setChannelsIds
+	setChannelsIds,
+	getChannels
 };

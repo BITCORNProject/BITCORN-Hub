@@ -57,7 +57,7 @@ async function init() {
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
-		const channels = Object.keys(settingsCache.getItems());
+		const channels = Object.values(settingsCache.getChannels());
 		const promises = channels.map(performPayout);
 		const result = await Promise.all(promises);
 		console.log({ result });
