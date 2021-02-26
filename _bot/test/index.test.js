@@ -68,7 +68,7 @@ describe('#mocha promises', function () {
 			"minRainAmount": 1.00000000,
 			"minTipAmount": 1.00000000,
 			"rainAlgorithm": 1,
-			"ircTarget": '#callowcreation',
+			"ircTarget": settingsCache.getChannelId('#callowcreation'),
 			"txMessages": true,
 			"txCooldownPerUser": 0.00000000,
 			"enableTransactions": false,
@@ -1036,12 +1036,12 @@ describe('#mocha promises', function () {
 
 	it('should store livestreams settings to cache', async () => {
 
-		const channel = 'clayman666'.toLowerCase();
+		const channelId = settingsCache.getChannelId('clayman666'.toLowerCase());
 
 		const items = settingsCache.getItems();
-		expect(items).to.be.ownProperty(channel);
+		expect(items).to.be.ownProperty(channelId);
 
-		expect(items[channel].ircTarget.toLowerCase()).to.be.equal(`#${channel}`);
+		expect(items[channelId].ircTarget.toLowerCase()).to.be.equal(channelId);
 	});
 
 	it('should clear settings cache', async () => {
@@ -1049,7 +1049,7 @@ describe('#mocha promises', function () {
 		const channel = 'clayman666'.toLowerCase();
 
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": `#${channel}`
+			"ircTarget": settingsCache.getChannelId(`#${channel}`)
 		});
 		settingsCache.setItems([sitems]);
 
@@ -1057,11 +1057,11 @@ describe('#mocha promises', function () {
 		// settingsCache.setItems(results);
 
 		let items = settingsCache.getItems();
-		expect(items).to.be.ownProperty(channel);
+		expect(items).to.be.ownProperty(settingsCache.getChannelId(channel));
 
 		settingsCache.clear();
 		items = settingsCache.getItems();
-		expect(items).to.be.not.ownProperty(channel);
+		expect(items).to.be.not.ownProperty(settingsCache.getChannelId(channel));
 		expect(Object.keys(items).length).to.be.equal(0);
 
 	});
@@ -1076,7 +1076,7 @@ describe('#mocha promises', function () {
 		expect(item).to.be.equal(undefined);
 
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": `#${channel}`
+			"ircTarget": settingsCache.getChannelId(`#${channel}`)
 		});
 		settingsCache.setItems([sitems]);
 
@@ -1084,16 +1084,16 @@ describe('#mocha promises', function () {
 
 		expect(item).to.be.ownProperty('ircTarget');
 
-		expect(item.ircTarget).to.be.equal(`#${channel}`);
+		expect(item.ircTarget).to.be.equal(settingsCache.getChannelId(`#${channel}`));
 	});
 
 	it('should early out with channel enable transaction is false', async () => {
 
 		settingsCache.clear();
 
-		const target = '#wollac';
+		const target = '#callowcreation';
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": target,
+			"ircTarget": settingsCache.getChannelId(target),
 			"enableTransactions": false
 		});
 
@@ -1131,7 +1131,7 @@ describe('#mocha promises', function () {
 		const target = '#callowcreation';
 
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": target,
+			"ircTarget": settingsCache.getChannelId(target),
 			"enableTransactions": true
 		});
 		settingsCache.setItems([sitems]);
@@ -1156,12 +1156,12 @@ describe('#mocha promises', function () {
 
 		const settingsHelper = require('../src/utils/settings-helper');
 
-		const target = '#wollac';
+		const target = '#callowcreation';
 
 		settingsCache.clear();
 
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": target,
+			"ircTarget": settingsCache.getChannelId(target),
 			"txCooldownPerUser": 0.10000000,
 			"enableTransactions": false
 		});
@@ -1185,7 +1185,7 @@ describe('#mocha promises', function () {
 		settingsCache.clear();
 
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": target,
+			"ircTarget": settingsCache.getChannelId(target),
 			"txMessages": false
 		});
 		settingsCache.setItems([sitems]);
@@ -1215,7 +1215,7 @@ describe('#mocha promises', function () {
 		settingsCache.clear();
 
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": target,
+			"ircTarget": settingsCache.getChannelId(target),
 			"txMessages": false
 		});
 		settingsCache.setItems([sitems]);
@@ -1260,7 +1260,7 @@ describe('#mocha promises', function () {
 			settingsCache.clear();
 
 			const sitems = mockSettingsCacheResponse({
-				"ircTarget": target,
+				"ircTarget": settingsCache.getChannelId(target),
 				"rainAlgorithm": 0,
 				"txMessages": false
 			});
@@ -1278,7 +1278,7 @@ describe('#mocha promises', function () {
 			settingsCache.clear();
 
 			const sitems = mockSettingsCacheResponse({
-				"ircTarget": target,
+				"ircTarget": settingsCache.getChannelId(target),
 				"rainAlgorithm": 1,
 				"txMessages": false
 			});
@@ -1306,7 +1306,7 @@ describe('#mocha promises', function () {
 
 		const sitems = mockSettingsCacheResponse({
 			"minTipAmount": minTipAmount,
-			"ircTarget": target
+			"ircTarget": settingsCache.getChannelId(target)
 		});
 		settingsCache.setItems([sitems]);
 
@@ -1325,7 +1325,7 @@ describe('#mocha promises', function () {
 
 		const sitems = mockSettingsCacheResponse({
 			"minRainAmount": minRainAmount,
-			"ircTarget": target
+			"ircTarget": settingsCache.getChannelId(target)
 		});
 		settingsCache.setItems([sitems]);
 
@@ -1396,7 +1396,7 @@ describe('#mocha promises', function () {
 		settingsCache.clear();
 
 		const sitems = mockSettingsCacheResponse({
-			"ircTarget": target,
+			"ircTarget": settingsCache.getChannelId(target),
 			"bitcornPerDonation": bitcornPerDonation
 		});
 		settingsCache.setItems([sitems]);
@@ -1411,8 +1411,8 @@ describe('#mocha promises', function () {
 		settingsCache.clear();
 
 		settingsCache.setItems([
-			mockSettingsCacheResponse({ "ircTarget": '#clayman666' }),
-			mockSettingsCacheResponse({ "ircTarget": '#callowcreation' })
+			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId('#clayman666') }),
+			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId('#callowcreation') })
 		]);
 
 		const clayman666Id = await settingsCache.getChannelId('#clayman666');
@@ -1426,12 +1426,12 @@ describe('#mocha promises', function () {
 		settingsCache.clear();
 
 		settingsCache.setItems([
-			mockSettingsCacheResponse({ "ircTarget": '#clayman666' })
+			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId('#clayman666') })
 		]);
 
 		const target = '#callowcreation';
 		settingsCache.setItems([
-			mockSettingsCacheResponse({ "ircTarget": target })
+			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId(target) })
 		]);
 
 		await settingsCache.setChannelsIds([target]);

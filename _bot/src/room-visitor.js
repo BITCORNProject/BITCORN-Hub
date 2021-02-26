@@ -45,7 +45,7 @@ async function joinChannelsFromQueue(tmi) {
 	let result = null;
 	try {
 		const joined = await joinChannels(tmi, item);
-		console.log({ joined });
+		//console.log({ joined });
 		retrieCount = 0;
 		queuedItems.dequeue();
 

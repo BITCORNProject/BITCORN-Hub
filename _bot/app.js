@@ -1,5 +1,7 @@
 "use strict";
 
+const twitchApi = require('./src/api-interface/twitch-api');
+
 if (module === require.main) {
 
 	(async () => {
@@ -12,6 +14,8 @@ if (module === require.main) {
 		const roomVisitor = require('./src/room-visitor');		
 		
 		await settingsCache.requestSettings();
+
+		//await twitchApi.sendSettingsCache(settingsCache.getItems());
 		
 		settingsCache.startPolling();
 

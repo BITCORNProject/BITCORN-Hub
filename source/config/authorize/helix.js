@@ -9,203 +9,225 @@ const { URLSearchParams } = require('url');
 const auth = require('../../../settings/auth');
 
 function Authenticated() {
-    this.access_token = '';
-    this.token_type = '';
-    this.scope = '';
-    this.expires_in = 0;
-    this.refresh_token = '';
-    this.id_token = '';
+	this.access_token = '';
+	this.token_type = '';
+	this.scope = '';
+	this.expires_in = 0;
+	this.refresh_token = '';
+	this.id_token = '';
 }
 
 const authenticated = new Authenticated();
 
 const channel = {
-    user_id: 0,
-    status: ''
+	user_id: 0,
+	status: ''
 };
 const appOptions = {
-    scope: [
-        'user:edit:broadcast',
-        'user:edit',
-        'user:read:email',
-        'analytics:read:games',
-        'bits:read'
-    ].join(' ')
+	scope: [
+		'user:edit:broadcast',
+		'user:edit',
+		'user:read:email',
+		'analytics:read:games',
+		'bits:read'
+	].join(' ')
 };
 
 function authUrl() {
-    
-    appOptions.client_id = auth.data.HELIX_CLIENT_ID;
-    appOptions.client_secret = auth.data.HELIX_SECRET;
-    appOptions.redirect_uri = auth.data.HELIX_CALLBACK_URL;
 
-    const urlParams = [
-        `client_id=${appOptions.client_id}`,
-        `redirect_uri=${encodeURIComponent(appOptions.redirect_uri)}`,
-        `response_type=code`,
-        `scope=${encodeURIComponent(appOptions.scope)}`,
-        `state=bot-twitch-api-app`
-    ];
-    const urlQuery = urlParams.join('&');
+	appOptions.client_id = auth.data.HELIX_CLIENT_ID;
+	appOptions.client_secret = auth.data.HELIX_SECRET;
+	appOptions.redirect_uri = auth.data.HELIX_CALLBACK_URL;
 
-    return `https://id.twitch.tv/oauth2/authorize?${urlQuery}`;
+	const searchParamsEntries = [
+		['client_id', appOptions.client_id],
+		['redirect_uri', appOptions.redirect_uri],
+		['response_type', 'code'],
+		['scope', appOptions.scope],
+		['state', 'bot-twitch-api-app'],
+	]; 
+	const searchParams = new URLSearchParams(searchParamsEntries); 
+	const urlQuery = searchParams.toString();
+
+	return `https://id.twitch.tv/oauth2/authorize?${urlQuery}`;
 }
 
 async function authenticateCode(code) {
 
-    const url = `https://id.twitch.tv/oauth2/token`;
+	const url = `https://id.twitch.tv/oauth2/token`;
 
-    const form = {
-        client_id: appOptions.client_id,
-        client_secret: appOptions.client_secret,
-        code: code,
-        grant_type: 'authorization_code',
-        redirect_uri: appOptions.redirect_uri
-    };
+	const form = {
+		client_id: appOptions.client_id,
+		client_secret: appOptions.client_secret,
+		code: code,
+		grant_type: 'authorization_code',
+		redirect_uri: appOptions.redirect_uri
+	};
 
-    const headers = {
-        'Authorization': 'Basic ' + (Buffer.from(appOptions.client_id + ':' + appOptions.client_secret).toString('base64'))
-    };
+	const headers = {
+		'Authorization': 'Basic ' + (Buffer.from(appOptions.client_id + ':' + appOptions.client_secret).toString('base64'))
+	};
 
-    const options = { headers: headers, method: 'POST', body: new URLSearchParams(form) };
+	const options = { headers: headers, method: 'POST', body: new URLSearchParams(form) };
 
-    const json = await fetch(url, options)
-        .then(res => res.json())
-        .catch(error => { error });
+	const json = await fetch(url, options)
+		.then(res => res.json())
+		.catch(error => { error });
 
-    if (json.error) {
-        return { success: false, error: json.error };
-    }
+	if (json.error) {
+		return { success: false, error: json.error };
+	}
 
-    authenticated.access_token = json.access_token;
-    authenticated.refresh_token = json.refresh_token;
-    authenticated.scope = json.scope;
-    authenticated.expires_in = json.expires_in;
+	authenticated.access_token = json.access_token;
+	authenticated.refresh_token = json.refresh_token;
+	authenticated.scope = json.scope;
+	authenticated.expires_in = json.expires_in;
 
-    await keepAlive();
+	await keepAlive();
 };
 
 async function keepAlive() {
 
-    const url = 'https://id.twitch.tv/oauth2/token';
+	const json = await refreshAccessToken({
+		refresh_token: authenticated.refresh_token,
+		client_id: appOptions.client_id,
+		client_secret: appOptions.client_secret
+	});
 
-    const form = {
-        grant_type: 'refresh_token',
-        refresh_token: authenticated.refresh_token,
-        client_id: appOptions.client_id,
-        client_secret: appOptions.client_secret,
-    };
+	if (json.error) {
+		return { success: false, error: json.error };
+	}
 
-    const headers = {
-        'Authorization': 'Basic ' + (Buffer.from(appOptions.client_id + ':' + appOptions.client_secret).toString('base64'))
-    };
+	authenticated.access_token = json.access_token;
+	authenticated.token_type = json.token_type;
+	authenticated.expires_in = json.expires_in;
 
-    const options = { headers: headers, method: 'POST', body: new URLSearchParams(form) };
+	setTimeout(keepAlive, (authenticated.expires_in - 1000) * 1000);
 
-    const json = await fetch(url, options)
-        .then(res => res.json())
-        .catch(error => { error });
+	const result = await getUser();
+	channel.user_id = result.id;
+}
 
-    if (json.error) {
-        return { success: false, error: json.error };
-    }
+async function refreshAccessToken({ refresh_token, client_id, client_secret }) {
+	const url = 'https://id.twitch.tv/oauth2/token';
 
-    authenticated.access_token = json.access_token;
-    authenticated.token_type = json.token_type;
-    authenticated.expires_in = json.expires_in;
+	const form = {
+		grant_type: 'refresh_token',
+		refresh_token: refresh_token,
+		client_id: client_id,
+		client_secret: client_secret,
+	};
 
-    setTimeout(keepAlive, (authenticated.expires_in - 1000) * 1000);
+	const headers = {
+		'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64'))
+	};
 
-    const result = await getUser();
-    channel.user_id = result.id;
+	const options = {
+		headers: headers,
+		method: 'POST',
+		body: new URLSearchParams(form)
+	};
+
+	return fetch(url, options)
+		.then(res => res.json())
+		.catch(error => { error; });
 }
 
 function getAuthorizedOptions(client_id, access_token) {
-    return {
-        headers: {
-            'Authorization': 'Bearer ' + access_token,
-            'Client-ID': client_id,
-            'Content-Type': 'application/json'
-        }
-    };
+	return {
+		headers: {
+			'Authorization': 'Bearer ' + access_token,
+			'Client-ID': client_id,
+			'Content-Type': 'application/json'
+		}
+	};
 }
 
 async function getEndpoint(url) {
-    const result = await fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
-        .then(res => res.json())
-        .catch(error => { error });
+	const result = await fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
+		.then(res => res.json())
+		.catch(error => { error });
 
-    if (result.error) {
-        return { success: false, message: result.error.message, error: result.error };
-    }
+	if (result.error) {
+		return { success: false, message: result.error.message, error: result.error };
+	}
 
-    if (result.data) {
-        if (result.data.length > 0) {
-            result.data[0].success = true;
-            return result.data[0];
-        } else {
-            return { success: false, message: `The stream seems to be offline.` };
-        }
-    }
+	if (result.data) {
+		if (result.data.length > 0) {
+			result.data[0].success = true;
+			return result.data[0];
+		} else {
+			return { success: false, message: `The stream seems to be offline.` };
+		}
+	}
 
-    return { success: false, message: `Fetch endpoint ${url} failed.` };
+	return { success: false, message: `Fetch endpoint ${url} failed.` };
 }
 
 async function getRawEndpoint(url) {
-    return fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
-        .then(res => res.json())
-        .catch(error => { error });
+	return fetch(url, getAuthorizedOptions(appOptions.client_id, authenticated.access_token))
+		.then(res => res.json())
+		.catch(error => { error });
 }
 
 async function getUserLogin(user_name) {
-    return getEndpoint(`https://api.twitch.tv/helix/users?login=${user_name}`);
+	return getEndpoint(`https://api.twitch.tv/helix/users?login=${user_name}`);
 }
 
 async function getUser() {
-    return getEndpoint(`https://api.twitch.tv/helix/users`);
+	return getEndpoint(`https://api.twitch.tv/helix/users`);
 }
 
 async function getStream() {
-    return getStreamById(channel.user_id);
+	return getStreamById(channel.user_id);
 }
 
 async function getStreamById(user_id) {
-    return getEndpoint(`https://api.twitch.tv/helix/streams?user_id=${user_id}`);
+	return getEndpoint(`https://api.twitch.tv/helix/streams?user_id=${user_id}`);
 }
 
 async function getUserFollows(to_user_id, from_user_id) {
-    return getEndpoint(`https://api.twitch.tv/helix/users/follows?to_id=${to_user_id}&from_id=${from_user_id}`);
+	return getEndpoint(`https://api.twitch.tv/helix/users/follows?to_id=${to_user_id}&from_id=${from_user_id}`);
 }
 
 async function getGame(game_id) {
-    return getEndpoint(`https://api.twitch.tv/helix/games?id=${game_id}`);
+	return getEndpoint(`https://api.twitch.tv/helix/games?id=${game_id}`);
 }
 
 async function getUsersByName(usernames) {
 	const params = usernames.map(x => `login=${x}`).join('&');
-    return getRawEndpoint(`https://api.twitch.tv/helix/users?${params}`);
+	return getRawEndpoint(`https://api.twitch.tv/helix/users?${params}`);
+}
+
+async function getUsersByIds(ids) {
+	const params = ids.map(x => `id=${x}`).join('&');
+	return getRawEndpoint(`https://api.twitch.tv/helix/users?${params}`);
 }
 
 async function init(app) {
-    app.on('connection', (socket) => {
-        const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
-        const clientName = socket.handshake.headers.referer.substring(lastIndex + 1, socket.handshake.headers.referer.length);
+	app.on('connection', (socket) => {
+		const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
+		const clientName = socket.handshake.headers.referer.substring(lastIndex + 1, socket.handshake.headers.referer.length);
 
-        if (clientName === 'control-panel') {
-            socket.emit('login-helix', { name: 'helix', authenticated: channel.user_id });
-        }
-    });
+		if (clientName === 'control-panel') {
+			socket.emit('login-helix', { name: 'helix', authenticated: channel.user_id });
+		}
+	});
 
-    return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
+	return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
 
-exports.init = init;
-exports.authUrl = authUrl;
-exports.authenticateCode = authenticateCode;
-exports.getUser = getUser;
-exports.getUserLogin = getUserLogin;
-exports.getUsersByName = getUsersByName;
-exports.getStream = getStream;
-exports.getStreamById = getStreamById;
-exports.getUserFollows = getUserFollows;
-exports.getGame = getGame;
+module.exports = {
+	init,
+	authUrl,
+	authenticateCode,
+	refreshAccessToken,
+	getUser,
+	getUserLogin,
+	getUsersByName,
+	getUsersByIds,
+	getStream,
+	getStreamById,
+	getUserFollows,
+	getGame
+};

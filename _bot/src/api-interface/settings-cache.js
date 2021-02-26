@@ -7,19 +7,21 @@
 
 const databaseAPI = require('./database-api');
 
-const { getUsers } = require('./twitch-api');
+const { getUsers, getUsersByIds } = require('./twitch-api');
 const SETTINGS_POLL_INTERVAL_MS = 1000 * 20;// 1000 * 60 * 2;
 let cache = {};
 let idMap = {};
 
 let interval = null;
 
+const initialValues = [];
+
 /*
 {
 	"minRainAmount": 1.00000000,
 	"minTipAmount": 1.00000000,
 	"rainAlgorithm": 0, // 0=last chatters 1=random chatters
-	"ircTarget": "#callowcreation",
+	"ircTarget": "75987197",
 	"txMessages": true,
 	"txCooldownPerUser": 0.00000000,
 	"enableTransactions": false,
@@ -41,6 +43,7 @@ function setItems(items) {
 		const channel = cleanChannelName(item.ircTarget);
 		if (cache[channel]) continue;
 		cache[channel] = item;
+		initialValues.push(item);
 	}
 }
 
@@ -54,13 +57,33 @@ function clear() {
 
 function getItem(channel) {
 	channel = cleanChannelName(channel);
-	return cache[channel];
+	const channelId = idMap[channel];
+	return cache[channelId];
 }
 
 async function requestSettings() {
 	const results = await databaseAPI.makeRequestChannelsSettings();
+
 	clear();
 	setItems(results);
+
+	const items = initialValues.filter(x => x.ircTarget);
+	const promises = [];
+	while (items.length > 0) {
+		const userIds = items.splice(0, 100);
+		promises.push(new Promise(async (resolve) => {
+			const { data } = await getUsersByIds(userIds.map(x => x.ircTarget));
+			resolve(data.map(x => ({ id: x.id, login: x.login })));
+		}));
+	}
+	const presults = await Promise.all(promises);
+	const concatResults = [].concat.apply([], presults);
+
+	for (let i = 0; i < concatResults.length; i++) {
+		const item = concatResults[i];
+		idMap[item.login] = item.id;
+	}
+
 }
 
 async function setChannelsIds(channels) {
@@ -88,11 +111,8 @@ function startPolling() {
 	}, SETTINGS_POLL_INTERVAL_MS);
 }
 
-async function getChannelId(channel) {
+function getChannelId(channel) {
 	channel = cleanChannelName(channel);
-	if(!idMap[channel]) {
-		await setChannelsIds([channel]);
-	}
 	return idMap[channel];
 }
 
