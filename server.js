@@ -60,7 +60,7 @@ if (module === require.main) {
 			};
 			const result = await orderedRequires[0].createCustomReward(channelId, data);
 			console.log({ result });
-			orderedRequires[1].listen(channelId, orderedRequires[0].getAuthenticated().access_token);
+			orderedRequires[1].listen(channelId, orderedRequires[0].getTokenStore(channelId).access_token);
 
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in main` });

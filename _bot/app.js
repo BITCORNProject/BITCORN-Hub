@@ -15,7 +15,7 @@ if (module === require.main) {
 		
 		await settingsCache.requestSettings();
 
-		//await twitchApi.sendSettingsCache(settingsCache.getItems());
+		await twitchApi.sendSettingsCache(settingsCache.getItems());
 		
 		settingsCache.startPolling();
 

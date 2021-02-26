@@ -57,17 +57,25 @@ exports.init = async (app) => {
 						client_secret: auth.data.API_SECRET
 					});
 
-					const result = twitchRefreshToken ? requestToken : { refresh_token: null };
+					const authenticated = twitchRefreshToken ? requestToken : {
+						access_token: null,
+						refresh_token: null,
+						expires_in: 0,
+						scope: null,
+						token_type: null
+					};
 
-					resolve({ result, ircTarget });
+					resolve({ authenticated, ircTarget });
 				}));
 			}
 
 			const results = await Promise.all(promises);
 
-			//console.log({ results });
 
-			res.status(200).json(results.map(x => ({ refreshToken: x.result.refresh_token, ircTarget: x.ircTarget })));
+			//console.log({ results });
+			helix.storeTokens(results.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
+
+			res.status(200).json(results.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })));
 		} catch (error) {
 
 			res.status(500).end();

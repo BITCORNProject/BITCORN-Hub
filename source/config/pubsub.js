@@ -159,7 +159,7 @@ exports.listen = (channelId, access_token) => {
 
 exports.init = async (app) => {
 	await connect();
-	while(!helix.getAuthenticated().access_token) {
+	while(!helix.hasTokens()) {
 		await new Promise(resolve => setTimeout(resolve, 500));
 	}
 	return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };

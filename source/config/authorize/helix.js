@@ -35,6 +35,8 @@ const appOptions = {
     ].join(' ')
 };
 
+const tokenStore = {};
+
 function authUrl() {
 
 	appOptions.client_id = auth.data.HELIX_CLIENT_ID;
@@ -221,6 +223,21 @@ async function createCustomReward(broadcaster_id, data) {
 	return postRawEndpoint(`https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`, data);
 }
 
+function getTokenStore(channelId) {
+	return tokenStore[channelId];
+}
+
+function storeTokens(items) {
+	for (const key in items) {
+		const item = items[key];
+		tokenStore[item.ircTarget] = item.authenticated;
+	}
+}
+
+function hasTokens() {
+	return Object.keys(tokenStore).length > 0;
+}
+
 async function init(app) {
     app.on('connection', (socket) => {
         const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
@@ -239,6 +256,9 @@ module.exports = {
 	authUrl,
 	authenticateCode,
 	refreshAccessToken,
+	storeTokens,
+	hasTokens,
+	getTokenStore,
 	getUser,
 	getUserLogin,
 	getUsersByName,
@@ -246,5 +266,6 @@ module.exports = {
 	getStream,
 	getStreamById,
 	getUserFollows,
-	getGame
+	getGame,
+	createCustomReward
 };
