@@ -44,7 +44,7 @@ describe('#mocha promises', function () {
 
 	const serverSettings = require('../settings/server-settings');
 
-	const { getUsers, getChatters } = require('../src/api-interface/twitch-api');
+	const { getUsers, getChatters, sendSettingsCache } = require('../src/api-interface/twitch-api');
 
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
@@ -1444,6 +1444,14 @@ describe('#mocha promises', function () {
 		expect(clayman666Id).to.be.equal('120524051');
 		expect(nonameId).to.be.equal(undefined);
 
+	});
+
+	it('should send settings to refresh tokens', async () => {
+
+		const length = Object.keys(settingsCache.getItems()).length;
+		const result = await sendSettingsCache(settingsCache.getItems());
+
+		expect(result.length).to.be.equal(length);
 	});
 
 });

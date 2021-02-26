@@ -26,10 +26,10 @@ exports.init = async (app) => {
 
 		const { ids, usernames } = req.body;
 
-		if(ids) {
+		if (ids) {
 			const resUsers = await helix.getUsersByIds(ids);
 			res.json(resUsers);
-		} else if(usernames) {
+		} else if (usernames) {
 			const resUsers = await helix.getUsersByName(usernames);
 			res.json(resUsers);
 		} else {
@@ -45,34 +45,29 @@ exports.init = async (app) => {
 
 			const promises = [];
 
-
-			Object.values(data).map(x => {
-
-			});
-
 			for (const channel in data) {
 
-				const { twitchRefreshToken } = data[channel];
-				if (!twitchRefreshToken) continue;
+				const { twitchRefreshToken, ircTarget } = data[channel];
 
 				promises.push(new Promise(async resolve => {
-					const cname = `${channel}`;
-					const result = await helix.refreshAccessToken({
+
+					const requestToken = await helix.refreshAccessToken({
 						refresh_token: twitchRefreshToken,
 						client_id: auth.data.API_CLIENT_ID,
 						client_secret: auth.data.API_SECRET
 					});
-					resolve({ result, cname });
+
+					const result = twitchRefreshToken ? requestToken : { refresh_token: null };
+
+					resolve({ result, ircTarget });
 				}));
 			}
 
 			const results = await Promise.all(promises);
 
-			console.log({ results });
+			//console.log({ results });
 
-			res.status(200).json({
-				data: results.map(x => ({ refreshToken: x.result.refresh_token, ircTarget: x.cname }))
-			});
+			res.status(200).json(results.map(x => ({ refreshToken: x.result.refresh_token, ircTarget: x.ircTarget })));
 		} catch (error) {
 
 			res.status(500).end();
