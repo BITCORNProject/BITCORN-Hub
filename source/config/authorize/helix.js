@@ -24,13 +24,15 @@ const channel = {
 	status: ''
 };
 const appOptions = {
-	scope: [
-		'user:edit:broadcast',
-		'user:edit',
-		'user:read:email',
-		'analytics:read:games',
-		'bits:read'
-	].join(' ')
+    scope: [
+        'user:edit:broadcast',
+        'user:edit',
+        'user:read:email',
+        'analytics:read:games',
+		'bits:read',
+		'channel:read:redemptions',
+		'channel:manage:redemptions'
+    ].join(' ')
 };
 
 function authUrl() {
@@ -170,6 +172,17 @@ async function getRawEndpoint(url) {
 		.catch(error => { error });
 }
 
+async function postRawEndpoint(url, data) {
+	const options = getAuthorizedOptions(appOptions.client_id, authenticated.access_token);
+	options.method = 'POST';
+	if(data) {
+		options.body = JSON.stringify(data);
+	}
+    return fetch(url, options)
+        .then(res => res.json())
+        .catch(error => { error });
+}
+
 async function getUserLogin(user_name) {
 	return getEndpoint(`https://api.twitch.tv/helix/users?login=${user_name}`);
 }
@@ -204,17 +217,21 @@ async function getUsersByIds(ids) {
 	return getRawEndpoint(`https://api.twitch.tv/helix/users?${params}`);
 }
 
+async function createCustomReward(broadcaster_id, data) {
+	return postRawEndpoint(`https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`, data);
+}
+
 async function init(app) {
-	app.on('connection', (socket) => {
-		const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
-		const clientName = socket.handshake.headers.referer.substring(lastIndex + 1, socket.handshake.headers.referer.length);
+    app.on('connection', (socket) => {
+        const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
+        const clientName = socket.handshake.headers.referer.substring(lastIndex + 1, socket.handshake.headers.referer.length);
 
-		if (clientName === 'control-panel') {
-			socket.emit('login-helix', { name: 'helix', authenticated: channel.user_id });
-		}
-	});
+        if (clientName === 'control-panel') {
+            socket.emit('login-helix', { name: 'helix', authenticated: channel.user_id });
+        }
+    });
 
-	return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
+    return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
 
 module.exports = {
