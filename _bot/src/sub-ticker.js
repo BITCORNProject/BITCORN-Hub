@@ -1,12 +1,11 @@
 "use strict";
 const fetch = require('node-fetch');
 
-const auth = require('../settings/auth');
-const serverSettings = require('../settings/server-settings');
-const databaseAPI = require('./api-interface/database-api');
-const { getUsers, getChatters } = require('./api-interface/twitch-api');
-const { getChannelId } = require('./api-interface/settings-cache');
-const settingsCache = require('./api-interface/settings-cache');
+const serverSettings = require('../../settings/server-settings.json');
+const databaseAPI = require('../../_api-service/database-api');
+const { getUsers, getChatters } = require('../../_api-service/request-api');
+const { getChannelId } = require('../../_api-service/settings-cache');
+const settingsCache = require('../../_api-service/settings-cache');
 
 const timeValues = {
 	SECOND: 1000,

@@ -6,8 +6,8 @@
 
 const util = require('util');
 
-const serverSettings = require('../../settings/server-settings');
-const databaseAPI = require('../api-interface/database-api');
+const serverSettings = require('../../../settings/server-settings.json');
+const databaseAPI = require('../../../_api-service/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const math = require('../utils/math');

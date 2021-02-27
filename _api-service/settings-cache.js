@@ -7,7 +7,7 @@
 
 const databaseAPI = require('./database-api');
 
-const { getUsers, getUsersByIds } = require('./twitch-api');
+const { getUsers, getUsersByIds } = require('./request-api');
 const SETTINGS_POLL_INTERVAL_MS = 1000 * 20;// 1000 * 60 * 2;
 let cache = {};
 let idMap = {};
@@ -30,6 +30,9 @@ const initialValues = [];
 	bitcornhubFunded(bool) = irc payments through bitcornhub or own wallet
 	bitcornPerBit(decimal) = how many corn to send for each bit
 	bitcornPerDonation(decimal) = how many corn to send for donation
+
+	bitcornPerChannelpointsRedemption(decimal)
+	enableChannelpoints(bool)
 }
 */
 

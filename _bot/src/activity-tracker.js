@@ -5,7 +5,7 @@
 "use strict";
 
 const JsonFile = require('./utils/json-file');
-const serverSettings = require('../settings/server-settings');
+const serverSettings = require('../../settings/server-settings.json');
 const allowedUsers = require('./utils/allowed-users');
 const settingsHelper = require('./utils/settings-helper');
 
@@ -19,7 +19,7 @@ function onChatMessage(target, user, msg, self) {
 	addToActiveChatters(target, event.user['user-id'], event.user.username);
 }
 
-const activityTracker = new JsonFile('../../settings/activity-tracker.json', {});
+const activityTracker = new JsonFile(__dirname + './../../settings/activity-tracker.json', {});
 
 //console.log('MAX_RAIN_USER_CACHE_WITH_PADDING', activityTracker.data);
 

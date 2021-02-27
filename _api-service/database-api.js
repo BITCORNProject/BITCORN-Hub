@@ -5,13 +5,14 @@ request_result1.refused
 
 "use strict";
 
-const { is_production } = require('../../prod');
+const { is_production } = require('../prod');
 
 const apiRequest = require('./api-request');
 
-const rooturl = require('../../settings/rooturl.json');
-const sql_db_auth = require(`../../settings/sql_db_auth.json`);
-const db_endpoints = require('../../settings/db_endpoints.json');
+const rooturl = require('../settings/rooturl.json');
+
+const sql_db_auth = require(`../settings/sql_db_auth.json`);
+const db_endpoints = require('../settings/db_endpoints.json');
 
 function DatabaseEndpoint() {
 
@@ -263,6 +264,10 @@ DatabaseEndpoint.prototype.makeRequestChannels = async function () {
 
 DatabaseEndpoint.prototype.makeRequestChannelsSettings = async function () {
 	return this.getRequestBase(this.rooturl().user, this.db_endpoints.livestreams.settings);
+}
+
+DatabaseEndpoint.prototype.sendTokens = async function (data) {
+	return this.makeRequestUser(this.db_endpoints.livestreams.tokens, data);
 }
 
 module.exports = new DatabaseEndpoint();

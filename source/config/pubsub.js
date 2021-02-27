@@ -6,12 +6,8 @@
 
 const WebSocket = require('ws');
 
-const helix = require('./authorize/helix');
-const { resolve } = require('path');
-
 const recentIds = [];
 let pingpongLog = '';
-
 
 const HEARTBEAT_INTERVAL = 1000 * 60 * 4;//ms between PING's
 const MAX_BACKOFF_THRESHOLD_INTERVAL = 1000 * 60 * 2;
@@ -153,14 +149,7 @@ function clearPongWaitTimeout() {
 	}
 }
 
-exports.listen = (channelId, access_token) => {
-	listen(`channel-points-channel-v1.${channelId}`, access_token);
-}
-
-exports.init = async (app) => {
-	await connect();
-	while(!helix.hasTokens()) {
-		await new Promise(resolve => setTimeout(resolve, 500));
-	}
-	return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
-}
+module.exports = {
+	connect,
+	listen
+};

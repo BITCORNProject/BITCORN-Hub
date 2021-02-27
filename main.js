@@ -31,11 +31,11 @@ exports.io = () => io;
         const auth = require('./settings/auth');
 
         const { server } = await new Promise(async (resolve) => {
-            const server = app.listen(auth.data.PORT, () => {
+            const server = app.listen(auth.PORT, () => {
                 resolve({ server: server, port: server.address().port });
             });
         });
-        console.log({ success: true, message: `Server listening on port ${auth.data.PORT}` })
+        console.log({ success: true, message: `Server listening on port ${auth.PORT}` })
 
         io = require('socket.io')(server);
 

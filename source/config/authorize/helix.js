@@ -7,6 +7,9 @@
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
 const auth = require('../../../settings/auth');
+const pubsub = require('../pubsub');
+
+const databaseAPI = require('../../../_api-service/database-api');
 
 function Authenticated() {
 	this.access_token = '';
@@ -39,9 +42,9 @@ const tokenStore = {};
 
 function authUrl() {
 
-	appOptions.client_id = auth.data.HELIX_CLIENT_ID;
-	appOptions.client_secret = auth.data.HELIX_SECRET;
-	appOptions.redirect_uri = auth.data.HELIX_CALLBACK_URL;
+	appOptions.client_id = auth.HELIX_CLIENT_ID;
+	appOptions.client_secret = auth.HELIX_SECRET;
+	appOptions.redirect_uri = auth.HELIX_CALLBACK_URL;
 
 	const searchParamsEntries = [
 		['client_id', appOptions.client_id],
@@ -88,6 +91,77 @@ async function authenticateCode(code) {
 	authenticated.expires_in = json.expires_in;
 
 	await keepAlive();
+
+	
+	
+	
+
+	try {
+		
+		const data = await databaseAPI.makeRequestChannelsSettings();
+		//console.log(data);
+
+		const promises = [];
+
+		for (const channel in data) {
+
+			const { twitchRefreshToken, ircTarget } = data[channel];
+
+			promises.push(new Promise(async resolve => {
+
+				const requestToken = await refreshAccessToken({
+					refresh_token: twitchRefreshToken,
+					client_id: auth.API_CLIENT_ID,
+					client_secret: auth.API_SECRET
+				});
+
+				const authenticated = twitchRefreshToken ? requestToken : {
+					access_token: null,
+					refresh_token: null,
+					expires_in: 0,
+					scope: null,
+					token_type: null
+				};
+
+				resolve({ authenticated, ircTarget });
+			}));
+		}
+
+		const items = await Promise.all(promises);
+
+		storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
+
+		await pubsub.connect();
+
+		for (let i = 0; i < items.length; i++) {
+			const { authenticated, ircTarget: channelId } = items[i];
+
+			// if settings channel point redemption is enabled
+			const data = {
+				title: 'BITCORNx420-TEST', // maybe title in dashboard settings
+				cost: 420, // to be replaced by dashboard settings from the api
+				prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
+				should_redemptions_skip_request_queue: true
+			};
+			const result = await createCustomReward(channelId, data);
+			// if settings channel point redemption is enabled
+
+			if (authenticated.access_token) {
+				pubsub.listen(`channel-points-channel-v1.${channelId}`, authenticated.access_token);
+				console.log(`listening: ${channelId}`);
+			} else {
+				console.log({ result });
+			}
+		}
+
+		// make sure these are sent back to the api
+		const response = await databaseAPI.sendTokens(items.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })));
+		console.log({response});
+	} catch (err) {
+
+		console.error(err);
+	}
+
 };
 
 async function keepAlive() {
@@ -234,10 +308,6 @@ function storeTokens(items) {
 	}
 }
 
-function hasTokens() {
-	return Object.keys(tokenStore).length > 0;
-}
-
 async function init(app) {
     app.on('connection', (socket) => {
         const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
@@ -257,7 +327,6 @@ module.exports = {
 	authenticateCode,
 	refreshAccessToken,
 	storeTokens,
-	hasTokens,
 	getTokenStore,
 	getUser,
 	getUserLogin,

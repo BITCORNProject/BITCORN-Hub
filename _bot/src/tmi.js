@@ -4,7 +4,6 @@ const fs = require('fs');
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
 const commander = require('./commander');
-const auth = require('../settings/auth');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
 const settingsHelper = require('./utils/settings-helper');
@@ -56,8 +55,8 @@ const client = new tmi.client({
 		reconnect: true
 	},
 	identity: {
-		username: auth.BOT_USERNAME,
-		password: auth.OAUTH_TOKEN
+		username: process.env.BOT_USERNAME,
+		password: process.env.OAUTH_TOKEN
 	},
 	channels: channels
 });
@@ -182,11 +181,7 @@ function duplicateRewardCheck(rewardId) {
 }
 
 function noRewardCheck(channel) {
-
-	let noRewardFilename = './_bot/settings/no-rewards.json';
-	if (!fs.existsSync(noRewardFilename)) {
-		noRewardFilename = '../_bot/settings/no-rewards.json';
-	}
+	const noRewardFilename = __dirname + '/./../../settings/no-rewards.json';
 	const channels = JSON.parse(fs.readFileSync(noRewardFilename, 'utf-8'));
 
 	return channels.map(x => hashReplace(x)).includes(hashReplace(channel));

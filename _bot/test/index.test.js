@@ -40,11 +40,11 @@ describe('#mocha promises', function () {
 	const messenger = require('../src/messenger');
 	const commander = require('../src/commander');
 	const math = require('../src/utils/math');
-	const settingsCache = require('../src/api-interface/settings-cache');
+	const settingsCache = require('../../_api-service/settings-cache');
 
-	const serverSettings = require('../settings/server-settings');
+	const serverSettings = require('../../settings/server-settings.json');
 
-	const { getUsers, getChatters, sendSettingsCache } = require('../src/api-interface/twitch-api');
+	const { getUsers, getChatters } = require('../../_api-service/request-api');
 
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
@@ -56,7 +56,7 @@ describe('#mocha promises', function () {
 			}
 		},
 		makeRequestChannels: () => Promise.resolve({ status: 500 })
-	} : require('../src/api-interface/database-api');
+	} : require('../../_api-service/database-api');
 
 	const activityTracker = require('../src/activity-tracker');
 	const allowedUsers = require('../src/utils/allowed-users');
@@ -585,13 +585,12 @@ describe('#mocha promises', function () {
 	it('should not enqueue MESSAGE_TYPE whisper self', () => {
 
 		const MESSAGE_TYPE = require('../src/utils/message-type');
-		const auth = require('../settings/auth');
 
 		let target = 'naivebot';
 		let message = 'We can see the thing';
 		messenger.enqueueMessageByType(MESSAGE_TYPE.irc_whisper, target, message);
 		const targetName = messenger.whisperQueue.peek();
-		expect(targetName.target).to.be.not.equal(auth.BOT_USERNAME);
+		expect(targetName.target).to.be.not.equal(process.env.BOT_USERNAME);
 	});
 
 	it('should queue messages to send by MESSAGE_TYPE', () => {
@@ -889,8 +888,6 @@ describe('#mocha promises', function () {
 
 	it('should send sub ticker payout request', async () => {
 
-		const auth = require('../settings/auth');
-
 		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 		let viewers = [];
 
@@ -964,7 +961,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should be able to get env development variable not in production', () => {
-		const { is_production } = require('../prod');
+		const { is_production } = require('../../prod');
 		expect(is_production).to.be.equal(false);
 	});
 
@@ -1445,13 +1442,4 @@ describe('#mocha promises', function () {
 		expect(nonameId).to.be.equal(undefined);
 
 	});
-
-	it('should send settings to refresh tokens', async () => {
-
-		const length = Object.keys(settingsCache.getItems()).length;
-		const result = await sendSettingsCache(settingsCache.getItems());
-
-		expect(result.length).to.be.equal(length);
-	});
-
 });

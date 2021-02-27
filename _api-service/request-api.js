@@ -5,11 +5,11 @@
 
 "use strict";
 
+require('dotenv').config({ path: __dirname + '/./../.env' });
+
 const fetch = require('node-fetch');
 
-const auth = require('../../settings/auth');
-
-const localUrl = `http://localhost:${auth.PORT}`;
+const localUrl = `http://localhost:${process.env.PORT}`;
 
 async function getRequest(url) {
 	return fetch(url)
@@ -42,13 +42,8 @@ async function getChatters(channel) {
 	return getRequest(`https://tmi.twitch.tv/group/user/${channel}/chatters`);
 }
 
-async function sendSettingsCache(data) {
-	return postRequest(`${localUrl}/tokens`, data);
-}
-
 module.exports = {
 	getUsers,
 	getUsersByIds,
-	getChatters,
-	sendSettingsCache
+	getChatters
 };

@@ -1,13 +1,12 @@
 "use strict";
 
-const { is_production } = require('../prod');
-const serverSettings = require('../settings/server-settings');
-const auth = require('../settings/auth');
+const { is_production } = require('../../prod');
+const serverSettings = require('../../settings/server-settings.json');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
 const settingsHelper = require('./utils/settings-helper');
 
-const { getChannelId, cleanChannelName } = require('./api-interface/settings-cache');
+const { getChannelId, cleanChannelName } = require('../../_api-service/settings-cache');
 
 function _Queue() {
 	this.items = new Queue();
@@ -107,8 +106,8 @@ async function sendQueuedRewards() {
 async function handleTipRewards(type, channel, username, amount) {
 
 	const commandHelper = require('./shared-lib/command-helper');
-	const databaseAPI = require('./api-interface/database-api');
-	const { getUsers } = require('./api-interface/twitch-api');
+	const databaseAPI = require('../../_api-service/database-api');
+	const { getUsers } = require('../../_api-service/request-api');
 
 	const { data: [toUser] } = await getUsers([username]);
 
@@ -145,10 +144,10 @@ function enqueueMessageByType(type, target, message) {
 	if (type === MESSAGE_TYPE.irc_chat) {
 		chatQueue.enqueue({ target, message });
 	} else if (type === MESSAGE_TYPE.irc_whisper) {
-		if (target.toLowerCase() !== auth.BOT_USERNAME.toLowerCase()) {
+		if (target.toLowerCase() !== process.env.BOT_USERNAME.toLowerCase()) {
 			whisperQueue.enqueue({ target, message });
 		} else {
-			console.error(`Bot ${auth.BOT_USERNAME} attempt to whisper self`);
+			console.error(`Bot ${process.env.BOT_USERNAME} attempt to whisper self`);
 		}
 	} else {
 		//console.log(`${type} ${target} ${message}`);

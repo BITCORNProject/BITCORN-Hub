@@ -4,7 +4,7 @@
 
 "use strict";
 
-const settingsCache = require('../api-interface/settings-cache');
+const settingsCache = require('../../../_api-service/settings-cache');
 const MESSAGE_TYPE = require('./message-type');
 const { shuffleArray } = require('./arrays');
 const { convertMinsToMs } = require('./math');

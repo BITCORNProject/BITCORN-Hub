@@ -1,7 +1,7 @@
 "use strict";
 
 const auth = require('../settings/auth');
-const serverSettings = require('../settings/server-settings');
+const serverSettings = require('../settings/server-settings.json');
 
 const tmi = require('./config/tmi');
 const helix = require('./config/authorize/helix');

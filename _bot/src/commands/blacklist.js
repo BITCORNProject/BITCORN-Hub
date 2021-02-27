@@ -6,8 +6,8 @@
 
 const util = require('util');
 
-const databaseAPI = require('../api-interface/database-api');
-const { getUsers } = require('../api-interface/twitch-api');
+const databaseAPI = require('../../../_api-service/database-api');
+const { getUsers } = require('../../../_api-service/request-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 

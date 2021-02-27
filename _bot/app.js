@@ -1,21 +1,19 @@
 "use strict";
 
-const twitchApi = require('./src/api-interface/twitch-api');
+const requestApi = require('../_api-service/request-api');
 
 if (module === require.main) {
 
 	(async () => {
 
 		const tmi = require('./src/tmi');
-		const settingsCache = require('./src/api-interface/settings-cache');
+		const settingsCache = require('../_api-service/settings-cache');
 		const messenger = require('./src/messenger');
 		const activityTracker = require('./src/activity-tracker');
 		const subTicker = require('./src/sub-ticker');
 		const roomVisitor = require('./src/room-visitor');		
 		
 		await settingsCache.requestSettings();
-
-		await twitchApi.sendSettingsCache(settingsCache.getItems());
 		
 		settingsCache.startPolling();
 

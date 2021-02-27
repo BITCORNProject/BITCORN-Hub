@@ -5,7 +5,7 @@
 "use strict";
 
 const util = require('util');
-const databaseAPI = require('../api-interface/database-api');
+const databaseAPI = require('../../../_api-service/database-api');
 const MESSAGE_TYPE = require('../utils/message-type');
 const settingsHelper = require('../utils/settings-helper');
 

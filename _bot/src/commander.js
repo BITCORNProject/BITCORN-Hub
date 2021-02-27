@@ -1,6 +1,6 @@
 "use strict";
 
-const { is_production } = require('../prod');
+const { is_production } = require('../../prod');
 const moduleloader = require('./utils/moduleloader');
 
 const commandsPath = '../commands';
