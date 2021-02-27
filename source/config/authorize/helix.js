@@ -6,8 +6,7 @@
 
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
-const auth = require('../../../settings/auth');
-const pubsub = require('../pubsub');
+const pubsub = require('./pubsub');
 
 const databaseAPI = require('../../../_api-service/database-api');
 
@@ -42,9 +41,9 @@ const tokenStore = {};
 
 function authUrl() {
 
-	appOptions.client_id = auth.HELIX_CLIENT_ID;
-	appOptions.client_secret = auth.HELIX_SECRET;
-	appOptions.redirect_uri = auth.HELIX_CALLBACK_URL;
+	appOptions.client_id = process.env.HELIX_CLIENT_ID;
+	appOptions.client_secret = process.env.HELIX_SECRET;
+	appOptions.redirect_uri = process.env.HELIX_CALLBACK_URL;
 
 	const searchParamsEntries = [
 		['client_id', appOptions.client_id],
@@ -111,8 +110,8 @@ async function authenticateCode(code) {
 
 				const requestToken = await refreshAccessToken({
 					refresh_token: twitchRefreshToken,
-					client_id: auth.API_CLIENT_ID,
-					client_secret: auth.API_SECRET
+					client_id: process.env.API_CLIENT_ID,
+					client_secret: process.env.API_SECRET
 				});
 
 				const authenticated = twitchRefreshToken ? requestToken : {

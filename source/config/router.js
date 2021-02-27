@@ -6,10 +6,7 @@
 
 const qs = require('querystring');
 const helix = require('./authorize/helix');
-const pubSub = require('./pubsub');
 const controllers = require('../controllers');
-const auth = require('../../settings/auth');
-const e = require('express');
 const login = controllers.login;
 const callback = controllers.callback;
 

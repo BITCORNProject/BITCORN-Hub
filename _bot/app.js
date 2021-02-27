@@ -1,7 +1,5 @@
 "use strict";
 
-const requestApi = require('../_api-service/request-api');
-
 if (module === require.main) {
 
 	(async () => {

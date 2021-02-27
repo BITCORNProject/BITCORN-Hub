@@ -23,7 +23,6 @@ module.exports = {
     fs: require('fs'),
     assert: require('assert'),
     fetch: require('node-fetch'),
-    main: require('../main'),
     math: require('../source/utils/math'),
     tmi: require('../source/config/tmi'),
     helix: require('../source/config/authorize/helix'),

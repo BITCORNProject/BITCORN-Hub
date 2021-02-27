@@ -1,7 +1,9 @@
+* active
+
 Here are some feature requests:
-idle-rewards channel-owner
+*idle-rewards channel-owner
 custom sub-rewards
-channelpoints -> bitcorn auto-payout(redeem)
+*channelpoints -> bitcorn auto-payout(redeem)
 
 
 BlessCards

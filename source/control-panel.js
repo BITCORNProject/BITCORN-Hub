@@ -1,13 +1,11 @@
 "use strict";
 
-const auth = require('../settings/auth');
 const serverSettings = require('../settings/server-settings.json');
 
 const tmi = require('./config/tmi');
 const helix = require('./config/authorize/helix');
 const tmiCommands = require('./tmi-commands');
 
-//ConfigsModel.deleteMany({}).exec();
 const controlNames = [
     'control-dashboard',
     'control-commands',
@@ -44,7 +42,6 @@ controlActions.set('control-polls', async (data) => { });
 controlActions.set('control-give-aways', async (data) => { });
 controlActions.set('control-settings', async (data) => {
     return { 
-        auth: auth.getValues(), 
         server: serverSettings.getValues()
     };
 });
@@ -111,10 +108,7 @@ async function init(app) {
             socket.on('control-settings-changed', async (parsed) => {
                 let result = { success: false, error: `property not found for parsed settings` };
                 let updated = 'none';
-                if ('auth' in parsed) {
-                    result = auth.setValues(parsed.auth);
-                    updated = 'auth';
-                } else if ('server' in parsed) {
+                if ('server' in parsed) {
                     result = serverSettings.setValues(parsed.server);
                     updated = 'server';
                 }

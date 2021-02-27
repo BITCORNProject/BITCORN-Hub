@@ -32,9 +32,7 @@ const _ = require('./test-dependencies');
             msg,
             args,
             user,
-            configs: command.configs,
-            isDevelopment: _.main.isDevelopment,
-            isProduction: _.main.isProduction
+            configs: command.configs
         }));
 
         console.log(result);
