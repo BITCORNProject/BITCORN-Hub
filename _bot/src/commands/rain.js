@@ -11,7 +11,7 @@ const databaseAPI = require('../../../_api-service/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const math = require('../utils/math');
-const settingsHelper = require('../utils/settings-helper');
+const settingsHelper = require('../../../_api-service/settings-helper');
 const activityTracker = require('../../src/activity-tracker');
 
 module.exports = {

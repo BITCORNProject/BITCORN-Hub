@@ -4,16 +4,28 @@
 
 "use strict";
 
-const settingsCache = require('../../../_api-service/settings-cache');
-const MESSAGE_TYPE = require('./message-type');
-const { shuffleArray } = require('./arrays');
-const { convertMinsToMs } = require('./math');
+const settingsCache = require('./settings-cache');
 
 const OUTPUT_TYPE = {
 	rewardEvent: 0,
 	tipEvent: 1
 };
+
+function shuffleArray(array) {
+	array.sort(function () {
+		return Math.random() - .5;
+	});
+	return array;
+}
+
 exports.OUTPUT_TYPE = OUTPUT_TYPE;
+
+function convertMinsToMs(minutes) {
+	const MINUTES_AS_MILLISECONDS = 60000;
+	return +minutes * MINUTES_AS_MILLISECONDS;
+}
+
+exports.convertMinsToMs = convertMinsToMs;
 
 exports.transactionsDisabled = function (target) {
 	const item = settingsCache.getItem(target);
@@ -29,7 +41,7 @@ exports.getChannelCooldown = function (target, cooldown) {
 	return item ? Math.max(convertMinsToMs(item.txCooldownPerUser), cooldown) : cooldown;
 }
 
-exports.getIrcMessageTarget = function (target, irc_out) {
+exports.getIrcMessageTarget = function (target, irc_out, MESSAGE_TYPE) {
 	const item = settingsCache.getItem(target);
 	return (item ? item.txMessages : false) || irc_out === MESSAGE_TYPE.irc_whisper ? irc_out : MESSAGE_TYPE.irc_none;
 }

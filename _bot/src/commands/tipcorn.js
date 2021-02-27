@@ -12,7 +12,7 @@ const { getUsers } = require('../../../_api-service/request-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
-const settingsHelper = require('../utils/settings-helper');
+const settingsHelper = require('../../../_api-service/settings-helper');
 const commandHelper = require('../shared-lib/command-helper');
 
 module.exports = {

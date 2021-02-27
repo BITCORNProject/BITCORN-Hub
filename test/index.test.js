@@ -39,11 +39,13 @@ describe('#mocha promises', function () {
 	const tmi = require('../_bot/src/tmi');
 	const messenger = require('../_bot/src/messenger');
 	const commander = require('../_bot/src/commander');
-	const math = require('../_bot/src/utils/math');
-	const settingsCache = require('../_api-service/settings-cache');
+
+	const activityTracker = require('../_bot/src/activity-tracker');
+	const allowedUsers = require('../_bot/src/utils/allowed-users');
 
 	const serverSettings = require('../settings/server-settings.json');
 
+	const settingsCache = require('../_api-service/settings-cache');
 	const { getUsers, getChatters } = require('../_api-service/request-api');
 
 	const databaseAPI = isMock ? {
@@ -58,34 +60,7 @@ describe('#mocha promises', function () {
 		makeRequestChannels: () => Promise.resolve({ status: 500 })
 	} : require('../_api-service/database-api');
 
-	const activityTracker = require('../_bot/src/activity-tracker');
-	const allowedUsers = require('../_bot/src/utils/allowed-users');
-
 	let broadcaster;
-
-	function mockSettingsCacheResponse(sobj) {
-		const items = {
-			"minRainAmount": 1.00000000,
-			"minTipAmount": 1.00000000,
-			"rainAlgorithm": 1,
-			"ircTarget": settingsCache.getChannelId('#callowcreation'),
-			"txMessages": true,
-			"txCooldownPerUser": 0.00000000,
-			"enableTransactions": false,
-
-			"ircEventPayments": false,
-			"bitcornhubFunded": false,
-			"bitcornPerBit": 0.10000000,
-			"bitcornPerDonation": 420.00000000
-		};
-
-		for (const key in items) {
-			if (sobj.hasOwnProperty(key)) {
-				items[key] = sobj[key];
-			}
-		}
-		return items;
-	}
 
 	async function mockEvent(msg, twitchUsername, channel, irc_target) {
 
@@ -108,9 +83,9 @@ describe('#mocha promises', function () {
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
-		await settingsCache.requestSettings();
-		
 		activityTracker.init();
+		
+		await settingsCache.requestSettings();
 
 		await tmi.connectToChat();
 
@@ -886,7 +861,7 @@ describe('#mocha promises', function () {
 		}
 	});
 
-	it('should send sub ticker payout request', async () => {
+	it.skip('should send sub ticker payout request', async () => {
 
 		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 		let viewers = [];
@@ -937,7 +912,7 @@ describe('#mocha promises', function () {
 		expect(results).to.be.greaterThan(0);
 	});
 
-	it('should perform sub ticker after init', async () => {
+	it.skip('should perform sub ticker after init', async () => {
 		const subTicker = require('../_bot/src/sub-ticker');
 
 		const channel = 'callowcreation';
@@ -1030,6 +1005,47 @@ describe('#mocha promises', function () {
 		expect(isNum).to.be.equal(true);
 		expect(results.length).to.not.be.equal(0);
 	});
+});
+
+describe('#mocha promises', function () {
+
+	const settingsCache = require('../_api-service/settings-cache');
+	const settingsHelper = require('../_api-service/settings-helper');
+
+	const serverSettings = require('../settings/server-settings.json');
+
+	const activityTracker = require('../_bot/src/activity-tracker');
+
+	function mockSettingsCacheResponse(sobj) {
+		const items = {
+			"minRainAmount": 1.00000000,
+			"minTipAmount": 1.00000000,
+			"rainAlgorithm": 1,
+			"ircTarget": settingsCache.getChannelId('#callowcreation'),
+			"txMessages": true,
+			"txCooldownPerUser": 0.00000000,
+			"enableTransactions": false,
+
+			"ircEventPayments": false,
+			"bitcornhubFunded": false,
+			"bitcornPerBit": 0.10000000,
+			"bitcornPerDonation": 420.00000000
+		};
+
+		for (const key in items) {
+			if (sobj.hasOwnProperty(key)) {
+				items[key] = sobj[key];
+			}
+		}
+		return items;
+	}
+
+	before(async () => {
+
+		activityTracker.init();
+
+		return settingsCache.requestSettings();
+	});
 
 	it('should store livestreams settings to cache', async () => {
 
@@ -1089,69 +1105,25 @@ describe('#mocha promises', function () {
 		settingsCache.clear();
 
 		const target = '#callowcreation';
+
 		const sitems = mockSettingsCacheResponse({
 			"ircTarget": settingsCache.getChannelId(target),
 			"enableTransactions": false
 		});
-
-		log(sitems);
 		settingsCache.setItems([sitems]);
-
-		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
-		const self = false;
-		let msg;
-		let obj;
-
-		msg = commander.commandName('$bitcorn');
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.message).to.be.equal('Transactions not enabled');
-
-		msg = `${commander.commandName('$rain')} 4200 10`;
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.message).to.be.equal('Transactions not enabled');
-
-		msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.message).to.be.equal('Transactions not enabled');
-
-		user['message-type'] = 'whisper';
-
-		msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.message).to.be.equal('Transactions not enabled');
-	});
-
-	it('should not allow transaction for user without settings', async () => {
-
-		settingsCache.clear();
-
-		const target = '#callowcreation';
-
-		const sitems = mockSettingsCacheResponse({
-			"ircTarget": settingsCache.getChannelId(target),
-			"enableTransactions": true
-		});
-		settingsCache.setItems([sitems]);
-
-		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'wollac' };
-		const self = false;
-		let msg;
-		let obj;
-
-		msg = commander.commandName('$bitcorn');
-		obj = await tmi.onMessageHandler(target, user, msg, self);
-		expect(obj.message).to.be.equal('User not allowed');
+	
+		expect(settingsHelper.transactionsDisabled(target)).to.be.equal(true);
 	});
 
 	it('should convert minutes to ms', () => {
-		expect(math.convertMinsToMs(1.5)).to.be.equal(90000);
-		expect(math.convertMinsToMs(0.5)).to.be.equal(30000);
-		expect(math.convertMinsToMs(0.1)).to.be.equal(6000);
+		const settingsHelper = require('../_api-service/settings-helper');
+
+		expect(settingsHelper.convertMinsToMs(1.5)).to.be.equal(90000);
+		expect(settingsHelper.convertMinsToMs(0.5)).to.be.equal(30000);
+		expect(settingsHelper.convertMinsToMs(0.1)).to.be.equal(6000);
 	});
 
 	it('should get channel cooldown or set a default value', async () => {
-
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
 
 		const target = '#callowcreation';
 
@@ -1164,10 +1136,7 @@ describe('#mocha promises', function () {
 		});
 		settingsCache.setItems([sitems]);
 
-		const commandsMap = commander.createCommandsMap();
-
-		const command = commandsMap.get(commander.commandName('rain'));
-		const result = settingsHelper.getChannelCooldown(target, command.configs.cooldown);
+		const result = settingsHelper.getChannelCooldown(target, 20);
 
 		expect(result).to.be.equal(6000);
 	});
@@ -1175,7 +1144,7 @@ describe('#mocha promises', function () {
 	it('should get irc output enabled from settings', async () => {
 
 		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 
 		const target = '#callowcreation';
 
@@ -1187,70 +1156,18 @@ describe('#mocha promises', function () {
 		});
 		settingsCache.setItems([sitems]);
 
-		const commandsMap = commander.createCommandsMap();
-		let command = commandsMap.get(commander.commandName('tipcorn'));
-
-		let result = settingsHelper.getIrcMessageTarget(target, command.configs.irc_out);
+		let result = settingsHelper.getIrcMessageTarget(target, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE);
 
 		expect(result).to.be.equal(MESSAGE_TYPE.irc_none);
 
-		command = commandsMap.get(commander.commandName('bitcorn'));
-
-		result = settingsHelper.getIrcMessageTarget(target, command.configs.irc_out);
+		result = settingsHelper.getIrcMessageTarget(target, MESSAGE_TYPE.irc_whisper, MESSAGE_TYPE);
 
 		expect(result).to.be.equal(MESSAGE_TYPE.irc_whisper);
 	});
 
-	it('should not send tx messages for commands', async () => {
-
-		await _wait(1000);
-
-		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
-
-		const target = '#callowcreation';
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"ircTarget": settingsCache.getChannelId(target),
-			"txMessages": false
-		});
-		settingsCache.setItems([sitems]);
-
-		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'naivebot' };
-		const self = false;
-
-		{
-			const msg = commander.commandName('$bitcorn');
-			const obj = await tmi.onMessageHandler(target, user, msg, self);
-			log(obj);
-			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
-		}
-		{
-			const msg = `${commander.commandName('$rain')} 4200 10`;
-			const obj = await tmi.onMessageHandler(target, user, msg, self);
-			log(obj);
-			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
-		}
-		{
-			const msg = `${commander.commandName('$tipcorn')} @naivebot 420`;
-			const obj = await tmi.onMessageHandler(target, user, msg, self);
-			log(obj);
-			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_none);
-		}
-		{
-			user['message-type'] = 'whisper';
-
-			const msg = `${commander.commandName('$withdraw')} 4200000001 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
-			const obj = await tmi.onMessageHandler(target, user, msg, self);
-			log(obj);
-			expect(obj.configs.irc_out).to.be.equal(MESSAGE_TYPE.irc_whisper);
-		}
-	});
-
 	it('should user correct $rain algorithm', async () => {
 
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 		const target = '#callowcreation';
 
 		{ // algo 0
@@ -1295,7 +1212,7 @@ describe('#mocha promises', function () {
 
 	it('should get tipcorn min amount from settings helper', async () => {
 
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 		const target = '#callowcreation';
 		const minTipAmount = 16.55;
 
@@ -1314,7 +1231,7 @@ describe('#mocha promises', function () {
 
 	it('should get rain min amount from settings helper', async () => {
 
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 		const target = '#callowcreation';
 		const minRainAmount = 5.55555;
 
@@ -1334,7 +1251,7 @@ describe('#mocha promises', function () {
 
 	it('should get irc event payments from settings helper', async () => {
 
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 		const target = '#callowcreation';
 
 		settingsCache.clear();
@@ -1351,7 +1268,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcornhub funded from settings helper', async () => {
 
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 		const target = '#callowcreation';
 
 		settingsCache.clear();
@@ -1368,7 +1285,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcorn per bit from settings helper', async () => {
 
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 		const target = '#callowcreation';
 		const bitcornPerBit = 6.66;
 
@@ -1386,7 +1303,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcorn per donation from settings helper', async () => {
 
-		const settingsHelper = require('../_bot/src/utils/settings-helper');
+		const settingsHelper = require('../_api-service/settings-helper');
 		const target = '#clayman666';
 		const bitcornPerDonation = 4.20;
 

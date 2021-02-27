@@ -6,7 +6,7 @@ const messenger = require('./messenger');
 const commander = require('./commander');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
-const settingsHelper = require('./utils/settings-helper');
+const settingsHelper = require('../../_api-service/settings-helper');
 
 
 const commandsMap = commander.createCommandsMap();
@@ -113,7 +113,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const data = JSON.parse(JSON.stringify(result));
 
-	data.configs.irc_out = settingsHelper.getIrcMessageTarget(target, data.configs.irc_out);
+	data.configs.irc_out = settingsHelper.getIrcMessageTarget(target, data.configs.irc_out, MESSAGE_TYPE);
 	data.msg = msg;
 
 	if (data.success === true) {
@@ -192,7 +192,7 @@ function hashReplace(channel) {
 }
 
 async function handleRewardEvent(type, channel, username, amount) {
-	if (settingsHelper.getIrcMessageTarget(channel, type) === MESSAGE_TYPE.irc_none) {
+	if (settingsHelper.getIrcMessageTarget(channel, type, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
 		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.rewardEvent);
 	}
 

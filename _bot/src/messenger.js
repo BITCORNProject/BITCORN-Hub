@@ -4,7 +4,7 @@ const { is_production } = require('../../prod');
 const serverSettings = require('../../settings/server-settings.json');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
-const settingsHelper = require('./utils/settings-helper');
+const settingsHelper = require('../../_api-service/settings-helper');
 
 const { getChannelId, cleanChannelName } = require('../../_api-service/settings-cache');
 
@@ -124,7 +124,7 @@ async function handleTipRewards(type, channel, username, amount) {
 	const result = await databaseAPI.request(fromUserId, body).tipcorn();
 	const { success, message } = commandHelper.handelTipResponse(result, cleanChannelName(channel), toUser.login, amount);
 	
-	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat) === MESSAGE_TYPE.irc_none) {
+	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
 		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.tipEvent);
 	}
 
