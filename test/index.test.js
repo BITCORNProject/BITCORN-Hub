@@ -36,15 +36,15 @@ describe('#mocha promises', function () {
 	//let messenger = null;
 	//let databaseAPI = null;
 
-	const tmi = require('../src/tmi');
-	const messenger = require('../src/messenger');
-	const commander = require('../src/commander');
-	const math = require('../src/utils/math');
-	const settingsCache = require('../../_api-service/settings-cache');
+	const tmi = require('../_bot/src/tmi');
+	const messenger = require('../_bot/src/messenger');
+	const commander = require('../_bot/src/commander');
+	const math = require('../_bot/src/utils/math');
+	const settingsCache = require('../_api-service/settings-cache');
 
-	const serverSettings = require('../../settings/server-settings.json');
+	const serverSettings = require('../settings/server-settings.json');
 
-	const { getUsers, getChatters } = require('../../_api-service/request-api');
+	const { getUsers, getChatters } = require('../_api-service/request-api');
 
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
@@ -56,10 +56,10 @@ describe('#mocha promises', function () {
 			}
 		},
 		makeRequestChannels: () => Promise.resolve({ status: 500 })
-	} : require('../../_api-service/database-api');
+	} : require('../_api-service/database-api');
 
-	const activityTracker = require('../src/activity-tracker');
-	const allowedUsers = require('../src/utils/allowed-users');
+	const activityTracker = require('../_bot/src/activity-tracker');
+	const allowedUsers = require('../_bot/src/utils/allowed-users');
 
 	let broadcaster;
 
@@ -108,6 +108,8 @@ describe('#mocha promises', function () {
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
+		await settingsCache.requestSettings();
+		
 		activityTracker.init();
 
 		await tmi.connectToChat();
@@ -125,14 +127,14 @@ describe('#mocha promises', function () {
 	});
 
 	it('should load commands from file system', () => {
-		const moduleloader = require('../src/utils/moduleloader');
+		const moduleloader = require('../_bot/src/utils/moduleloader');
 		const commandsPath = '../commands';
 		const commands = moduleloader(commandsPath);
 		expect(commands.length).to.be.greaterThan(0);
 	});
 
 	it('should commands loaded have all configs', () => {
-		const moduleloader = require('../src/utils/moduleloader');
+		const moduleloader = require('../_bot/src/utils/moduleloader');
 		const commandsPath = '../commands';
 		const commands = moduleloader(commandsPath);
 
@@ -192,7 +194,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should utility clean params of @ < >', () => {
-		const cleanParams = require('../src/utils/clean-params');
+		const cleanParams = require('../_bot/src/utils/clean-params');
 
 		const msg = '$tipcorn <@naivebot> 420';
 		const args = commander.messageAsCommand(msg);
@@ -203,7 +205,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should confirm params is a number', () => {
-		const { amount, isNumber } = require('../src/utils/clean-params');
+		const { amount, isNumber } = require('../_bot/src/utils/clean-params');
 
 		const msg = '$tipcorn <@naivebot> <420>';
 		const args = commander.messageAsCommand(msg);
@@ -290,7 +292,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('../src/commands/bitcorn');
+		} : require('../_bot/src/commands/bitcorn');
 
 		const obj = await commander.validateAndExecute(event, command);
 		if (obj.success === false) {
@@ -329,7 +331,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('../src/commands/bitcorn');
+		} : require('../_bot/src/commands/bitcorn');
 
 		const event = await mockEvent('$bitcorn', 'naivebot', 'callowcreation', '#callowcreation');
 
@@ -410,7 +412,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('../src/commands/tipcorn');
+		} : require('../_bot/src/commands/tipcorn');
 		const event = await mockEvent('$tipcorn d4rkcide 100', 'callowcreation', '#callowcreation', '#callowcreation');
 
 		const results = await commander.validateAndExecute(event, command);
@@ -496,7 +498,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('../src/commands/withdraw');
+		} : require('../_bot/src/commands/withdraw');
 
 		const event = await mockEvent('$withdraw 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g', 'callowcreation', 'callowcreation', '#callowcreation');
 
@@ -508,7 +510,7 @@ describe('#mocha promises', function () {
 	it('should process whispers and chat messages - chat', async () => {
 		await _wait(50);
 
-		const type = require('../src/utils/message-type').irc_chat;
+		const type = require('../_bot/src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
 
 		const twitchUsername = 'd4rkcide';
@@ -526,7 +528,7 @@ describe('#mocha promises', function () {
 
 		await _wait(50);
 
-		const type = require('../src/utils/message-type').irc_whisper;
+		const type = require('../_bot/src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
 		const twitchUsername = 'callowcreation';
@@ -550,7 +552,7 @@ describe('#mocha promises', function () {
 
 		await _wait(50);
 
-		const type = require('../src/utils/message-type').irc_whisper;
+		const type = require('../_bot/src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
 		const twitchUsername = 'callowcreation';
@@ -582,7 +584,7 @@ describe('#mocha promises', function () {
 
 	it('should not enqueue MESSAGE_TYPE whisper self', () => {
 
-		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
 
 		let target = 'naivebot';
 		let message = 'We can see the thing';
@@ -593,7 +595,7 @@ describe('#mocha promises', function () {
 
 	it('should queue messages to send by MESSAGE_TYPE', () => {
 
-		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
 
 		while (messenger.whisperQueue.size() > 0) messenger.whisperQueue.dequeue();
 		while (messenger.chatQueue.size() > 0) messenger.chatQueue.dequeue();
@@ -616,7 +618,7 @@ describe('#mocha promises', function () {
 
 	it('should confirm messages in chat and whisper queue', () => {
 
-		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
 
 		const target = 'callowcreation';
 		const message = 'We can see the thing again';
@@ -631,7 +633,7 @@ describe('#mocha promises', function () {
 
 		await _wait(500);
 
-		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
 
 		let target = '#callowcreation';
 		let message = 'should send many message from chat queue ' + Date.now();
@@ -649,7 +651,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should send whisper message from whisper queue', async () => {
-		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
 
 		let target = '#callowcreation';
 		let message = 'should send whisper message from whisper queue ' + Date.now();
@@ -699,7 +701,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('../src/commands/rain');
+		} : require('../_bot/src/commands/rain');
 		const event = await mockEvent('$rain 24.999999999999999 5', 'd4rkcide', '#callowcreation', '#callowcreation');
 		const result = await commander.validateAndExecute(event, command);
 		log({ event, result });
@@ -754,7 +756,7 @@ describe('#mocha promises', function () {
 			execute(event) {
 				return Promise.resolve({ success: true });
 			}
-		} : require('../src/commands/blacklist');
+		} : require('../_bot/src/commands/blacklist');
 		const event = await mockEvent(`${commander.commandName('$blacklist')} @naivebot`, 'callowcreation', '#callowcreation', '#callowcreation');
 		const result = await commander.validateAndExecute(event, command);
 		expect(result.success).to.be.not.equal(false);
@@ -936,7 +938,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should perform sub ticker after init', async () => {
-		const subTicker = require('../src/sub-ticker');
+		const subTicker = require('../_bot/src/sub-ticker');
 
 		const channel = 'callowcreation';
 
@@ -950,7 +952,7 @@ describe('#mocha promises', function () {
 
 	it('should send error to database logger', async () => {
 
-		const errorLogger = require('../src/utils/error-logger');
+		const errorLogger = require('../_bot/src/utils/error-logger');
 
 		const error = new Error('Failed test as expected');
 		const errorcode = 0;
@@ -959,7 +961,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should be able to get env development variable not in production', () => {
-		const { is_production } = require('../../prod');
+		const { is_production } = require('../prod');
 		expect(is_production).to.be.equal(false);
 	});
 
@@ -985,7 +987,7 @@ describe('#mocha promises', function () {
 	});
 
 	it('should make http request to livestreams', async () => {
-		const { isNumber } = require('../src/utils/clean-params');
+		const { isNumber } = require('../_bot/src/utils/clean-params');
 
 		const results = await databaseAPI.makeRequestChannels();
 
@@ -997,7 +999,7 @@ describe('#mocha promises', function () {
 
 	it('should populate and join via queue', async () => {
 
-		const roomVisitor = require('../src/room-visitor');
+		const roomVisitor = require('../_bot/src/room-visitor');
 
 		const { addChannels, getJoinQueue, joinChannelsFromQueue } = await roomVisitor(tmi);
 
@@ -1017,7 +1019,7 @@ describe('#mocha promises', function () {
 
 	it('should make livestreams settings request', async () => {
 
-		const { isNumber } = require('../src/utils/clean-params');
+		const { isNumber } = require('../_bot/src/utils/clean-params');
 
 		const results = await databaseAPI.makeRequestChannelsSettings();
 
@@ -1149,7 +1151,7 @@ describe('#mocha promises', function () {
 
 	it('should get channel cooldown or set a default value', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 
 		const target = '#callowcreation';
 
@@ -1172,8 +1174,8 @@ describe('#mocha promises', function () {
 
 	it('should get irc output enabled from settings', async () => {
 
-		const MESSAGE_TYPE = require('../src/utils/message-type');
-		const settingsHelper = require('../src/utils/settings-helper');
+		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 
 		const target = '#callowcreation';
 
@@ -1203,7 +1205,7 @@ describe('#mocha promises', function () {
 
 		await _wait(1000);
 
-		const MESSAGE_TYPE = require('../src/utils/message-type');
+		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
 
 		const target = '#callowcreation';
 
@@ -1248,7 +1250,7 @@ describe('#mocha promises', function () {
 
 	it('should user correct $rain algorithm', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 		const target = '#callowcreation';
 
 		{ // algo 0
@@ -1293,7 +1295,7 @@ describe('#mocha promises', function () {
 
 	it('should get tipcorn min amount from settings helper', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 		const target = '#callowcreation';
 		const minTipAmount = 16.55;
 
@@ -1312,7 +1314,7 @@ describe('#mocha promises', function () {
 
 	it('should get rain min amount from settings helper', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 		const target = '#callowcreation';
 		const minRainAmount = 5.55555;
 
@@ -1332,7 +1334,7 @@ describe('#mocha promises', function () {
 
 	it('should get irc event payments from settings helper', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 		const target = '#callowcreation';
 
 		settingsCache.clear();
@@ -1349,7 +1351,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcornhub funded from settings helper', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 		const target = '#callowcreation';
 
 		settingsCache.clear();
@@ -1366,7 +1368,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcorn per bit from settings helper', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 		const target = '#callowcreation';
 		const bitcornPerBit = 6.66;
 
@@ -1384,7 +1386,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcorn per donation from settings helper', async () => {
 
-		const settingsHelper = require('../src/utils/settings-helper');
+		const settingsHelper = require('../_bot/src/utils/settings-helper');
 		const target = '#clayman666';
 		const bitcornPerDonation = 4.20;
 
