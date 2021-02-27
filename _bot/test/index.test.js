@@ -105,8 +105,6 @@ describe('#mocha promises', function () {
 
 		({ data: [broadcaster] } = await getUsers(['callowcreation']));
 
-		await settingsCache.requestSettings();
-
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 

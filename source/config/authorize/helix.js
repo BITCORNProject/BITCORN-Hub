@@ -6,9 +6,6 @@
 
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
-const pubsub = require('./pubsub');
-
-const databaseAPI = require('../../../_api-service/database-api');
 
 function Authenticated() {
 	this.access_token = '';
@@ -90,77 +87,6 @@ async function authenticateCode(code) {
 	authenticated.expires_in = json.expires_in;
 
 	await keepAlive();
-
-	
-	
-	
-
-	try {
-		
-		const data = await databaseAPI.makeRequestChannelsSettings();
-		//console.log(data);
-
-		const promises = [];
-
-		for (const channel in data) {
-
-			const { twitchRefreshToken, ircTarget } = data[channel];
-
-			promises.push(new Promise(async resolve => {
-
-				const requestToken = await refreshAccessToken({
-					refresh_token: twitchRefreshToken,
-					client_id: process.env.API_CLIENT_ID,
-					client_secret: process.env.API_SECRET
-				});
-
-				const authenticated = twitchRefreshToken ? requestToken : {
-					access_token: null,
-					refresh_token: null,
-					expires_in: 0,
-					scope: null,
-					token_type: null
-				};
-
-				resolve({ authenticated, ircTarget });
-			}));
-		}
-
-		const items = await Promise.all(promises);
-
-		storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
-
-		await pubsub.connect();
-
-		for (let i = 0; i < items.length; i++) {
-			const { authenticated, ircTarget: channelId } = items[i];
-
-			// if settings channel point redemption is enabled
-			const data = {
-				title: 'BITCORNx420-TEST', // maybe title in dashboard settings
-				cost: 420, // to be replaced by dashboard settings from the api
-				prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
-				should_redemptions_skip_request_queue: true
-			};
-			const result = await createCustomReward(channelId, data);
-			// if settings channel point redemption is enabled
-
-			if (authenticated.access_token) {
-				pubsub.listen(`channel-points-channel-v1.${channelId}`, authenticated.access_token);
-				console.log(`listening: ${channelId}`);
-			} else {
-				console.log({ result });
-			}
-		}
-
-		// make sure these are sent back to the api
-		const response = await databaseAPI.sendTokens(items.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })));
-		console.log({response});
-	} catch (err) {
-
-		console.error(err);
-	}
-
 };
 
 async function keepAlive() {

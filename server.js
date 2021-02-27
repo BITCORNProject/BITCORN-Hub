@@ -6,11 +6,12 @@
 
 require('dotenv').config();
 
-const orderedRequires = [];
-
-orderedRequires.push(require('./source/config/authorize/helix'));
+//const settingsCache = require('./_api-service/settings-cache');
 
 const app = require('./source/config/express');
+
+const helix = require('./source/config/authorize/helix');
+const pubsub = require('./source/config/authorize/pubsub');
 
 if (module === require.main) {
 
@@ -46,10 +47,12 @@ if (module === require.main) {
 				});
 			});
 
-			for (let i = 0; i < orderedRequires.length; i++) {
-				const item = orderedRequires[i];
-				console.log(await item.init(app));
-			}
+					
+			//await settingsCache.requestSettings();		
+			//settingsCache.startPolling();
+
+			await helix.init(app);
+			await pubsub.init();
 
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in main` });

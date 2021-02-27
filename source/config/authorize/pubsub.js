@@ -6,6 +6,10 @@
 
 const WebSocket = require('ws');
 
+const helix = require('./helix');
+
+const databaseAPI = require('../../../_api-service/database-api');
+
 const recentIds = [];
 let pingpongLog = '';
 
@@ -149,7 +153,77 @@ function clearPongWaitTimeout() {
 	}
 }
 
+async function init() {
+	try {
+		
+		const data = await databaseAPI.makeRequestChannelsSettings();
+		console.log(data);
+
+		const promises = [];
+
+		for (const channel in data) {
+
+			const { twitchRefreshToken, ircTarget } = data[channel];
+
+			promises.push(new Promise(async resolve => {
+
+				const requestToken = await helix.refreshAccessToken({
+					refresh_token: twitchRefreshToken,
+					client_id: process.env.API_CLIENT_ID,
+					client_secret: process.env.API_SECRET
+				});
+
+				const authenticated = twitchRefreshToken ? requestToken : {
+					access_token: null,
+					refresh_token: null,
+					expires_in: 0,
+					scope: null,
+					token_type: null
+				};
+
+				resolve({ authenticated, ircTarget });
+			}));
+		}
+
+		const items = await Promise.all(promises);
+
+		helix.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
+
+		await connect();
+
+		for (let i = 0; i < items.length; i++) {
+			const { authenticated, ircTarget: channelId } = items[i];
+
+			
+			
+			const data = {
+				title: 'BITCORNx420-TEST', // maybe title in dashboard settings
+				cost: 420, // to be replaced by dashboard settings from the api
+				prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
+				should_redemptions_skip_request_queue: true
+			};
+			const result = await helix.createCustomReward(channelId, data);
+			// if settings channel point redemption is enabled
+
+			if (authenticated.access_token) {
+				listen(`channel-points-channel-v1.${channelId}`, authenticated.access_token);
+				console.log(`listening: ${channelId}`);
+			} else {
+				console.log({ result });
+			}
+		}
+
+		// make sure these are sent back to the api
+		const response = await databaseAPI.sendTokens(items.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })));
+		console.log({response});
+	} catch (err) {
+
+		console.error(err);
+	}
+}
+
 module.exports = {
+	init,
 	connect,
 	listen
 };
