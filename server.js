@@ -45,12 +45,22 @@ if (module === require.main) {
 				});
 
 			});
-					
+
 			await helix.init(app);
 			await pubsub.init();
 
-			
-			const settings_io = require('socket.io-client')(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`);
+			const WebSocket = require('ws');
+			const ws = new WebSocket(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`);
+
+			ws.on('open', function open() {
+				console.log('Connected');
+			});
+
+			ws.on('message', function incoming(data) {
+				console.log(data);
+			});
+
+			/*const settings_io = require('socket.io-client')(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`);
 			const settingsSocket = settings_io.connect();
 			settingsSocket.on('connect', async () => {
 
@@ -59,7 +69,7 @@ if (module === require.main) {
 				});
 				console.log('settings service server connected');
 
-			});
+			});*/
 
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in main` });

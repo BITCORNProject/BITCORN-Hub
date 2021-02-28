@@ -6,20 +6,56 @@
 
 require('dotenv').config({ path: __dirname + './../.env' });
 
+const WebSocket = require('ws');
+
 const express = require('express');
 
 const settingsCache = require('./settings-cache');
 
 const app = express();
 
-// app.get('/', function (req, res) {
-// 	res.send('hello world');
-// });
-
 if (module === require.main) {
 
 	(async () => {
 		try {
+
+			const ws = new WebSocket("wss://bitcorndataservice-dev.azurewebsites.net/bitcornhub");
+
+			ws.on('open', function open() {
+				console.log('Connected');
+			});
+
+			ws.on('message', function incoming(data) {
+				console.log(data);
+/*
+
+{
+   "type":"update-livestream-settings",
+   "payload":{
+      "MinRainAmount":100000000.00000000,
+      "MinTipAmount":10000000.00000000,
+      "RainAlgorithm":1,
+      "IrcTarget":"120524051",
+      "TxMessages":true,
+      "TxCooldownPerUser":0.00000000,
+      "EnableTransactions":true,
+      "IrcEventPayments":true,
+      "BitcornhubFunded":true,
+      "BitcornPerBit":321.00000000,
+      "BitcornPerDonation":123.00000000,
+      "TwitchRefreshToken":"<token>",
+      "BitcornPerChannelpointsRedemption":0.40000000,
+      "EnableChannelpoints":true
+   }
+}
+
+*/				
+				io.emit('settings-updated', { settings: {} });
+			});
+
+			ws.onerror = (error) => {
+				console.log(error);
+			};
 
 			const { server } = await new Promise(async (resolve) => {
 				const server = app.listen(process.env.SETTINGS_SERVER_PORT, () => {
@@ -52,10 +88,8 @@ if (module === require.main) {
 			});
 
 			await settingsCache.requestSettings();
-			settingsCache.startPolling(settings => {
-				io.emit('settings-updated', { settings });
-				console.log('settings serviceupdated');
-			});
+			
+			io.emit('settings-updated', { settings: settingsCache.getItems() });
 
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in settings server main` });

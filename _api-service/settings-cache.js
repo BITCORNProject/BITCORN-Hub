@@ -7,7 +7,7 @@
 
 const databaseAPI = require('./database-api');
 
-const { getUsers, getUsersByIds } = require('./request-api');
+const { getUsers, getUsersByIds, isTwitchAuthenticated } = require('./request-api');
 const SETTINGS_POLL_INTERVAL_MS = 1000 * 20;// 1000 * 60 * 2;
 let cache = {};
 let idMap = {};
@@ -65,10 +65,18 @@ function getItem(channel) {
 }
 
 async function requestSettings() {
+	
 	const results = await databaseAPI.makeRequestChannelsSettings();
 
 	clear();
 	setItems(results);
+
+	let isAuthenticated = await isTwitchAuthenticated();
+	while(!isAuthenticated) {
+		await new Promise(resolve => setTimeout(resolve, 1000));
+		//console.log('isTwitchAuthenticated');
+		isAuthenticated = await isTwitchAuthenticated();
+	}
 
 	const items = initialValues.filter(x => x.ircTarget);
 	const promises = [];
@@ -108,13 +116,6 @@ async function setChannelsIds(channels) {
 	}
 }
 
-function startPolling(callback) {
-	interval = setInterval(async () => {
-		await requestSettings();
-		callback(getItems());
-	}, SETTINGS_POLL_INTERVAL_MS);
-}
-
 function getChannelId(channel) {
 	channel = cleanChannelName(channel);
 	return idMap[channel];
@@ -131,7 +132,6 @@ module.exports = {
 	clear,
 	getItem,
 	requestSettings,
-	startPolling,
 	getChannelId,
 	setChannelsIds,
 	getChannels

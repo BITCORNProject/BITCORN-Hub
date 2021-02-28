@@ -42,12 +42,12 @@ async function getChatters(channel) {
 	return getRequest(`https://tmi.twitch.tv/group/user/${channel}/chatters`);
 }
 
-function isReady() {
-	return false;
+function isTwitchAuthenticated() {
+	return getRequest(`${localUrl}/ping-twitch`);
 }
 
 module.exports = {
-	isReady,
+	isTwitchAuthenticated,
 	getUsers,
 	getUsersByIds,
 	getChatters
