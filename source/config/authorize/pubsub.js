@@ -155,7 +155,7 @@ function clearPongWaitTimeout() {
 
 async function init() {
 	try {
-		
+
 		const data = await databaseAPI.makeRequestChannelsSettings();
 		console.log(data);
 
@@ -163,25 +163,28 @@ async function init() {
 
 		for (const channel in data) {
 
-			const { twitchRefreshToken, ircTarget } = data[channel];
+			const { twitchRefreshToken, ircTarget, enableChannelpoints } = data[channel];
 
 			promises.push(new Promise(async resolve => {
 
-				const requestToken = await helix.refreshAccessToken({
-					refresh_token: twitchRefreshToken,
-					client_id: process.env.API_CLIENT_ID,
-					client_secret: process.env.API_SECRET
-				});
-
-				const authenticated = twitchRefreshToken ? requestToken : {
-					access_token: null,
-					refresh_token: null,
-					expires_in: 0,
-					scope: null,
-					token_type: null
-				};
-
-				resolve({ authenticated, ircTarget });
+				if (twitchRefreshToken && enableChannelpoints) {
+					const authenticated = await helix.refreshAccessToken({
+						refresh_token: twitchRefreshToken,
+						client_id: process.env.API_CLIENT_ID,
+						client_secret: process.env.API_SECRET
+					});
+					resolve({ authenticated, ircTarget });
+				} else {
+					resolve({
+						authenticated: {
+							access_token: null,
+							refresh_token: null,
+							expires_in: 0,
+							scope: null,
+							token_type: null
+						}, ircTarget
+					});
+				}
 			}));
 		}
 
@@ -194,28 +197,33 @@ async function init() {
 		for (let i = 0; i < items.length; i++) {
 			const { authenticated, ircTarget: channelId } = items[i];
 
-			
-			
-			const data = {
-				title: 'BITCORNx420-TEST', // maybe title in dashboard settings
-				cost: 420, // to be replaced by dashboard settings from the api
-				prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
-				should_redemptions_skip_request_queue: true
-			};
-			const result = await helix.createCustomReward(channelId, data);
-			// if settings channel point redemption is enabled
+			const item = data.find(x => x.ircTarget === channelId);
 
-			if (authenticated.access_token) {
-				listen(`channel-points-channel-v1.${channelId}`, authenticated.access_token);
-				console.log(`listening: ${channelId}`);
+			if (!item) throw new Error('Go, no go ??????');
+
+			if (item.enableChannelpoints === true) {
+				const data = {
+					title: 'BITCORNx420-TEST', // maybe title in dashboard settings
+					cost: 420, // to be replaced by dashboard settings from the api
+					prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
+					should_redemptions_skip_request_queue: true
+				};
+				const result = await helix.createCustomReward(channelId, data);
+
+				if (authenticated.access_token) {
+					listen(`channel-points-channel-v1.${channelId}`, authenticated.access_token);
+					console.log(`listening: ${channelId}`);
+				} else {
+					console.log({ result });
+				}
 			} else {
-				console.log({ result });
+				// remove existing channel point cards
 			}
 		}
 
 		// make sure these are sent back to the api
-		const response = await databaseAPI.sendTokens(items.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })));
-		console.log({response});
+		const response = await databaseAPI.sendTokens({ tokens: items.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })) });
+		console.log({ response });
 	} catch (err) {
 
 		console.error(err);

@@ -28,7 +28,7 @@ async function _wait(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-describe('#mocha promises', function () {
+describe.skip('#mocha promises', function () {
 	const isMock = false;
 
 	this.timeout(20000);

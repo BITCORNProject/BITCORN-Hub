@@ -108,9 +108,10 @@ async function setChannelsIds(channels) {
 	}
 }
 
-function startPolling() {
+function startPolling(callback) {
 	interval = setInterval(async () => {
 		await requestSettings();
+		callback(getItems());
 	}, SETTINGS_POLL_INTERVAL_MS);
 }
 

@@ -235,6 +235,7 @@ function storeTokens(items) {
 
 async function init(app) {
     app.on('connection', (socket) => {
+		if(!socket.handshake.headers.referer) return;
         const lastIndex = socket.handshake.headers.referer.lastIndexOf('/');
         const clientName = socket.handshake.headers.referer.substring(lastIndex + 1, socket.handshake.headers.referer.length);
 

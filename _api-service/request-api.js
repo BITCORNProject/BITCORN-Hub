@@ -9,7 +9,7 @@ require('dotenv').config({ path: __dirname + '/./../.env' });
 
 const fetch = require('node-fetch');
 
-const localUrl = `http://localhost:${process.env.PORT}`;
+const localUrl = `http://localhost:${process.env.TWITCH_SERVER_PORT}`;
 
 async function getRequest(url) {
 	return fetch(url)
@@ -42,7 +42,12 @@ async function getChatters(channel) {
 	return getRequest(`https://tmi.twitch.tv/group/user/${channel}/chatters`);
 }
 
+function isReady() {
+	return false;
+}
+
 module.exports = {
+	isReady,
 	getUsers,
 	getUsersByIds,
 	getChatters

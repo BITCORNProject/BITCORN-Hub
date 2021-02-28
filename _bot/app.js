@@ -5,15 +5,10 @@ if (module === require.main) {
 	(async () => {
 
 		const tmi = require('./src/tmi');
-		const settingsCache = require('../_api-service/settings-cache');
 		const messenger = require('./src/messenger');
 		const activityTracker = require('./src/activity-tracker');
 		const subTicker = require('./src/sub-ticker');
 		const roomVisitor = require('./src/room-visitor');		
-		
-		await settingsCache.requestSettings();
-		
-		settingsCache.startPolling();
 
 		tmi.registerEvents();
 
@@ -36,6 +31,19 @@ if (module === require.main) {
 
 		const roomResult = await roomVisitor(tmi);
 		console.log(roomResult);
+
+		
+		const settings_io = require('socket.io-client')(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`);
+		const settingsSocket = settings_io.connect();
+		settingsSocket.on('connect', async () => {
+
+			console.log('settings service server connected');
+
+			settingsSocket.on('settings-updated', res => {
+				console.log(res.settings);	
+			});
+
+		});
 
 	})();
 }
