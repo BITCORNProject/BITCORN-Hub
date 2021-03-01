@@ -247,10 +247,6 @@ async function init(app) {
     return { success: true, message: `${require('path').basename(__filename).replace('.js', '.')}init()` };
 }
 
-function isAuthenticated() {
-	return authenticated.access_token ? true : false;
-}
-
 module.exports = {
 	init,
 	authUrl,
@@ -266,6 +262,5 @@ module.exports = {
 	getStreamById,
 	getUserFollows,
 	getGame,
-	createCustomReward,
-	isAuthenticated
+	createCustomReward
 };

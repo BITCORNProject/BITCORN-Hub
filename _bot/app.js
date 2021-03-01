@@ -32,18 +32,5 @@ if (module === require.main) {
 		const roomResult = await roomVisitor(tmi);
 		console.log(roomResult);
 
-		
-		const settings_io = require('socket.io-client')(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`);
-		const settingsSocket = settings_io.connect();
-		settingsSocket.on('connect', async () => {
-
-			console.log('settings service server connected');
-
-			settingsSocket.on('settings-updated', res => {
-				console.log(res.settings);	
-			});
-
-		});
-
 	})();
 }

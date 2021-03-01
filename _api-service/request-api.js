@@ -14,7 +14,7 @@ const localUrl = `http://localhost:${process.env.TWITCH_SERVER_PORT}`;
 async function getRequest(url) {
 	return fetch(url)
 		.then(res => res.json())
-		.catch(err => console.error(err));
+		.catch(err => err);
 }
 
 async function postRequest(url, data) {
@@ -27,7 +27,7 @@ async function postRequest(url, data) {
 	};
 	return fetch(url, options)
 		.then(res => res.json())
-		.catch(err => console.error(err));
+		.catch(err => err);
 }
 
 async function getUsers(usernames) {
@@ -42,12 +42,7 @@ async function getChatters(channel) {
 	return getRequest(`https://tmi.twitch.tv/group/user/${channel}/chatters`);
 }
 
-function isTwitchAuthenticated() {
-	return getRequest(`${localUrl}/ping-twitch`);
-}
-
 module.exports = {
-	isTwitchAuthenticated,
 	getUsers,
 	getUsersByIds,
 	getChatters

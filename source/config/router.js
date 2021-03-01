@@ -15,10 +15,6 @@ authMap.set('helix', { login: login.helix, callback: callback.helix });
 
 exports.init = async (app) => {
 
-	app.get('/ping-twitch', async (req, res, next) => {
-		res.json(helix.isAuthenticated());
-	});
-
 	app.post('/users', async (req, res, next) => {
 
 		const { ids, usernames } = req.body;

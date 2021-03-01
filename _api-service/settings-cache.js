@@ -7,12 +7,8 @@
 
 const databaseAPI = require('./database-api');
 
-const { getUsers, getUsersByIds, isTwitchAuthenticated } = require('./request-api');
-const SETTINGS_POLL_INTERVAL_MS = 1000 * 20;// 1000 * 60 * 2;
 let cache = {};
 let idMap = {};
-
-let interval = null;
 
 const initialValues = [];
 
@@ -33,6 +29,23 @@ const initialValues = [];
 
 	bitcornPerChannelpointsRedemption(decimal)
 	enableChannelpoints(bool)
+
+
+	bitcornhubFunded: true
+	bitcornPerBit: 321.00
+	bitcornPerChannelpointsRedemption: 0.4
+	bitcornPerDonation: 123.00
+	enableChannelpoints: true
+	enableTransactions: true
+	ircEventPayments: true
+	ircTarget: "120524051"
+	minRainAmount: 1.00000000
+	minTipAmount: 1.0000000
+	rainAlgorithm: 1 		// 0=last chatters 1=random chatters
+	twitchRefreshToken: ""
+	twitchUsername: ""
+	txCooldownPerUser: 0.00
+	txMessages: true
 }
 */
 
@@ -71,48 +84,9 @@ async function requestSettings() {
 	clear();
 	setItems(results);
 
-	let isAuthenticated = await isTwitchAuthenticated();
-	while(!isAuthenticated) {
-		await new Promise(resolve => setTimeout(resolve, 1000));
-		//console.log('isTwitchAuthenticated');
-		isAuthenticated = await isTwitchAuthenticated();
-	}
-
-	const items = initialValues.filter(x => x.ircTarget);
-	const promises = [];
-	while (items.length > 0) {
-		const userIds = items.splice(0, 100);
-		promises.push(new Promise(async (resolve) => {
-			const { data } = await getUsersByIds(userIds.map(x => x.ircTarget));
-			resolve(data.map(x => ({ id: x.id, login: x.login })));
-		}));
-	}
-	const presults = await Promise.all(promises);
-	const concatResults = [].concat.apply([], presults);
-
-	for (let i = 0; i < concatResults.length; i++) {
-		const item = concatResults[i];
-		idMap[item.login] = item.id;
-	}
-
-}
-
-async function setChannelsIds(channels) {
-	const items = channels.filter(x => x);
-	const promises = [];
-	while (items.length > 0) {
-		const usernames = items.splice(0, 100);
-		promises.push(new Promise(async (resolve) => {
-			const { data } = await getUsers(usernames.map(x => cleanChannelName(x)));
-			resolve(data.map(x => ({ id: x.id, login: x.login })));
-		}));
-	}
-	const presults = await Promise.all(promises);
-	const results = [].concat.apply([], presults);
-
-	for (let i = 0; i < results.length; i++) {
-		const item = results[i];
-		idMap[item.login] = item.id;
+	for (let i = 0; i < initialValues.length; i++) {
+		const item = initialValues[i];
+		idMap[item.twitchUsername] = item.ircTarget;
 	}
 }
 
@@ -133,6 +107,5 @@ module.exports = {
 	getItem,
 	requestSettings,
 	getChannelId,
-	setChannelsIds,
 	getChannels
 };

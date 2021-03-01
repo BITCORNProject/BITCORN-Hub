@@ -3,7 +3,6 @@
 const _ = require('lodash');
 const Queue = require('./utils/queue');
 const databaseApi = require('../../_api-service/database-api');
-const { setChannelsIds } = require('../../_api-service/settings-cache');
 
 const SETTINGS_JOIN_LEAVE_INTERVAL_MS = 1000 * 60 * 0.5;
 const MAX_JOIN_RETRIES = 5;
@@ -73,8 +72,6 @@ module.exports = async (tmi) => {
 
 		const channels = await databaseApi.makeRequestChannels();
 
-		await setChannelsIds(channels);
-
 		addChannels(channels);
 		joinChannelsFromQueue(tmi);
 
@@ -88,8 +85,6 @@ module.exports = async (tmi) => {
 
 			const leaves = _.difference(joinedChannels, channels);
 			const joins = _.difference(channels, joinedChannels);
-
-			await setChannelsIds(joins);
 
 			await partChannels(tmi, leaves);
 

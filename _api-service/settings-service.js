@@ -14,82 +14,75 @@ const settingsCache = require('./settings-cache');
 
 const app = express();
 
-if (module === require.main) {
-
-	(async () => {
-		try {
-
-			const ws = new WebSocket("wss://bitcorndataservice-dev.azurewebsites.net/bitcornhub");
-
-			ws.on('open', function open() {
-				console.log('Connected');
-			});
-
-			ws.on('message', function incoming(data) {
-				console.log(data);
 /*
 
 {
    "type":"update-livestream-settings",
    "payload":{
-      "MinRainAmount":100000000.00000000,
-      "MinTipAmount":10000000.00000000,
-      "RainAlgorithm":1,
-      "IrcTarget":"120524051",
-      "TxMessages":true,
-      "TxCooldownPerUser":0.00000000,
-      "EnableTransactions":true,
-      "IrcEventPayments":true,
-      "BitcornhubFunded":true,
-      "BitcornPerBit":321.00000000,
-      "BitcornPerDonation":123.00000000,
-      "TwitchRefreshToken":"<token>",
-      "BitcornPerChannelpointsRedemption":0.40000000,
-      "EnableChannelpoints":true
+      "minRainAmount": 100000000.00000000,
+      "minTipAmount": 10000000.00000000,
+      "rainAlgorithm": 1,
+      "ircTarget": "120524051",
+      "txMessages": true,
+      "txCooldownPerUser": 0.00000000,
+      "enableTransactions": true,
+      "ircEventPayments": true,
+      "bitcornhubFunded": true,
+      "bitcornPerBit": 321.00000000,
+      "bitcornPerDonation": 123.00000000,
+      "twitchRefreshToken": "<token>",
+      "bitcornPerChannelpointsRedemption": 0.40000000,
+      "enableChannelpoints": true
    }
 }
 
-*/				
-				io.emit('settings-updated', { settings: {} });
-			});
+*/
+if (module === require.main) {
 
-			ws.onerror = (error) => {
-				console.log(error);
-			};
+	(async () => {
+		try {
+
+			await settingsCache.requestSettings();
 
 			const { server } = await new Promise(async (resolve) => {
 				const server = app.listen(process.env.SETTINGS_SERVER_PORT, () => {
-					resolve({ server: server, port: server.address().port });
+					resolve({ server: server });
 				});
 			});
 			console.log({ success: true, message: `Settings server listening on port ${process.env.SETTINGS_SERVER_PORT}` })
 
 			const io = require('socket.io')(server);
 
-			const connections = new Map();
+			const ws = new WebSocket("wss://bitcorndataservice-dev.azurewebsites.net/bitcornhub");
+
+			ws.onopen = () => {
+				console.log('connected to bitcorndataservice api');
+			};
+
+			ws.onmessage = ({ data }) => {
+				const obj = JSON.parse(data);
+				console.log(obj);
+				io.emit(obj.type, { payload: obj.payload });
+			};
+
+			ws.onerror = (error) => {
+				console.log(error);
+			};
+
+			ws.onclose = () => {
+				console.log('bitcorndataservice api closed the connection');
+			};
 
 			io.on('connection', async (socket) => {
-				if (connections.has(socket.id) === true) {
-					console.log("PROBLEM ???");
-				}
 
-				console.log({ message: `client connection: ${socket.handshake.headers.referer}` });
-				app.emit('connection', socket);
+				console.log({ message: `client connection: ${socket.id}` });
 
-				connections.set(socket.id, socket);
+				io.emit('update-all-settings', { settings: settingsCache.getItems() });
 
 				socket.on('disconnect', async () => {
-					if (connections.has(socket.id) === true) {
-						connections.delete(socket.id);
-					}
-					console.log({ message: `disconnect: ${socket.handshake.headers.referer}` });
-					app.emit('disconnect', socket);
+					console.log({ message: `disconnect: ${socket.id}` });
 				});
 			});
-
-			await settingsCache.requestSettings();
-			
-			io.emit('settings-updated', { settings: settingsCache.getItems() });
 
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in settings server main` });

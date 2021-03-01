@@ -24,21 +24,18 @@ if (module === require.main) {
 
 			const io = require('socket.io')(server);
 
-			const connections = new Map();
+			const connections = {}
 
 			io.on('connection', async (socket) => {
-				if (connections.has(socket.id) === true) {
-					console.log("PROBLEM ???");
-				}
 
 				console.log({ message: `client connection: ${socket.handshake.headers.referer}` });
 				app.emit('connection', socket);
 
-				connections.set(socket.id, socket);
+				connections[socket.id] = socket;
 
 				socket.on('disconnect', async () => {
-					if (connections.has(socket.id) === true) {
-						connections.delete(socket.id);
+					if (connections[socket.id]) {
+						delete connections[socket.id];
 					}
 					console.log({ message: `disconnect: ${socket.handshake.headers.referer}` });
 					app.emit('disconnect', socket);
@@ -47,29 +44,27 @@ if (module === require.main) {
 			});
 
 			await helix.init(app);
-			await pubsub.init();
+			await pubsub.init(app);
 
-			const WebSocket = require('ws');
-			const ws = new WebSocket(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`);
-
-			ws.on('open', function open() {
-				console.log('Connected');
-			});
-
-			ws.on('message', function incoming(data) {
-				console.log(data);
-			});
-
-			/*const settings_io = require('socket.io-client')(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`);
+			const settings_io = require('socket.io-client')(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`);
 			const settingsSocket = settings_io.connect();
 			settingsSocket.on('connect', async () => {
+				console.log('connected to settings service server');
 
-				settingsSocket.on('settings-updated', res => {
-					console.log(res);
+				settingsSocket.on('update-all-settings', req => {
+					console.log(req);
+					app.emit('update-all-settings', { settings: req.settings });
 				});
-				console.log('settings service server connected');
 
-			});*/
+				settingsSocket.on('update-livestream-settings', async req => {
+					console.log(req);
+					app.emit('update-livestream-settings', { payload: req.payload });
+				});
+
+				settingsSocket.on('disconnect', () => {
+					console.log('disconnected settings service server');
+				});
+			});
 
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in main` });

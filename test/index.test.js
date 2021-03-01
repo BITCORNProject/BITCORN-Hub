@@ -28,7 +28,7 @@ async function _wait(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-describe.skip('#mocha promises', function () {
+describe('#mocha promises', function () {
 	const isMock = false;
 
 	this.timeout(20000);
@@ -344,7 +344,7 @@ describe.skip('#mocha promises', function () {
 		expect(result.status).to.be.equal(500);
 	});
 
-	it('should get api response for tipcorn amountOfTipsSent:', async () => {
+	it('should get api response for tipcorn amountOfTipsSent', async () => {
 		const twitchId = '75987197';
 		const body = {
 			from: `twitch|75987197`,
@@ -1336,27 +1336,4 @@ describe('#mocha promises', function () {
 		expect(clayman666Id).to.be.equal('120524051');
 	});
 
-	it('should set channel id(s) to settings cache', async () => {
-		settingsCache.clear();
-
-		settingsCache.setItems([
-			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId('#clayman666') })
-		]);
-
-		const target = '#callowcreation';
-		settingsCache.setItems([
-			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId(target) })
-		]);
-
-		await settingsCache.setChannelsIds([target]);
-
-		const clayman666Id = await settingsCache.getChannelId('#clayman666');
-		const callowcreationId = await settingsCache.getChannelId('#callowcreation');
-		const nonameId = await settingsCache.getChannelId('#no-name');
-
-		expect(callowcreationId).to.be.equal('75987197');
-		expect(clayman666Id).to.be.equal('120524051');
-		expect(nonameId).to.be.equal(undefined);
-
-	});
 });
