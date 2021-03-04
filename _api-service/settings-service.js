@@ -14,6 +14,14 @@ const settingsCache = require('./settings-cache');
 
 const app = express();
 
+let io = null;
+let ws = null;
+
+const MAX_BACKOFF_THRESHOLD_INTERVAL = 1000 * 60 * 2;
+const BACKOFF_THRESHOLD_INTERVAL = 1000 * 3; //ms to wait before reconnect
+
+let reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
+
 /*
 
 {
@@ -37,12 +45,61 @@ const app = express();
 }
 
 */
+
+function reconnect() {
+	console.log({ success: false, resultText: 'INFO: Reconnecting...' });
+	reconnectInterval = floorJitterInterval(reconnectInterval * 2);
+	if (reconnectInterval > MAX_BACKOFF_THRESHOLD_INTERVAL) {
+		reconnectInterval = floorJitterInterval(MAX_BACKOFF_THRESHOLD_INTERVAL);
+	}
+	setTimeout(connect, reconnectInterval);
+}
+
+function floorJitterInterval(interval) {
+	return Math.floor(interval + Math.random() * 1000);
+}
+
+function connect() {
+	
+	ws = new WebSocket("wss://bitcorndataservice-dev.azurewebsites.net/bitcornhub");
+
+	ws.onerror = (error) => {
+		console.log(error);
+	};
+
+	ws.onopen = () => {
+		console.log('INFO: connected to bitcorndataservice api');
+		reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
+	};
+
+	ws.onmessage = ({ data }) => {
+		const obj = JSON.parse(data);
+		console.log(obj);
+
+		switch (obj.type) {
+			case 'initial-settings':
+				settingsCache.applySettings(obj.payload);
+				io.emit(obj.type, { payload: settingsCache.getItems() });
+				break;
+			case 'update-livestream-settings':
+				settingsCache.applyItem(obj.payload);
+				io.emit(obj.type, { payload: settingsCache.getItem(obj.payload.twitchUsername) });
+				break;
+			default:
+				break;
+		}
+	};
+
+	ws.onclose = () => {
+		console.log('INFO: bitcorndataservice api closed the connection');
+		reconnect();
+	};
+}
+
 if (module === require.main) {
 
 	(async () => {
 		try {
-
-			await settingsCache.requestSettings();
 
 			const { server } = await new Promise(async (resolve) => {
 				const server = app.listen(process.env.SETTINGS_SERVER_PORT, () => {
@@ -51,33 +108,17 @@ if (module === require.main) {
 			});
 			console.log({ success: true, message: `Settings server listening on port ${process.env.SETTINGS_SERVER_PORT}` })
 
-			const io = require('socket.io')(server);
+			connect();
 
-			const ws = new WebSocket("wss://bitcorndataservice-dev.azurewebsites.net/bitcornhub");
-
-			ws.onopen = () => {
-				console.log('connected to bitcorndataservice api');
-			};
-
-			ws.onmessage = ({ data }) => {
-				const obj = JSON.parse(data);
-				console.log(obj);
-				io.emit(obj.type, { payload: obj.payload });
-			};
-
-			ws.onerror = (error) => {
-				console.log(error);
-			};
-
-			ws.onclose = () => {
-				console.log('bitcorndataservice api closed the connection');
-			};
+			io = require('socket.io')(server);
 
 			io.on('connection', async (socket) => {
 
 				console.log({ message: `client connection: ${socket.id}` });
 
-				io.emit('update-all-settings', { settings: settingsCache.getItems() });
+				socket.on('initial-settings-request', () => {
+					io.emit('initial-settings', { payload: settingsCache.getItems() });
+				});
 
 				socket.on('disconnect', async () => {
 					console.log({ message: `disconnect: ${socket.id}` });

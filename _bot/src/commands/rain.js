@@ -11,7 +11,7 @@ const databaseAPI = require('../../../_api-service/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const math = require('../utils/math');
-const settingsHelper = require('../../../_api-service/settings-helper');
+const settingsHelper = require('../../settings-helper');
 const activityTracker = require('../../src/activity-tracker');
 
 module.exports = {
@@ -30,10 +30,11 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
+		//if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const rain_amount = cleanParams.amount(event.args.params[0]);
 		const rain_user_count = cleanParams.amount(event.args.params[1]);
+		const ircMessage = event.args.params.slice(2).join(' ');
 
 		const minRainAmount = settingsHelper.getRainMinAmount(event.channel, serverSettings.MIN_RAIN_AMOUNT);
 
@@ -64,6 +65,7 @@ module.exports = {
 
 			const body = {
 				ircTarget: event.channelId,
+				ircMessage: ircMessage,
 				from: `twitch|${event.twitchId}`,
 				to: recipients,
 				platform: 'twitch',

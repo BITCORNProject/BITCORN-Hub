@@ -7,6 +7,7 @@ chai.use(chaiAsPromised);
 
 const fetch = require('node-fetch');
 const _ = require('lodash');
+const settingsHelper = require('../_bot/settings-helper');
 
 function log(...value) {
 	//console.log(value);
@@ -84,8 +85,10 @@ describe('#mocha promises', function () {
 		messenger.whisperQueue.client = tmi.whisperClient;
 
 		activityTracker.init();
-		
+
 		await settingsCache.requestSettings();
+
+		settingsHelper.setItemsObjects(settingsCache.getItems());
 
 		await tmi.connectToChat();
 
@@ -144,10 +147,6 @@ describe('#mocha promises', function () {
 				expect(Object.keys(values[i])).to.include(key);
 			});
 		}
-	});
-
-	it('should tmi has commands', () => {
-		expect(commander.commands().map(x => x.configs.name)).to.include('bitcorn');
 	});
 
 	it('should create commands map from commands array', () => {
@@ -647,6 +646,7 @@ describe('#mocha promises', function () {
 
 		const obj = await tmi.onMessageHandler(target, user, msg, self);
 		expect(obj.success).to.be.equal(true);
+		console,log(obj.configs.name);
 		expect(obj.configs.name).to.be.equal('help');
 	});
 
@@ -742,7 +742,7 @@ describe('#mocha promises', function () {
 		const username = 'wollac';
 		const amount = 50;
 		const result = await messenger.handleTipRewards('Subscribing', channel, username, amount);
-		if(result.success === false) {
+		if (result.success === false) {
 			expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
 		} else {
 			expect(result.success).to.be.equal(true);
@@ -861,7 +861,7 @@ describe('#mocha promises', function () {
 		}
 	});
 
-	it.skip('should send sub ticker payout request', async () => {
+	it('should send sub ticker payout request', async () => {
 
 		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 		let viewers = [];
@@ -912,7 +912,7 @@ describe('#mocha promises', function () {
 		expect(results).to.be.greaterThan(0);
 	});
 
-	it.skip('should perform sub ticker after init', async () => {
+	it('should perform sub ticker after init', async () => {
 		const subTicker = require('../_bot/src/sub-ticker');
 
 		const channel = 'callowcreation';
@@ -1010,7 +1010,7 @@ describe('#mocha promises', function () {
 describe('#mocha promises', function () {
 
 	const settingsCache = require('../_api-service/settings-cache');
-	const settingsHelper = require('../_api-service/settings-helper');
+	const settingsHelper = require('../_bot/settings-helper');
 
 	const serverSettings = require('../settings/server-settings.json');
 
@@ -1029,7 +1029,8 @@ describe('#mocha promises', function () {
 			"ircEventPayments": false,
 			"bitcornhubFunded": false,
 			"bitcornPerBit": 0.10000000,
-			"bitcornPerDonation": 420.00000000
+			"bitcornPerDonation": 420.00000000,
+			"twitchUsername": '#callowcreation'
 		};
 
 		for (const key in items) {
@@ -1041,10 +1042,11 @@ describe('#mocha promises', function () {
 	}
 
 	before(async () => {
+		await settingsCache.requestSettings();
+
+		settingsHelper.setItemsObjects(settingsCache.getItems());
 
 		activityTracker.init();
-
-		return settingsCache.requestSettings();
 	});
 
 	it('should store livestreams settings to cache', async () => {
@@ -1111,12 +1113,16 @@ describe('#mocha promises', function () {
 			"enableTransactions": false
 		});
 		settingsCache.setItems([sitems]);
-	
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
+
 		expect(settingsHelper.transactionsDisabled(target)).to.be.equal(true);
 	});
 
 	it('should convert minutes to ms', () => {
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 
 		expect(settingsHelper.convertMinsToMs(1.5)).to.be.equal(90000);
 		expect(settingsHelper.convertMinsToMs(0.5)).to.be.equal(30000);
@@ -1132,9 +1138,14 @@ describe('#mocha promises', function () {
 		const sitems = mockSettingsCacheResponse({
 			"ircTarget": settingsCache.getChannelId(target),
 			"txCooldownPerUser": 0.10000000,
-			"enableTransactions": false
+			"enableTransactions": false,
+			"twitchUsername": target
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		const result = settingsHelper.getChannelCooldown(target, 20);
 
@@ -1144,7 +1155,7 @@ describe('#mocha promises', function () {
 	it('should get irc output enabled from settings', async () => {
 
 		const MESSAGE_TYPE = require('../_bot/src/utils/message-type');
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 
 		const target = '#callowcreation';
 
@@ -1155,6 +1166,10 @@ describe('#mocha promises', function () {
 			"txMessages": false
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		let result = settingsHelper.getIrcMessageTarget(target, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE);
 
@@ -1167,7 +1182,7 @@ describe('#mocha promises', function () {
 
 	it('should user correct $rain algorithm', async () => {
 
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 		const target = '#callowcreation';
 
 		{ // algo 0
@@ -1179,6 +1194,10 @@ describe('#mocha promises', function () {
 				"txMessages": false
 			});
 			settingsCache.setItems([sitems]);
+			const item = {
+				[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+			};
+			settingsHelper.setItemsObjects(item);
 
 			const activeChatters = activityTracker.getValues();
 			const items = activeChatters[target].filter(x => x);
@@ -1197,6 +1216,10 @@ describe('#mocha promises', function () {
 				"txMessages": false
 			});
 			settingsCache.setItems([sitems]);
+			const item = {
+				[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+			};
+			settingsHelper.setItemsObjects(item);
 
 			const activeChatters = activityTracker.getValues();
 			const items = activeChatters[target].filter(x => x);
@@ -1212,7 +1235,7 @@ describe('#mocha promises', function () {
 
 	it('should get tipcorn min amount from settings helper', async () => {
 
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 		const target = '#callowcreation';
 		const minTipAmount = 16.55;
 
@@ -1223,6 +1246,10 @@ describe('#mocha promises', function () {
 			"ircTarget": settingsCache.getChannelId(target)
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		const result = settingsHelper.getTipcornMinAmount(target, serverSettings.MIN_TIPCORN_AMOUNT);
 
@@ -1231,7 +1258,7 @@ describe('#mocha promises', function () {
 
 	it('should get rain min amount from settings helper', async () => {
 
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 		const target = '#callowcreation';
 		const minRainAmount = 5.55555;
 
@@ -1242,6 +1269,10 @@ describe('#mocha promises', function () {
 			"ircTarget": settingsCache.getChannelId(target)
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		const result = settingsHelper.getRainMinAmount(target, serverSettings.MIN_RAIN_AMOUNT);
 
@@ -1251,7 +1282,7 @@ describe('#mocha promises', function () {
 
 	it('should get irc event payments from settings helper', async () => {
 
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 		const target = '#callowcreation';
 
 		settingsCache.clear();
@@ -1260,6 +1291,10 @@ describe('#mocha promises', function () {
 			"ircEventPayments": true
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		const result = settingsHelper.getIrcEventPayments(target, false);
 
@@ -1268,7 +1303,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcornhub funded from settings helper', async () => {
 
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 		const target = '#callowcreation';
 
 		settingsCache.clear();
@@ -1277,6 +1312,10 @@ describe('#mocha promises', function () {
 			"bitcornhubFunded": true
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		const result = settingsHelper.getBitcornhubFunded(target, false);
 
@@ -1285,7 +1324,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcorn per bit from settings helper', async () => {
 
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 		const target = '#callowcreation';
 		const bitcornPerBit = 6.66;
 
@@ -1295,6 +1334,10 @@ describe('#mocha promises', function () {
 			"bitcornPerBit": bitcornPerBit
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		const result = settingsHelper.getBitcornPerBit(target, 1.000000);
 
@@ -1303,7 +1346,7 @@ describe('#mocha promises', function () {
 
 	it('should get bitcorn per donation from settings helper', async () => {
 
-		const settingsHelper = require('../_api-service/settings-helper');
+		const settingsHelper = require('../_bot/settings-helper');
 		const target = '#clayman666';
 		const bitcornPerDonation = 4.20;
 
@@ -1314,6 +1357,10 @@ describe('#mocha promises', function () {
 			"bitcornPerDonation": bitcornPerDonation
 		});
 		settingsCache.setItems([sitems]);
+		const item = {
+			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
+		};
+		settingsHelper.setItemsObjects(item);
 
 		const result = settingsHelper.getBitcornPerDonation(target, 4.000000);
 
@@ -1328,6 +1375,11 @@ describe('#mocha promises', function () {
 			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId('#clayman666') }),
 			mockSettingsCacheResponse({ "ircTarget": settingsCache.getChannelId('#callowcreation') })
 		]);
+		const items = {
+			[settingsCache.getChannelId('#clayman666')]: settingsCache.getItem('#clayman666'),
+			[settingsCache.getChannelId('#callowcreation')]: settingsCache.getItem('#callowcreation'),
+		};
+		settingsHelper.setItemsObjects(items);
 
 		const clayman666Id = await settingsCache.getChannelId('#clayman666');
 		const callowcreationId = await settingsCache.getChannelId('#callowcreation');

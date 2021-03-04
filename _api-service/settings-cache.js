@@ -57,7 +57,6 @@ function setItems(items) {
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
 		const channel = cleanChannelName(item.ircTarget);
-		if (cache[channel]) continue;
 		cache[channel] = item;
 		initialValues.push(item);
 	}
@@ -65,6 +64,10 @@ function setItems(items) {
 
 function getItems() {
 	return cache;
+}
+
+function getInitialValues() {
+	return initialValues;
 }
 
 function clear() {
@@ -78,12 +81,31 @@ function getItem(channel) {
 }
 
 async function requestSettings() {
-	
 	const results = await databaseAPI.makeRequestChannelsSettings();
+	applySettings(results);
+}
 
+function applySettings(results) {
 	clear();
 	setItems(results);
+	mapNamesToIds();
+}
 
+function applyItem(result) {
+
+	const filtered = initialValues.filter(x => x.ircTarget !== result.ircTarget);
+
+	initialValues.splice(0);
+	initialValues.push(...filtered);
+
+	delete idMap[result.twitchUsername];
+	delete cache[result.ircTarget];
+
+	setItems([result]);
+	mapNamesToIds();
+}
+
+function mapNamesToIds() {
 	for (let i = 0; i < initialValues.length; i++) {
 		const item = initialValues[i];
 		idMap[item.twitchUsername] = item.ircTarget;
@@ -103,9 +125,12 @@ module.exports = {
 	cleanChannelName,
 	setItems,
 	getItems,
+	getInitialValues,
 	clear,
 	getItem,
 	requestSettings,
+	applySettings,
+	applyItem,
 	getChannelId,
 	getChannels
 };

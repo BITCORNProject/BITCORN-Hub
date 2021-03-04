@@ -40,7 +40,7 @@ function heartbeat() {
 		console.log({ resultText: `heartbeat: ws.readyState === ${ws.readyState}` });
 		return;
 	}
-	if (pongWaitTimeout !== null) {
+	if (pongWaitTimeout) {
 		console.log({ resultText: `Waiting... sent heartbeat #${heartbeatCounter}` });
 		return;
 	}
@@ -71,65 +71,79 @@ function listen(topic, access_token) {
 	ws.send(JSON.stringify(message));
 }
 
+function unlisten(topic, access_token) {
+	if (ws.readyState !== WebSocket.OPEN) {
+		console.log({ success: true, resultText: `unlisten: ws.readyState === ${ws.readyState}` });
+		return;
+	}
+	const message = {
+		type: 'UNLISTEN',
+		nonce: nonce(15),
+		data: {
+			topics: [topic],
+			auth_token: access_token
+		}
+	};
+	console.log({ success: true, resultText: 'SENT: ' + JSON.stringify(message) });
+	ws.send(JSON.stringify(message));
+}
+
 function connect() {
-	return new Promise((resolve, reject) => {
 
-		let heartbeatHandle;
+	let heartbeatHandle;
 
-		ws = new WebSocket('wss://pubsub-edge.twitch.tv');
+	ws = new WebSocket('wss://pubsub-edge.twitch.tv');
 
-		ws.onopen = (event) => {
-			console.log({ success: true, resultText: 'INFO: Socket Opened', event });
-			heartbeat();
-			heartbeatHandle = setInterval(heartbeat, HEARTBEAT_INTERVAL);
+	ws.onopen = (event) => {
+		console.log({ success: true, resultText: 'INFO: Socket Opened', event });
+		heartbeat();
+		heartbeatHandle = setInterval(heartbeat, HEARTBEAT_INTERVAL);
 
-			reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
-			resolve();
-		};
+		reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
+	};
 
-		ws.onerror = (error) => {
-			console.log({ success: false, resultText: `ERR #${heartbeatCounter}: ${JSON.stringify(error)}` });
-			reject();
-		};
+	ws.onerror = (error) => {
+		console.log({ success: false, resultText: `ERR #${heartbeatCounter}: ${JSON.stringify(error)}` });
+	};
 
-		ws.onmessage = async (event) => {
-			const value = JSON.parse(event.data);
-			switch (value.type) {
-				case 'MESSAGE':
+	ws.onmessage = async (event) => {
+		const value = JSON.parse(event.data);
+		console.log({ value });
+		switch (value.type) {
+			case 'MESSAGE':
 
-					const message = JSON.parse(value.data.message);
-					const id = message.data.redemption.id;
-					if (recentIds.includes(id)) break;
-					recentIds.push(id);
-					const reward = message.data.redemption.reward;
-					const user = message.data.redemption.user;
+				const message = JSON.parse(value.data.message);
+				const id = message.data.redemption.id;
+				if (recentIds.includes(id)) break;
+				recentIds.push(id);
+				const reward = message.data.redemption.reward;
+				const user = message.data.redemption.user;
 
-					console.log(message.data);
-					break;
-				case 'PONG':
-					console.log({ success: true, resultText: `${pingpongLog} RECV #${heartbeatCounter}: ${JSON.stringify(value)}` });
-					clearPongWaitTimeout();
-					break;
-				case 'RECONNECT':
-					reconnect();
-					break;
-				case 'RESPONSE':
-					if (value.error) {
-						console.log(value);
-					}
-					break;
-				default:
-					console.log({ success: false, resultText: `Unknown state: ${value.type}`, value });
-					break;
-			}
-		};
+				console.log(message.data);
+				break;
+			case 'PONG':
+				console.log({ success: true, resultText: `${pingpongLog} RECV #${heartbeatCounter}: ${JSON.stringify(value)}` });
+				clearPongWaitTimeout();
+				break;
+			case 'RECONNECT':
+				reconnect();
+				break;
+			case 'RESPONSE':
+				if (value.error) {
+					console.log(value);
+				}
+				break;
+			default:
+				console.log({ success: false, resultText: `Unknown state: ${value.type}`, value });
+				break;
+		}
+	};
 
-		ws.onclose = () => {
-			console.log({ success: false, resultText: 'INFO: Socket Closed' });
-			clearInterval(heartbeatHandle);
-			reconnect();
-		};
-	});
+	ws.onclose = (event) => {
+		console.log({ success: false, resultText: 'INFO: Socket Closed', event });
+		clearInterval(heartbeatHandle);
+		reconnect();
+	};
 }
 
 function reconnect() {
@@ -147,7 +161,7 @@ function floorJitterInterval(interval) {
 }
 
 function clearPongWaitTimeout() {
-	if (pongWaitTimeout !== null) {
+	if (pongWaitTimeout) {
 		clearTimeout(pongWaitTimeout);
 		pongWaitTimeout = null;
 	}
@@ -155,20 +169,46 @@ function clearPongWaitTimeout() {
 
 async function init(app) {
 
-	app.on('update-all-settings', async ({ settings }) => {
+	app.on('update-livestream-settings', async ({ payload }) => {
+
+		const { twitchRefreshToken, ircTarget } = payload;
+
+		if (!twitchRefreshToken) return;
+
+		const tokenStore = helix.getTokenStore(ircTarget);
+		const items = [];
+		if (!tokenStore && twitchRefreshToken) {
+			const authenticated = await helix.refreshAccessToken({
+				refresh_token: twitchRefreshToken,
+				client_id: process.env.API_CLIENT_ID,
+				client_secret: process.env.API_SECRET
+			});
+			items.push([{ authenticated, ircTarget }]);
+			helix.storeTokens(items);
+		} else {
+			items.push({ authenticated: tokenStore, ircTarget });
+		}
+
+		await handleChannelPointsCard(items, { [ircTarget]: payload });
+
+		await sendTokensToApi(items, { [ircTarget]: payload });
+	});
+
+	app.on('initial-settings', async ({ settings: payload }) => {
 
 		try {
 
-			console.log({ settings });
+			console.log({ payload });
 			const promises = [];
 
-			for (const channel in settings) {
+			for (const channel in payload) {
 
-				const { twitchRefreshToken, ircTarget, enableChannelpoints } = settings[channel];
+				const { twitchRefreshToken, ircTarget, enableChannelpoints } = payload[channel];
 
 				promises.push(new Promise(async resolve => {
 
 					if (twitchRefreshToken && enableChannelpoints) {
+
 						const authenticated = await helix.refreshAccessToken({
 							refresh_token: twitchRefreshToken,
 							client_id: process.env.API_CLIENT_ID,
@@ -183,7 +223,8 @@ async function init(app) {
 								expires_in: 0,
 								scope: null,
 								token_type: null
-							}, ircTarget
+							},
+							ircTarget
 						});
 					}
 				}));
@@ -193,38 +234,13 @@ async function init(app) {
 
 			helix.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
 
-			await connect();
-
-			for (let i = 0; i < items.length; i++) {
-				const { authenticated, ircTarget: channelId } = items[i];
-
-				const item = settings[channelId];
-
-				if (!item) throw new Error('Go, no go ??????');
-
-				if (item.enableChannelpoints === true) {
-					const data = {
-						title: 'BITCORNx420-TEST', // maybe title in dashboard settings
-						cost: 420, // to be replaced by dashboard settings from the api
-						prompt: `Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio.`,
-						should_redemptions_skip_request_queue: true
-					};
-					const result = await helix.createCustomReward(channelId, data);
-
-					if (authenticated.access_token) {
-						listen(`channel-points-channel-v1.${channelId}`, authenticated.access_token);
-						console.log(`listening: ${channelId}`);
-					} else {
-						console.log({ result });
-					}
-				} else {
-					// remove existing channel point cards
-				}
+			connect();
+			while (ws.readyState !== WebSocket.OPEN) {
+				await new Promise(resolve => setTimeout(resolve, 100));
 			}
+			await handleChannelPointsCard(items, payload);
 
-			// make sure these are sent back to the api
-			const response = await databaseAPI.sendTokens({ tokens: items.map(({ authenticated: { refresh_token }, ircTarget }) => ({ refreshToken: refresh_token, ircTarget })) });
-			console.log({ response });
+			await sendTokensToApi(items, payload);
 
 		} catch (error) {
 			console.log(error);
@@ -238,8 +254,85 @@ async function init(app) {
 	// }
 }
 
+async function handleChannelPointsCard(items, payload) {
+	const cardTitle = '(TESTMODE) BITCORNx420-TEST (TESTMODE)';
+
+	for (let i = 0; i < items.length; i++) {
+		// for (const key in items[i]) {
+		// 	if (items[i].hasOwnProperty(key)) {
+		// 		const strangeItem = items[i][key];
+		// 		console.log({ key, strangeItem });
+		// 	}
+		// }
+		const { authenticated, ircTarget } = items[i];
+
+		const item = payload[ircTarget];
+
+		if (!item) throw new Error('Go, no go ??????');
+
+		const result = await helix.getCustomReward(ircTarget).catch(e => {
+			console.log(e);
+		});
+
+		console.log({ item, ircTarget, result });
+
+
+		if (item.enableChannelpoints === true && !result.error) {
+
+			const reward = result.data ? result.data.find(x => x.title === cardTitle) : null;
+
+			if (!reward) {
+				const data = {
+					title: cardTitle,
+					cost: 420,
+					prompt: `(TESTMODE) Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio. (TESTMODE)`,
+					should_redemptions_skip_request_queue: true
+				};
+
+				const results = await helix.createCustomReward(ircTarget, data).catch(e => {
+					console.log(e);
+				});
+
+				if (results) {
+					if (results.data) {
+						item.channelPointCardId = results.data[0].id;
+					} else if (results.error) {
+					}
+				}
+			} else {
+				item.channelPointCardId = reward.id;
+			}
+
+			if (item.channelPointCardId) {
+				listen(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
+				console.log(`listening: ${ircTarget}`);
+			}
+		} else {
+
+			if (authenticated.access_token) {
+				if (item.channelPointCardId) {
+					const deleteCustomReward = await helix.deleteCustomReward(ircTarget, item.channelPointCardId);
+					console.log({ deleteCustomReward });
+				}
+				unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
+				console.log(`stopped listening: ${ircTarget}`);
+			} else {
+				//console.log({ result });
+			}
+		}
+	}
+}
+
+async function sendTokensToApi(items, payload) {
+	const tokens = items.map(({ authenticated: { refresh_token }, ircTarget }) => {
+		return ({ refreshToken: refresh_token, ircTarget, channelPointCardId: payload[ircTarget].channelPointCardId });
+	});
+	const response = await databaseAPI.sendTokens({ tokens: tokens });
+	console.log({ response });
+}
+
 module.exports = {
 	init,
-	connect,
-	listen
+	connect
 };
+

@@ -6,6 +6,8 @@
 
 require('dotenv').config();
 
+const io_client = require('socket.io-client');
+
 const app = require('./source/config/express');
 
 const helix = require('./source/config/authorize/helix');
@@ -40,32 +42,39 @@ if (module === require.main) {
 					console.log({ message: `disconnect: ${socket.handshake.headers.referer}` });
 					app.emit('disconnect', socket);
 				});
-
 			});
 
 			await helix.init(app);
 			await pubsub.init(app);
 
-			const settings_io = require('socket.io-client')(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`);
+			const settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
+				reconnection: true
+			});
 			const settingsSocket = settings_io.connect();
-			settingsSocket.on('connect', async () => {
-				console.log('connected to settings service server');
 
-				settingsSocket.on('update-all-settings', req => {
-					console.log(req);
-					app.emit('update-all-settings', { settings: req.settings });
-				});
-
-				settingsSocket.on('update-livestream-settings', async req => {
-					console.log(req);
-					app.emit('update-livestream-settings', { payload: req.payload });
-				});
-
-				settingsSocket.on('disconnect', () => {
-					console.log('disconnected settings service server');
-				});
+			settingsSocket.on('error', e => {
+				console.log(`error settings service server id: ${settingsSocket.id}`, e);
 			});
 
+			settingsSocket.on('connect', () => {
+				console.log(`connected to settings service server id: ${settingsSocket.id}`);
+
+				settingsSocket.emit('initial-settings-request');
+			});
+
+			settingsSocket.on('initial-settings', req => {
+				console.log(req);
+				app.emit('initial-settings', { settings: req.payload });
+			});
+
+			settingsSocket.on('update-livestream-settings', async req => {
+				console.log(req);
+				app.emit('update-livestream-settings', { payload: req.payload });
+			});
+
+			settingsSocket.on('disconnect', () => {
+				console.log(`disconnected settings service server id: ${settingsSocket.id}`);
+			});
 		} catch (error) {
 			console.log({ success: false, message: `Uncaught error in main` });
 			console.error(error);

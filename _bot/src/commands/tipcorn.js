@@ -12,7 +12,7 @@ const { getUsers } = require('../../../_api-service/request-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
-const settingsHelper = require('../../../_api-service/settings-helper');
+const settingsHelper = require('../../settings-helper');
 const commandHelper = require('../shared-lib/command-helper');
 
 module.exports = {
@@ -32,10 +32,11 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
+		//if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
+		const ircMessage = event.args.params.slice(2).join(' ');
 
 		const minTipAmount = settingsHelper.getTipcornMinAmount(event.channel, serverSettings.MIN_TIPCORN_AMOUNT);
 
@@ -64,6 +65,7 @@ module.exports = {
 			} else {
 				const body = {
 					ircTarget: event.channelId,
+					ircMessage: ircMessage,
 					from: `twitch|${event.twitchId}`,
 					to: `twitch|${user.id}`,
 					platform: 'twitch',

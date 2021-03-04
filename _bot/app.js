@@ -4,11 +4,14 @@ if (module === require.main) {
 
 	(async () => {
 
+		const settingsHelper = require('./settings-helper');
 		const tmi = require('./src/tmi');
 		const messenger = require('./src/messenger');
 		const activityTracker = require('./src/activity-tracker');
 		const subTicker = require('./src/sub-ticker');
-		const roomVisitor = require('./src/room-visitor');		
+		const roomVisitor = require('./src/room-visitor');
+
+		settingsHelper.init();
 
 		tmi.registerEvents();
 
@@ -31,6 +34,6 @@ if (module === require.main) {
 
 		const roomResult = await roomVisitor(tmi);
 		console.log(roomResult);
-
+		
 	})();
 }

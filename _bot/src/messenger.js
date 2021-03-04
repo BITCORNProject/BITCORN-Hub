@@ -4,7 +4,7 @@ const { is_production } = require('../../prod');
 const serverSettings = require('../../settings/server-settings.json');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
-const settingsHelper = require('../../_api-service/settings-helper');
+const settingsHelper = require('../settings-helper');
 
 const { getChannelId, cleanChannelName } = require('../../_api-service/settings-cache');
 

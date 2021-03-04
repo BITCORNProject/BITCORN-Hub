@@ -6,7 +6,7 @@ const messenger = require('./messenger');
 const commander = require('./commander');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
-const settingsHelper = require('../../_api-service/settings-helper');
+const settingsHelper = require('../settings-helper');
 
 
 const commandsMap = commander.createCommandsMap();
