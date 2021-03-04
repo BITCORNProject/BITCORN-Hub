@@ -41,34 +41,38 @@ function setItemsObjects(items) {
 }
 
 function init() {
-	const settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
-		reconnection: true
-	});
-	const settingsSocket = settings_io.connect({ reconnect: true });
-
-	settingsSocket.on('error', e => {
-		console.log(`error settings service server id: ${settingsSocket.id}`, e);
-	});
-
-	settingsSocket.on('connect', async () => {
-		console.log(`connected to settings service server id: ${settingsSocket.id}`);
-
-		settingsSocket.emit('initial-settings-request');
-	});
-
-	settingsSocket.on('initial-settings', req => {
-		console.log(req);
-		setItemsObjects(req.payload);
-	});
-
-	settingsSocket.on('update-livestream-settings', async req => {
-		console.log(req);
-		setItemsObjects({ [req.payload.ircTarget]: req.payload });
-	});
-
-	settingsSocket.on('disconnect', () => {
-		console.log(`disconnected settings service server id: ${settingsSocket.id}`);
-	});
+	try {
+		const settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
+			reconnection: true
+		});
+		const settingsSocket = settings_io.connect({ reconnect: true });
+	
+		settingsSocket.on('error', e => {
+			console.log(`error settings service server id: ${settingsSocket.id}`, e);
+		});
+	
+		settingsSocket.on('connect', async () => {
+			console.log(`connected to settings service server id: ${settingsSocket.id}`);
+	
+			settingsSocket.emit('initial-settings-request');
+		});
+	
+		settingsSocket.on('initial-settings', req => {
+			console.log(req);
+			setItemsObjects(req.payload);
+		});
+	
+		settingsSocket.on('update-livestream-settings', async req => {
+			console.log(req);
+			setItemsObjects({ [req.payload.ircTarget]: req.payload });
+		});
+	
+		settingsSocket.on('disconnect', () => {
+			console.log(`disconnected settings service server`);
+		});
+	} catch (err) {
+		console.error(err);
+	}
 }
 
 function convertMinsToMs(minutes) {

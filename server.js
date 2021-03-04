@@ -47,7 +47,7 @@ if (module === require.main) {
 			await helix.init(app);
 			await pubsub.init(app);
 
-			const settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
+			const settings_io = io_client(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
 				reconnection: true
 			});
 			const settingsSocket = settings_io.connect();

@@ -47,7 +47,7 @@ let reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
 */
 
 function reconnect() {
-	console.log({ success: false, resultText: 'INFO: Reconnecting...' });
+	console.log({ message: 'INFO: Reconnecting...' });
 	reconnectInterval = floorJitterInterval(reconnectInterval * 2);
 	if (reconnectInterval > MAX_BACKOFF_THRESHOLD_INTERVAL) {
 		reconnectInterval = floorJitterInterval(MAX_BACKOFF_THRESHOLD_INTERVAL);
@@ -60,21 +60,21 @@ function floorJitterInterval(interval) {
 }
 
 function connect() {
-	
+
 	ws = new WebSocket("wss://bitcorndataservice-dev.azurewebsites.net/bitcornhub");
 
 	ws.onerror = (error) => {
-		console.log(error);
+		console.log({ message: error.message, error, timestamp: new Date().toLocaleTimeString() });
 	};
 
 	ws.onopen = () => {
-		console.log('INFO: connected to bitcorndataservice api');
+		console.log({ message: 'connected to bitcorndataservice api', timestamp: new Date().toLocaleTimeString() });
 		reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
 	};
 
 	ws.onmessage = ({ data }) => {
 		const obj = JSON.parse(data);
-		console.log(obj);
+		console.log({ obj, timestamp: new Date().toLocaleTimeString() });
 
 		switch (obj.type) {
 			case 'initial-settings':
@@ -91,7 +91,7 @@ function connect() {
 	};
 
 	ws.onclose = () => {
-		console.log('INFO: bitcorndataservice api closed the connection');
+		console.log({ message: 'bitcorndataservice api closed the connection', timestamp: new Date().toLocaleTimeString() });
 		reconnect();
 	};
 }
@@ -106,7 +106,7 @@ if (module === require.main) {
 					resolve({ server: server });
 				});
 			});
-			console.log({ success: true, message: `Settings server listening on port ${process.env.SETTINGS_SERVER_PORT}` })
+			console.log({ message: `Settings server listening on port ${process.env.SETTINGS_SERVER_PORT}`, timestamp: new Date().toLocaleTimeString() })
 
 			connect();
 
@@ -114,20 +114,19 @@ if (module === require.main) {
 
 			io.on('connection', async (socket) => {
 
-				console.log({ message: `client connection: ${socket.id}` });
+				console.log({ message: `client connection: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 
 				socket.on('initial-settings-request', () => {
 					io.emit('initial-settings', { payload: settingsCache.getItems() });
 				});
 
 				socket.on('disconnect', async () => {
-					console.log({ message: `disconnect: ${socket.id}` });
+					console.log({ message: `disconnect: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 				});
 			});
 
 		} catch (error) {
-			console.log({ success: false, message: `Uncaught error in settings server main` });
-			console.error(error);
+			console.log({ message: `Uncaught error in settings server main`, error, timestamp: new Date().toLocaleTimeString() });
 		}
 	})();
 }

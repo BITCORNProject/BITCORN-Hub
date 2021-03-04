@@ -95,6 +95,9 @@ function connect() {
 	ws = new WebSocket('wss://pubsub-edge.twitch.tv');
 
 	ws.onopen = (event) => {
+		if(ws && ws.readyState !== WebSocket.OPEN) {
+			ws.close();
+		}
 		console.log({ success: true, resultText: 'INFO: Socket Opened', event });
 		heartbeat();
 		heartbeatHandle = setInterval(heartbeat, HEARTBEAT_INTERVAL);
@@ -103,12 +106,12 @@ function connect() {
 	};
 
 	ws.onerror = (error) => {
-		console.log({ success: false, resultText: `ERR #${heartbeatCounter}: ${JSON.stringify(error)}` });
+		console.log({ success: false, resultText: `ERR #${heartbeatCounter}`, error });
 	};
 
 	ws.onmessage = async (event) => {
 		const value = JSON.parse(event.data);
-		console.log({ value });
+		// console.log({ value });
 		switch (value.type) {
 			case 'MESSAGE':
 
@@ -118,6 +121,12 @@ function connect() {
 				recentIds.push(id);
 				const reward = message.data.redemption.reward;
 				const user = message.data.redemption.user;
+
+				/*
+					these redemption request may need to be queued and managed incase of failure
+					the redemption is FULFILLED so the channel points are use when the
+						'Redeem' button is clicked
+				*/
 
 				console.log(message.data);
 				break;
