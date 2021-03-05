@@ -8,113 +8,92 @@ require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const io_client = require('socket.io-client');
 
 const twitchRequest = require('./src/twitch-request');
 
-const io_client = require('socket.io-client');
+const pubsub = require('./src/pubsub');
 
-const app = require('./source/config/express');
+const app = express();
+app.use(bodyParser.json());
 
-const helix = require('./source/config/authorize/helix');
-const pubsub = require('./source/config/authorize/pubsub');
+app.get('/auth/helix/callback', async (req, res) => {
+	try {
+		await twitchRequest.authorize(req.query.code, req.query.state);
+		console.log('authenticated');
+		res.status(200).send('Twitch API authenticated.  You can close this browser window/tab.');
+	} catch (err) {
+		console.error(err);
+		res.status(500).send(err.message);
+	}
+});
 
-if (module === require.main) {
+app.post('/users', async (req, res) => {
 
-	(async () => {
-		const app = express();
-		app.use(bodyParser.json());
+	try {
+		const { ids, usernames } = req.body;
 
-		app.get('/auth/helix/callback', async (req, res) => {
-			try {
-				await twitchRequest.authorize(req.query.code, req.query.state);
-				console.log('authenticated');
-				res.status(200).send('Twitch API authenticated.  You can close this browser window/tab.');
-			} catch (err) {
-				console.error(err);
-				res.status(500).send(err.message);
-			}
-		});
-
-		app.post('/users', async (req, res) => {
-
-			const { ids, usernames } = req.body;
-	
-			if (ids) {
-				const resUsers = await twitchRequest.getUsersByIds(ids);
-				res.json(resUsers);
-			} else if (usernames) {
-				const resUsers = await twitchRequest.getUsersByName(usernames);
-				res.json(resUsers);
-			} else {
-				res.status(404).end();
-			}
-		});
-
-		try {
-
-			const server = app.listen(process.env.TWITCH_SERVER_PORT || 7000, () => {
-				const port = server.address().port;
-				console.log(`App listening on port ${port}`);
-		
-				const open = require('open');
-				open(twitchRequest.authorizeUrl);
-			});
-			console.log({ success: true, message: `Server listening on port ${process.env.TWITCH_SERVER_PORT}` })
-
-			/*const io = require('socket.io')(server);
-
-			const connections = {}
-
-			io.on('connection', async (socket) => {
-
-				console.log({ message: `client connection: ${socket.handshake.headers.referer}` });
-				app.emit('connection', socket);
-
-				connections[socket.id] = socket;
-
-				socket.on('disconnect', async () => {
-					if (connections[socket.id]) {
-						delete connections[socket.id];
-					}
-					console.log({ message: `disconnect: ${socket.handshake.headers.referer}` });
-					app.emit('disconnect', socket);
-				});
-			});*/
-
-			await helix.init(app);
-			await pubsub.init(app);
-
-			const settings_io = io_client(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
-				reconnection: true
-			});
-			const settingsSocket = settings_io.connect();
-
-			settingsSocket.on('error', e => {
-				console.log(`error settings service server id: ${settingsSocket.id}`, e);
-			});
-
-			settingsSocket.on('connect', () => {
-				console.log(`connected to settings service server id: ${settingsSocket.id}`);
-
-				settingsSocket.emit('initial-settings-request');
-			});
-
-			settingsSocket.on('initial-settings', req => {
-				console.log(req);
-				app.emit('initial-settings', { settings: req.payload });
-			});
-
-			settingsSocket.on('update-livestream-settings', async req => {
-				console.log(req);
-				app.emit('update-livestream-settings', { payload: req.payload });
-			});
-
-			settingsSocket.on('disconnect', () => {
-				console.log(`disconnected settings service server id: ${settingsSocket.id}`);
-			});
-		} catch (error) {
-			console.log({ success: false, message: `Uncaught error in main` });
-			console.error(error);
+		if (ids) {
+			const resUsers = await twitchRequest.getUsersByIds(ids);
+			res.json(resUsers);
+		} else if (usernames) {
+			const resUsers = await twitchRequest.getUsersByName(usernames);
+			res.json(resUsers);
+		} else {
+			res.status(404).end();
 		}
+	} catch (err) {
+		console.error(err);
+		res.status(500).send(err.message);
+	}
+
+});
+
+try {
+	(async () => {
+
+		const server = app.listen(process.env.TWITCH_SERVER_PORT || 7000, () => {
+			const port = server.address().port;
+			console.log(`App listening on port ${port}`);
+	
+			const open = require('open');
+			open(twitchRequest.authorizeUrl);
+		});
+		console.log({ success: true, message: `Server listening on port ${process.env.TWITCH_SERVER_PORT}` })
+
+		
+		await pubsub.init(app);
+
+		const settings_io = io_client(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
+			reconnection: true
+		});
+		const settingsSocket = settings_io.connect();
+	
+		settingsSocket.on('error', e => {
+			console.log(`error settings service server id: ${settingsSocket.id}`, e);
+		});
+	
+		settingsSocket.on('connect', () => {
+			console.log(`connected to settings service server id: ${settingsSocket.id}`);
+	
+			settingsSocket.emit('initial-settings-request');
+		});
+	
+		settingsSocket.on('initial-settings', req => {
+			console.log(req);
+			app.emit('initial-settings', { settings: req.payload });
+		});
+	
+		settingsSocket.on('update-livestream-settings', async req => {
+			console.log(req);
+			app.emit('update-livestream-settings', { payload: req.payload });
+		});
+	
+		settingsSocket.on('disconnect', () => {
+			console.log(`disconnected settings service server id: ${settingsSocket.id}`);
+		});
 	})();
+} catch (error) {
+	console.log({ success: false, message: `Uncaught error in main` });
+	console.error(error);
 }

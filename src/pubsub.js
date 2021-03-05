@@ -6,9 +6,9 @@
 
 const WebSocket = require('ws');
 
-const helix = require('./helix');
+const twitchRequest = require('./twitch-request');
 
-const databaseAPI = require('../../../_api-service/database-api');
+const databaseAPI = require('../_api-service/database-api');
 
 const recentIds = [];
 let pingpongLog = '';
@@ -186,16 +186,16 @@ async function init(app) {
 
 		if (!twitchRefreshToken) return;
 
-		const tokenStore = helix.getTokenStore(ircTarget);
+		const tokenStore = twitchRequest.getTokenStore(ircTarget);
 		const items = [];
 		if (!tokenStore && twitchRefreshToken) {
-			const authenticated = await helix.refreshAccessToken({
+			const authenticated = await twitchRequest.refreshAccessToken({
 				refresh_token: twitchRefreshToken,
 				client_id: process.env.API_CLIENT_ID,
 				client_secret: process.env.API_SECRET
 			});
 			items.push([{ authenticated, ircTarget }]);
-			helix.storeTokens(items);
+			twitchRequest.storeTokens(items);
 		} else {
 			items.push({ authenticated: tokenStore, ircTarget });
 		}
@@ -219,8 +219,7 @@ async function init(app) {
 				promises.push(new Promise(async resolve => {
 
 					if (twitchRefreshToken && enableChannelpoints) {
-
-						const authenticated = await helix.refreshAccessToken({
+						const authenticated = await twitchRequest.refreshAccessToken({
 							refresh_token: twitchRefreshToken,
 							client_id: process.env.API_CLIENT_ID,
 							client_secret: process.env.API_SECRET
@@ -243,7 +242,7 @@ async function init(app) {
 
 			const items = await Promise.all(promises);
 
-			helix.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
+			twitchRequest.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
 
 			while (ws.readyState !== WebSocket.OPEN) {
 				await new Promise(resolve => setTimeout(resolve, 100));
@@ -280,7 +279,7 @@ async function handleChannelPointsCard(items, payload) {
 
 		if (!item) throw new Error('Go, no go ??????');
 
-		const result = await helix.getCustomReward(ircTarget).catch(e => {
+		const result = await twitchRequest.getCustomReward(ircTarget).catch(e => {
 			console.log(e);
 		});
 
@@ -299,7 +298,7 @@ async function handleChannelPointsCard(items, payload) {
 					should_redemptions_skip_request_queue: true
 				};
 
-				const results = await helix.createCustomReward(ircTarget, data).catch(e => {
+				const results = await twitchRequest.createCustomReward(ircTarget, data).catch(e => {
 					console.log(e);
 				});
 
@@ -321,7 +320,7 @@ async function handleChannelPointsCard(items, payload) {
 
 			if (authenticated.access_token) {
 				if (item.channelPointCardId) {
-					const deleteCustomReward = await helix.deleteCustomReward(ircTarget, item.channelPointCardId);
+					const deleteCustomReward = await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
 					console.log({ deleteCustomReward });
 				}
 				unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
