@@ -28,29 +28,19 @@ async function authorize(code, state) {
 	await twitchOAuth.fetchToken(code);
 }
 
-async function getUserExtensions(user_id) {
-	return twitchOAuth.getEndpoint(`${HELIX_API_BASE_PATH}/users/extensions?user_id=${user_id}`);
-}
-
 async function getUsersByName(usernames) {
 	const params = usernames.map(x => `login=${x}`).join('&');
 	return twitchOAuth.getEndpoint(`${HELIX_API_BASE_PATH}/users?${params}`);
 }
 
-async function getUserById(user_id) {
-	return twitchOAuth.getEndpoint(`${HELIX_API_BASE_PATH}/users?id=${user_id}`);
-}
-
 async function getUsersByIds(user_ids) {
-	const params = user_ids.map(x => `id=${x}`)
+	const params = user_ids.map(x => `id=${x}`);
 	return twitchOAuth.getEndpoint(`${HELIX_API_BASE_PATH}/users?${params.join('&')}`);
 }
 
 module.exports = {
 	authorizeUrl: twitchOAuth.authorizeUrl,
 	authorize,
-	getUserById,
 	getUsersByIds,
-	getUserExtensions,
 	getUsersByName
 };

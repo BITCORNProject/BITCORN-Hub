@@ -117,7 +117,7 @@ if (module === require.main) {
 				console.log({ message: `client connection: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 
 				socket.on('initial-settings-request', () => {
-					io.emit('initial-settings', { payload: settingsCache.getItems() });
+					socket.emit('initial-settings', { payload: settingsCache.getItems() });
 				});
 
 				socket.on('disconnect', async () => {
