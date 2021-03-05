@@ -153,7 +153,7 @@ function connect() {
 }
 
 function reconnect() {
-	if(ws && ws.readyState !== WebSocket.OPEN) {
+	if (ws && ws.readyState !== WebSocket.OPEN) {
 		ws.close();
 	}
 	clearPongWaitTimeout();
@@ -194,7 +194,7 @@ async function init(app) {
 				client_id: process.env.API_CLIENT_ID,
 				client_secret: process.env.API_SECRET
 			});
-			items.push([{ authenticated, ircTarget }]);
+			items.push({ authenticated, ircTarget });
 			twitchRequest.storeTokens(items);
 		} else {
 			items.push({ authenticated: tokenStore, ircTarget });
@@ -273,62 +273,72 @@ async function handleChannelPointsCard(items, payload) {
 		// 		console.log({ key, strangeItem });
 		// 	}
 		// }
-		const { authenticated, ircTarget } = items[i];
+		try {
+			const { authenticated, ircTarget } = items[i];
 
-		const item = payload[ircTarget];
+			const item = payload[ircTarget];
 
-		if (!item) throw new Error('Go, no go ??????');
+			if (!item) throw new Error('Go, no go ??????');
 
-		const result = await twitchRequest.getCustomReward(ircTarget).catch(e => {
+			console.log({ item, ircTarget });
+
+			if (item.enableChannelpoints === true) {
+
+				await twitchRequest.getCustomReward(ircTarget)
+					.then(result => createListenCustomReward(result, cardTitle, item, authenticated))
+					.catch(e => {
+						console.log(e);
+					});
+			} else {
+
+				if (authenticated.access_token) {
+					if (item.channelPointCardId) {
+						const deleteCustomReward = await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
+						console.log({ deleteCustomReward });
+					}
+					unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
+					console.log(`stopped listening: ${ircTarget}`);
+				} else {
+					console.log({ message: 'Can not unlistenn no access token', item });
+				}
+			}
+		} catch (error) {
+			console.log(items[i]);
+			console.error(error);
+		}
+	}
+}
+
+async function createListenCustomReward(result, cardTitle, item, authenticated) {
+
+	const reward = result.data ? result.data.find(x => x.title === cardTitle) : null;
+
+	if (!reward) {
+		const data = {
+			title: cardTitle,
+			cost: 420,
+			prompt: `(TESTMODE) Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio. (TESTMODE)`,
+			should_redemptions_skip_request_queue: true
+		};
+
+		const results = await twitchRequest.createCustomReward(item.ircTarget, data).catch(e => {
 			console.log(e);
 		});
 
-		console.log({ item, ircTarget, result });
-
-
-		if (item.enableChannelpoints === true && !result.error) {
-
-			const reward = result.data ? result.data.find(x => x.title === cardTitle) : null;
-
-			if (!reward) {
-				const data = {
-					title: cardTitle,
-					cost: 420,
-					prompt: `(TESTMODE) Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio. (TESTMODE)`,
-					should_redemptions_skip_request_queue: true
-				};
-
-				const results = await twitchRequest.createCustomReward(ircTarget, data).catch(e => {
-					console.log(e);
-				});
-
-				if (results) {
-					if (results.data) {
-						item.channelPointCardId = results.data[0].id;
-					} else if (results.error) {
-					}
-				}
-			} else {
-				item.channelPointCardId = reward.id;
-			}
-
-			if (item.channelPointCardId) {
-				listen(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
-				console.log(`listening: ${ircTarget}`);
-			}
-		} else {
-
-			if (authenticated.access_token) {
-				if (item.channelPointCardId) {
-					const deleteCustomReward = await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
-					console.log({ deleteCustomReward });
-				}
-				unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
-				console.log(`stopped listening: ${ircTarget}`);
-			} else {
-				//console.log({ result });
+		if (results) {
+			if (results.data) {
+				item.channelPointCardId = results.data[0].id;
+			} else if (results.error) {
+				console.error(results.error);
 			}
 		}
+	} else {
+		item.channelPointCardId = reward.id;
+	}
+
+	if (item.channelPointCardId) {
+		listen(`channel-points-channel-v1.${item.ircTarget}`, authenticated.access_token);
+		console.log(`listening: ${item.ircTarget}`);
 	}
 }
 

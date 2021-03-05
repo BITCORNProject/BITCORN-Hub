@@ -19,7 +19,11 @@ app.use(bodyParser.json());
 
 app.get('/auth/helix/callback', async (req, res) => {
 	try {
+		
 		await twitchRequest.authorize(req.query.code, req.query.state);
+		
+		await pubsub.init(app);
+
 		console.log('authenticated');
 		res.status(200).send('Twitch API authenticated.  You can close this browser window/tab.');
 	} catch (err) {
@@ -60,9 +64,6 @@ try {
 			open(twitchRequest.authorizeUrl);
 		});
 		console.log({ success: true, message: `Server listening on port ${process.env.TWITCH_SERVER_PORT}` })
-
-		
-		await pubsub.init(app);
 
 		const settings_io = io_client(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
 			reconnection: true
