@@ -4,7 +4,6 @@
 
 "use strict";
 
-const util = require('util');
 const databaseAPI = require('../../../_api-service/database-api');
 const MESSAGE_TYPE = require('../utils/message-type');
 const settingsHelper = require('../../settings-helper');
@@ -37,7 +36,7 @@ module.exports = {
 		} else if (result.status && result.status === 204) {
 
 			success = true;
-			message = util.format('Hey!  @%s you are not registered please visit the sync site https://bitcornfarms.com/', event.twitchUsername);
+			message = `Hey!  @${event.twitchUsername} you are not registered please visit the sync site https://bitcornfarms.com/`;
 
 		} else if (result.status && result.status === 420) {
 
@@ -45,11 +44,11 @@ module.exports = {
 
 		} else if (result.status || result.code) {
 
-			message = util.format(`ERROR: ${result.status || result.code} - Hmmmmm Bitcorn Fail`, event.twitchUsername);
+			message = `ERROR: ${result.status || result.code} - Hmmmmm Bitcorn Fail @${event.twitchUsername}`;
 
 		} else {
 			success = true;
-			message = util.format(`Howdy BITCORN Farmer! You have amassed %s $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: %s`, result.balance, result.cornAddy);
+			message = `Howdy BITCORN Farmer! You have amassed ${result.balance} $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: ${result.cornAddy}`;
 		}
 
 		return { 

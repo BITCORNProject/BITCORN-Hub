@@ -107,7 +107,7 @@ async function handleTipRewards(type, channel, username, amount) {
 
 	const commandHelper = require('./shared-lib/command-helper');
 	const databaseAPI = require('../../_api-service/database-api');
-	const { getUsers } = require('../../_api-service/request-api');
+	const { getUsers } = require('./request-api');
 
 	const { data: [toUser] } = await getUsers([username]);
 

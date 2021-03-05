@@ -4,8 +4,6 @@
 
 "use strict";
 
-const util = require('util');
-
 const serverSettings = require('../../../settings/server-settings.json');
 const databaseAPI = require('../../../_api-service/database-api');
 const cleanParams = require('../utils/clean-params');
@@ -30,7 +28,7 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		//if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const rain_amount = cleanParams.amount(event.args.params[0]);
 		const rain_user_count = cleanParams.amount(event.args.params[1]);
@@ -45,13 +43,13 @@ module.exports = {
 			rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS) {
 			if (rain_amount < minRainAmount) {
 				success = true;
-				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, minRainAmount, this.configs.example);
+				message = `Can not ${this.configs.name} an amount that small minimum amount ${minRainAmount} CORN - ${this.configs.example}`;
 			} else if (rain_user_count > databaseAPI.MAX_RAIN_USERS) {
 				success = true;
-				message = util.format(`Number of people you can %s to is 1 to %d`, this.configs.name, databaseAPI.MAX_RAIN_USERS);
+				message = `Number of people you can ${this.configs.name} to is 1 to ${databaseAPI.MAX_RAIN_USERS}`;
 			} else if (rain_amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 				success = true;
-				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);
+				message = `Can not ${this.configs.name} an amount that large - ${event.twitchUsername}`;
 			} else {
 				message = 'Invalid input';
 			}
@@ -122,7 +120,7 @@ module.exports = {
 					message = `${successMessage}${(failedItems.length > 0 ? failedMessage : '')}`;
 				} else if (successItems.length == 0 && failedItems.length > 0) {
 					if (results[0].from.balance < rain_amount) {
-						message = util.format(`DogePls SourPls %s You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`, event.twitchUsername);
+						message = `DogePls SourPls ${event.twitchUsername} You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`;
 					} else {
 						const successMessage = `${event.twitchUsername} FeelsRainMan`;
 						const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
@@ -137,7 +135,7 @@ module.exports = {
 				}
 
 			} else {
-				message = util.format(`ERROR: ${results.status || results.code} - Hmmmmm Rain Fail`, event.twitchUsername, amount);
+				message = `ERROR: ${results.status || results.code} - Hmmmmm Rain Fail ${event.twitchUsername} ${amount}`;
 			}
 		}
 

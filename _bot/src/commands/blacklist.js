@@ -4,10 +4,8 @@
 
 "use strict";
 
-const util = require('util');
-
 const databaseAPI = require('../../../_api-service/database-api');
-const { getUsers } = require('../../../_api-service/request-api');
+const { getUsers } = require('../request-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 
@@ -32,8 +30,8 @@ module.exports = {
 
 		const { data: [user] } = await getUsers([twitchUsername]);
 
-		if (user.error) {
-			message = JSON.stringify(user);
+		if (!user) {
+			message = `User not ${twitchUsername} found`;
 		} else {
 
 			const result = await databaseAPI.requestBlacklist(event.twitchId, user.id);
@@ -49,10 +47,10 @@ module.exports = {
 			} else if (result.Value) {
 
 				success = true;
-				message = util.format('User %s was added to the blacklist', result.Value.twitchUsername);
+				message = `User ${result.Value.twitchUsername} was added to the blacklist`;
 
 			} else {
-				message = util.format(`ERROR: ${result.status || result.code} - Hmmmmm Blacklist Fail`, twitchUsername, amount);
+				message = `ERROR: ${result.status || result.code} - Hmmmmm Blacklist Fail ${twitchUsername}`;
 			}
 		}
 

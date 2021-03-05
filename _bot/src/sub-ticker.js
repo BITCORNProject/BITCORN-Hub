@@ -3,9 +3,8 @@ const fetch = require('node-fetch');
 
 const serverSettings = require('../../settings/server-settings.json');
 const databaseAPI = require('../../_api-service/database-api');
-const { getUsers, getChatters } = require('../../_api-service/request-api');
-const { getChannelId } = require('../../_api-service/settings-cache');
-const settingsCache = require('../../_api-service/settings-cache');
+const { getUsers, getChatters } = require('./request-api');
+const settingsHelper = require('../settings-helper');
 
 const timeValues = {
 	SECOND: 1000,
@@ -41,7 +40,7 @@ async function performPayout(channel) {
 	const presults = await Promise.all(promises);
 	chatters = [].concat.apply([], presults);
 
-	const channelId = await getChannelId(channel);
+	const channelId = await settingsHelper.getMapChannelId(channel);
 	const body = {
 		ircTarget: channelId,
 		chatters: chatters,
@@ -56,11 +55,11 @@ async function init() {
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
-		const channels = Object.values(settingsCache.getChannels());
+		const channels = Object.values(settingsHelper.getChannelNames());
 		const promises = channels.map(performPayout);
 		const result = await Promise.all(promises);
 		console.log({ result });
-	}, timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
+	}, 1000 * 30 /*timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER*/);
 
 	return { success: true };
 }

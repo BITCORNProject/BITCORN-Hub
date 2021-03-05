@@ -3,7 +3,6 @@
 */
 
 "use strict";
-const util = require('util');
 
 const databaseAPI = require('../../../_api-service/database-api');
 const cleanParams = require('../utils/clean-params');
@@ -66,12 +65,12 @@ module.exports = {
 					message = 'Invalid BITCORN address';
 				} else if (result.txid) {
 					success = true;
-					message = util.format(`You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://www.coinexplorer.net/CORN/transaction/%s`, result.txid);
+					message = `You have successfully withdrawn BITCORN off of your Twitch Wallet Address: https://www.coinexplorer.net/CORN/transaction/${result.txid}`;
 				} else if(result.balance < amount) {
 					success = true;
 					message = `You failed to withdraw: insufficient funds`;
 				} else {
-					message = util.format(`ERROR: ${results.status || results.code} - Hmmmmm Withdraw Fail`, event.twitchUsername, amount);
+					message = `ERROR: ${results.status || results.code} - Hmmmmm Withdraw Fail ${event.twitchUsername} ${amount}`;
 				}
 			}
 		}

@@ -47,7 +47,7 @@ describe('#mocha promises', function () {
 	const serverSettings = require('../settings/server-settings.json');
 
 	const settingsCache = require('../_api-service/settings-cache');
-	const { getUsers, getChatters } = require('../_api-service/request-api');
+	const { getUsers, getChatters } = require('../_bot/src/request-api');
 
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
@@ -136,7 +136,7 @@ describe('#mocha promises', function () {
 			const msg = command.configs.example;
 			const self = false;
 
-			callbackPromises.push(tmi.onMessageHandler(target, user, msg, self));
+			callbackPromises.push(tmi.onMessageHandler(target, user, msg, self).catch(console.log));
 		}
 
 		const values = await Promise.all(callbackPromises);
@@ -151,7 +151,7 @@ describe('#mocha promises', function () {
 
 	it('should create commands map from commands array', () => {
 		const commandsMap = commander.createCommandsMap();
-		const commandNames = ['bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist'];
+		const commandNames = ['tts', 'bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist'];
 		const mapped = commandNames.map(commander.commandName);
 		expect(commandsMap).to.have.all.keys(mapped);
 	});
@@ -321,7 +321,7 @@ describe('#mocha promises', function () {
 		const msg = commander.commandName('$bitcorn');
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 		expect(obj.success).to.be.equal(true);
 		expect(obj.configs.name).to.be.equal('bitcorn');
 	});
@@ -416,7 +416,7 @@ describe('#mocha promises', function () {
 		const msg = `${commander.commandName('$tipcorn')} @mattras007 101`;
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 
 		if (obj.success === false) {
 			log('Command Output =>>>>>>>>>> ', obj);
@@ -437,7 +437,7 @@ describe('#mocha promises', function () {
 		const msg = `${commander.commandName('$tipcorn')} @mattras007 4200000001`;
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 
 		if (obj.success === false) {
 			log('Command Output =>>>>>>>>>> ', obj);
@@ -457,7 +457,7 @@ describe('#mocha promises', function () {
 		const msg = `${commander.commandName('$tipcorn')} @3412q 103`;
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 
 		if (obj.success === false) {
 			log('Command Output =>>>>>>>>>> ', obj);
@@ -637,6 +637,19 @@ describe('#mocha promises', function () {
 		expect(obj.success).to.be.equal(true);
 	});
 
+	/*it('should invoke tts with message handler', async () => {
+
+		const target = '#callowcreation';
+		const user = { 'room-id': broadcaster.id, 'user-id': '120614707', username: 'callowcreation' };
+		const msg = `${commander.commandName('$tts')} testing, testing 123`;
+		const self = false;
+
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
+		expect(obj.success).to.be.equal(true);
+		console,log(obj.configs.name);
+		expect(obj.configs.name).to.be.equal('tts');
+	});*/
+
 	it('should invoke help with message handler', async () => {
 
 		const target = '#callowcreation';
@@ -644,7 +657,7 @@ describe('#mocha promises', function () {
 		const msg = commander.commandName('$help');
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 		expect(obj.success).to.be.equal(true);
 		console,log(obj.configs.name);
 		expect(obj.configs.name).to.be.equal('help');
@@ -694,7 +707,7 @@ describe('#mocha promises', function () {
 		const msg = `${commander.commandName('$rain')} 24.999999999999999 10`;
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 
 		if (obj.success === false) {
 			log('Command Output =>>>>>>>>>> ', obj, obj.message);
@@ -715,7 +728,7 @@ describe('#mocha promises', function () {
 		const msg = `${commander.commandName('$rain')} 4200000024.999999999999999 10`;
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 
 		if (obj.success === false) {
 			log('Command Output =>>>>>>>>>> ', obj, obj.message);
@@ -950,7 +963,7 @@ describe('#mocha promises', function () {
 		const msg = '$raintest 24.999999999999999 10';
 		const self = false;
 
-		const obj = await tmi.onMessageHandler(target, user, msg, self);
+		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 
 		if (obj.success === false) {
 			log('Command Output =>>>>>>>>>> ', obj, obj.message);

@@ -222,6 +222,7 @@ DatabaseEndpoint.prototype.errorlogRequest = async function (sendData) {
 // v3
 DatabaseEndpoint.prototype.request = function (twitchId, body) {
 	return {
+		tts: () => this._criticalArbitraryRequest(this.db_endpoints.tts, twitchId, body),
 		rain: () => this._criticalArbitraryRequest(this.db_endpoints.rain, twitchId, body),
 		tipcorn: () => this._criticalArbitraryRequest(this.db_endpoints.tipcorn, twitchId, body),
 		bitcorn: () => this.makeRequestUser(`${this.db_endpoints.bitcorn}${twitchId}`, null),

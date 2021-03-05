@@ -40,39 +40,13 @@ function setItemsObjects(items) {
 	}
 }
 
-function init() {
-	try {
-		const settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
-			reconnection: true
-		});
-		const settingsSocket = settings_io.connect({ reconnect: true });
-	
-		settingsSocket.on('error', e => {
-			console.log(`error settings service server id: ${settingsSocket.id}`, e);
-		});
-	
-		settingsSocket.on('connect', async () => {
-			console.log(`connected to settings service server id: ${settingsSocket.id}`);
-	
-			settingsSocket.emit('initial-settings-request');
-		});
-	
-		settingsSocket.on('initial-settings', req => {
-			console.log(req);
-			setItemsObjects(req.payload);
-		});
-	
-		settingsSocket.on('update-livestream-settings', async req => {
-			console.log(req);
-			setItemsObjects({ [req.payload.ircTarget]: req.payload });
-		});
-	
-		settingsSocket.on('disconnect', () => {
-			console.log(`disconnected settings service server`);
-		});
-	} catch (err) {
-		console.error(err);
-	}
+function getChannelNames() {
+	return Object.keys(idMap);
+}
+
+function getMapChannelId(channel) {
+	channel = cleanChannelName(channel);
+	return idMap[channel];
 }
 
 function convertMinsToMs(minutes) {
@@ -147,10 +121,47 @@ function getBitcornPerDonation(target, bitcornPerDonation) {
 	return item ? item.bitcornPerDonation : bitcornPerDonation;
 }
 
+function init() {
+	try {
+		const settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
+			reconnection: true
+		});
+		const settingsSocket = settings_io.connect({ reconnect: true });
+	
+		settingsSocket.on('error', e => {
+			console.log(`error settings service server id: ${settingsSocket.id}`, e);
+		});
+	
+		settingsSocket.on('connect', async () => {
+			console.log(`connected to settings service server id: ${settingsSocket.id}`);
+	
+			settingsSocket.emit('initial-settings-request');
+		});
+	
+		settingsSocket.on('initial-settings', req => {
+			console.log(req);
+			setItemsObjects(req.payload);
+		});
+	
+		settingsSocket.on('update-livestream-settings', async req => {
+			console.log(req);
+			setItemsObjects({ [req.payload.ircTarget]: req.payload });
+		});
+	
+		settingsSocket.on('disconnect', () => {
+			console.log(`disconnected settings service server`);
+		});
+	} catch (err) {
+		console.error(err);
+	}
+}
+
 module.exports = {
 	OUTPUT_TYPE,
 	init,
 	setItemsObjects,
+	getChannelNames,
+	getMapChannelId,
 	convertMinsToMs,
 	transactionsDisabled,
 	txDisabledOutput,

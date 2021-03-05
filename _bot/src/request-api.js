@@ -13,8 +13,8 @@ const localUrl = `http://localhost:${process.env.TWITCH_SERVER_PORT}`;
 
 async function getRequest(url) {
 	return fetch(url)
-		.then(res => res.json())
-		.catch(err => err);
+	.then(res => res.json())
+	.catch(err => err);
 }
 
 async function postRequest(url, data) {

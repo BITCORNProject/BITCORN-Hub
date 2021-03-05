@@ -95,9 +95,6 @@ function connect() {
 	ws = new WebSocket('wss://pubsub-edge.twitch.tv');
 
 	ws.onopen = (event) => {
-		if(ws && ws.readyState !== WebSocket.OPEN) {
-			ws.close();
-		}
 		console.log({ success: true, resultText: 'INFO: Socket Opened', event });
 		heartbeat();
 		heartbeatHandle = setInterval(heartbeat, HEARTBEAT_INTERVAL);
@@ -156,6 +153,9 @@ function connect() {
 }
 
 function reconnect() {
+	if(ws && ws.readyState !== WebSocket.OPEN) {
+		ws.close();
+	}
 	clearPongWaitTimeout();
 	console.log({ success: false, resultText: 'INFO: Reconnecting...' });
 	reconnectInterval = floorJitterInterval(reconnectInterval * 2);
@@ -177,6 +177,8 @@ function clearPongWaitTimeout() {
 }
 
 async function init(app) {
+
+	connect();
 
 	app.on('update-livestream-settings', async ({ payload }) => {
 
@@ -243,7 +245,6 @@ async function init(app) {
 
 			helix.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
 
-			connect();
 			while (ws.readyState !== WebSocket.OPEN) {
 				await new Promise(resolve => setTimeout(resolve, 100));
 			}

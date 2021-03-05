@@ -4,11 +4,9 @@
 
 "use strict";
 
-const util = require('util');
-
 const serverSettings = require('../../../settings/server-settings.json');
 const databaseAPI = require('../../../_api-service/database-api');
-const { getUsers } = require('../../../_api-service/request-api');
+const { getUsers } = require('../request-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
@@ -32,7 +30,7 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		//if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
+		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
@@ -48,10 +46,10 @@ module.exports = {
 
 			if (amount < minTipAmount) {
 				success = true;
-				message = util.format(`Can not %s an amount that small minimum amount %d CORN - %s`, this.configs.name, minTipAmount, this.configs.example);
+				message = `Can not ${this.configs.name} an amount that small minimum amount ${minTipAmount} CORN - ${this.configs.example}`;
 			} else if (amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 				success = true;
-				message = util.format(`Can not %s an amount that large - %s`, this.configs.name, event.twitchUsername);
+				message = `Can not ${this.configs.name} an amount that large - ${event.twitchUsername}`;
 			} else {
 				message = 'Invalid input';
 			}
@@ -59,9 +57,9 @@ module.exports = {
 
 			const { data: [user] } = await getUsers([twitchUsername]);
 
-			if (user.error) {
+			if (!user) {
 				success = true;
-				message = util.format(`%s - mttvMOONMAN Here's a tip for you: %s who? mttvMOONMAN`, twitchUsername);
+				message = `mttvMOONMAN Here's a tip for you: ${twitchUsername} who? mttvMOONMAN`;
 			} else {
 				const body = {
 					ircTarget: event.channelId,

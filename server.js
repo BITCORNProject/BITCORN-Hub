@@ -6,6 +6,11 @@
 
 require('dotenv').config();
 
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const twitchRequest = require('./src/twitch-request');
+
 const io_client = require('socket.io-client');
 
 const app = require('./source/config/express');
@@ -16,15 +21,47 @@ const pubsub = require('./source/config/authorize/pubsub');
 if (module === require.main) {
 
 	(async () => {
+		const app = express();
+		app.use(bodyParser.json());
+
+		app.get('/auth/helix/callback', async (req, res) => {
+			try {
+				await twitchRequest.authorize(req.query.code, req.query.state);
+				console.log('authenticated');
+				res.status(200).send('Twitch API authenticated.  You can close this browser window/tab.');
+			} catch (err) {
+				console.error(err);
+				res.status(500).send(err.message);
+			}
+		});
+
+		app.post('/users', async (req, res) => {
+
+			const { ids, usernames } = req.body;
+	
+			if (ids) {
+				const resUsers = await twitchRequest.getUsersByIds(ids);
+				res.json(resUsers);
+			} else if (usernames) {
+				const resUsers = await twitchRequest.getUsersByName(usernames);
+				res.json(resUsers);
+			} else {
+				res.status(404).end();
+			}
+		});
+
 		try {
-			const { server } = await new Promise(async (resolve) => {
-				const server = app.listen(process.env.TWITCH_SERVER_PORT, () => {
-					resolve({ server: server, port: server.address().port });
-				});
+
+			const server = app.listen(process.env.TWITCH_SERVER_PORT || 7000, () => {
+				const port = server.address().port;
+				console.log(`App listening on port ${port}`);
+		
+				const open = require('open');
+				open(twitchRequest.authorizeUrl);
 			});
 			console.log({ success: true, message: `Server listening on port ${process.env.TWITCH_SERVER_PORT}` })
 
-			const io = require('socket.io')(server);
+			/*const io = require('socket.io')(server);
 
 			const connections = {}
 
@@ -42,7 +79,7 @@ if (module === require.main) {
 					console.log({ message: `disconnect: ${socket.handshake.headers.referer}` });
 					app.emit('disconnect', socket);
 				});
-			});
+			});*/
 
 			await helix.init(app);
 			await pubsub.init(app);
