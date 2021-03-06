@@ -33,8 +33,12 @@ async function performPayout(channel) {
 	while (viewers.length > 0) {
 		const usernames = viewers.splice(0, 100);
 		promises.push(new Promise(async (resolve) => {
-			const { data } = await getUsers(usernames);
-			resolve(data.map(x => x.id));
+			try {
+				const { data } = await getUsers(usernames);
+				resolve(data.map(x => x.id));
+			} catch (error) {
+				resolve(null);
+			}
 		}));
 	}
 	const presults = await Promise.all(promises);

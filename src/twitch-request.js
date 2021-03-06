@@ -89,7 +89,7 @@ async function refreshAccessToken({ refresh_token, client_id, client_secret }) {
 function storeTokens(items) {
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
-		if (item.authenticated && item.authenticated.access_token) {
+		if (item.authenticated) {
 			tokenStore[item.ircTarget] = item.authenticated;
 		} else {
 			delete tokenStore[item.ircTarget];

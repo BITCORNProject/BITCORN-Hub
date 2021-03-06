@@ -31,7 +31,7 @@ module.exports = {
 		const body = {
 			ircTarget: event.channelId,
 			from: `twitch|${event.twitchId}`,
-			ircMessage: cleanParams.brackets(event.args.params[0]),
+			ircMessage: cleanParams.brackets(event.args.params.join(' ')),
 			type: 'tts',
 			platform: 'twitch',
 			columns: ['balance', 'twitchusername', 'isbanned', 'twitchid']

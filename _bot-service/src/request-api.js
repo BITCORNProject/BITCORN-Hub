@@ -34,7 +34,7 @@ async function getUsers(usernames) {
 	return postRequest(`${localUrl}/users`, { usernames });
 }
 
-async function getUsersByIds(ids) {
+async function getIds(ids) {
 	return postRequest(`${localUrl}/users`, { ids });
 }
 
@@ -44,6 +44,6 @@ async function getChatters(channel) {
 
 module.exports = {
 	getUsers,
-	getUsersByIds,
+	getIds,
 	getChatters
 };

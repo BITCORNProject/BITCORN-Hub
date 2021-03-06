@@ -176,91 +176,69 @@ function clearPongWaitTimeout() {
 	}
 }
 
-async function init(app) {
+async function updateLivestreamSettings({ payload }) {
 
-	connect();
+	const { twitchRefreshToken, ircTarget } = payload;
 
-	app.on('update-livestream-settings', async ({ payload }) => {
+	if (!twitchRefreshToken) return;
 
-		const { twitchRefreshToken, ircTarget } = payload;
+	const tokenStore = twitchRequest.getTokenStore(ircTarget);
+	const items = [];
+	if (!tokenStore && twitchRefreshToken) {
+		const authenticated = await twitchRequest.refreshAccessToken({
+			refresh_token: twitchRefreshToken,
+			client_id: process.env.API_CLIENT_ID,
+			client_secret: process.env.API_SECRET
+		});
+		items.push({ authenticated, ircTarget });
+		twitchRequest.storeTokens(items);
+	} else {
+		items.push({ authenticated: tokenStore, ircTarget });
+	}
 
-		if (!twitchRefreshToken) return;
+	await handleChannelPointsCard(items, { [ircTarget]: payload });
 
-		const tokenStore = twitchRequest.getTokenStore(ircTarget);
-		const items = [];
-		if (!tokenStore && twitchRefreshToken) {
-			const authenticated = await twitchRequest.refreshAccessToken({
-				refresh_token: twitchRefreshToken,
-				client_id: process.env.API_CLIENT_ID,
-				client_secret: process.env.API_SECRET
-			});
-			items.push({ authenticated, ircTarget });
-			twitchRequest.storeTokens(items);
-		} else {
-			items.push({ authenticated: tokenStore, ircTarget });
+	await sendTokensToApi(items, { [ircTarget]: payload });
+}
+
+async function initialSettings({ payload }) {
+	try {
+
+		console.log({ payload });
+		const promises = [];
+
+		for (const channel in payload) {
+
+			const { twitchRefreshToken, ircTarget } = payload[channel];
+
+			promises.push(new Promise(async resolve => {
+				if (twitchRefreshToken) {
+					const authenticated = await twitchRequest.refreshAccessToken({
+						refresh_token: twitchRefreshToken,
+						client_id: process.env.API_CLIENT_ID,
+						client_secret: process.env.API_SECRET
+					});
+					resolve({ authenticated, ircTarget });
+				} else {
+					resolve({ authenticated: null, ircTarget });
+				}
+			}));
 		}
 
-		await handleChannelPointsCard(items, { [ircTarget]: payload });
+		const items = await Promise.all(promises);
 
-		await sendTokensToApi(items, { [ircTarget]: payload });
-	});
+		twitchRequest.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
 
-	app.on('initial-settings', async ({ settings: payload }) => {
-
-		try {
-
-			console.log({ payload });
-			const promises = [];
-
-			for (const channel in payload) {
-
-				const { twitchRefreshToken, ircTarget, enableChannelpoints } = payload[channel];
-
-				promises.push(new Promise(async resolve => {
-
-					if (twitchRefreshToken && enableChannelpoints) {
-						const authenticated = await twitchRequest.refreshAccessToken({
-							refresh_token: twitchRefreshToken,
-							client_id: process.env.API_CLIENT_ID,
-							client_secret: process.env.API_SECRET
-						});
-						resolve({ authenticated, ircTarget });
-					} else {
-						resolve({
-							authenticated: {
-								access_token: null,
-								refresh_token: null,
-								expires_in: 0,
-								scope: null,
-								token_type: null
-							},
-							ircTarget
-						});
-					}
-				}));
-			}
-
-			const items = await Promise.all(promises);
-
-			twitchRequest.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
-
-			while (ws.readyState !== WebSocket.OPEN) {
-				await new Promise(resolve => setTimeout(resolve, 100));
-			}
-			await handleChannelPointsCard(items, payload);
-
-			await sendTokensToApi(items, payload);
-
-		} catch (error) {
-			console.log(error);
+		while (ws.readyState !== WebSocket.OPEN) {
+			await new Promise(resolve => setTimeout(resolve, 100));
 		}
-	});
-	// try {
-	// 	const data = await databaseAPI.makeRequestChannelsSettings();
-	// 	console.log(data);
-	// } catch (err) {
-	// 	console.error(err);
-	// }
+		await handleChannelPointsCard(items, payload);
+
+		await sendTokensToApi(items, payload);
+
+	} catch (error) {
+		console.log(error);
+	}
 }
 
 async function handleChannelPointsCard(items, payload) {
@@ -286,12 +264,15 @@ async function handleChannelPointsCard(items, payload) {
 
 				await twitchRequest.getCustomReward(ircTarget)
 					.then(result => createListenCustomReward(result, cardTitle, item, authenticated))
+					.then(({ item, access_token }) => {
+						listenToChannel(item, access_token);
+					})
 					.catch(e => {
 						console.log(e);
 					});
 			} else {
 
-				if (authenticated.access_token) {
+				if (authenticated) {
 					if (item.channelPointCardId) {
 						const deleteCustomReward = await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
 						console.log({ deleteCustomReward });
@@ -335,9 +316,12 @@ async function createListenCustomReward(result, cardTitle, item, authenticated) 
 	} else {
 		item.channelPointCardId = reward.id;
 	}
+	return { item, access_token: authenticated.access_token };
+}
 
+function listenToChannel(item, access_token) {
 	if (item.channelPointCardId) {
-		listen(`channel-points-channel-v1.${item.ircTarget}`, authenticated.access_token);
+		listen(`channel-points-channel-v1.${item.ircTarget}`, access_token);
 		console.log(`listening: ${item.ircTarget}`);
 	}
 }
@@ -351,7 +335,8 @@ async function sendTokensToApi(items, payload) {
 }
 
 module.exports = {
-	init,
-	connect
+	connect,
+	initialSettings,
+	updateLivestreamSettings
 };
 
