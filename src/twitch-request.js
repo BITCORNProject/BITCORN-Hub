@@ -8,6 +8,8 @@ const HELIX_API_BASE_PATH = 'https://api.twitch.tv/helix';
 const buffer = crypto.randomBytes(16);
 const state = buffer.toString('hex');
 
+const tokenStore = {};
+
 const twitchOAuth = new TwitchOAuth({
 	client_id: process.env.HELIX_CLIENT_ID,
 	client_secret: process.env.HELIX_SECRET,
@@ -38,46 +40,42 @@ async function getUsersByIds(user_ids) {
 	return twitchOAuth.getEndpoint(`${HELIX_API_BASE_PATH}/users?${params.join('&')}`);
 }
 
-const tokenStore = {};
-
+function tokenOrThrow(broadcaster_id) {
+	if (!tokenStore[broadcaster_id]) throw new Error(`No access token for ${broadcaster_id} custom rewards`);
+	return tokenStore[broadcaster_id];
+}
 /**
  * throws if the broadcaster_id does not have an access token
  */
 async function createCustomReward(broadcaster_id, data) {
-	const store = tokenStore[broadcaster_id];
-	if (!store.access_token) throw new Error(`No access token for ${broadcaster_id} create custom rewards`);
+	const store = tokenOrThrow(broadcaster_id);
 
-	const client_id = process.env.API_CLIENT_ID;
-	const url = `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`;
+	const url = `${HELIX_API_BASE_PATH}/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`;
 	const options = {
 		method: 'POST',
 		body: JSON.stringify(data)
 	};
-	return twitchOAuth.fetchEndpointWithCredentials(client_id, store.access_token, url, options);
+	return twitchOAuth.fetchEndpointWithCredentials(process.env.API_CLIENT_ID, store.access_token, url, options);
 }
 
 async function deleteCustomReward(broadcaster_id, card_id) {
-	const store = tokenStore[broadcaster_id];
-	if (!store) throw new Error(`No access token for ${broadcaster_id} delete custom rewards`);
+	const store = tokenOrThrow(broadcaster_id);
 
-	const client_id = process.env.API_CLIENT_ID;
-	const url = `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}&id=${card_id}`;
+	const url = `${HELIX_API_BASE_PATH}/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}&id=${card_id}`;
 	const options = {
 		method: 'DELETE'
 	};
-	return twitchOAuth.fetchEndpointWithCredentials(client_id, store.access_token, url, options);
+	return twitchOAuth.fetchEndpointWithCredentials(process.env.API_CLIENT_ID, store.access_token, url, options);
 }
 
 async function getCustomReward(broadcaster_id) {
-	const store = tokenStore[broadcaster_id];
-	if (!store) throw new Error(`No access token for ${broadcaster_id} get custom rewards`);
+	const store = tokenOrThrow(broadcaster_id);
 
-	const client_id = process.env.API_CLIENT_ID;
-	const url = `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`;
+	const url = `${HELIX_API_BASE_PATH}/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`;
 	const options = {
 		method: 'GET'
 	};
-	return twitchOAuth.fetchEndpointWithCredentials(client_id, store.access_token, url, options);
+	return twitchOAuth.fetchEndpointWithCredentials(process.env.API_CLIENT_ID, store.access_token, url, options);
 }
 
 async function refreshAccessToken({ refresh_token, client_id, client_secret }) {

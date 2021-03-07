@@ -6,9 +6,9 @@
     "scripts": {
         "test": "mocha test/index.test.js --exit --timeout=20000"
     },
-	"engines": {
-	  "node": "10"
-	},
+    "engines": {
+        "node": "10"
+    },
     "author": "Jones S. Cropper",
     "license": "ISC",
     "repository": {
@@ -16,7 +16,7 @@
         "url": "https://github.com/npm/cli.git"
     },
     "dependencies": {
-        "@callowcreation/basic-twitch-oauth": "^1.0.7",
+        "@callowcreation/basic-twitch-oauth": "^1.0.9",
         "body-parser": "^1.17.2",
         "chai-as-promised": "^7.1.1",
         "dotenv": "^8.2.0",

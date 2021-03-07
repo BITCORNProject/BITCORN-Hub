@@ -63,7 +63,7 @@ async function init() {
 		const promises = channels.map(performPayout);
 		const result = await Promise.all(promises);
 		console.log({ result });
-	}, 1000 * 30 /*timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER*/);
+	}, /*1000 * 30 */ timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
 
 	return { success: true };
 }

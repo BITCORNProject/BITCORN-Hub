@@ -203,8 +203,6 @@ async function updateLivestreamSettings({ payload }) {
 
 async function initialSettings({ payload }) {
 	try {
-
-		console.log({ payload });
 		const promises = [];
 
 		for (const channel in payload) {
@@ -274,8 +272,7 @@ async function handleChannelPointsCard(items, payload) {
 
 				if (authenticated) {
 					if (item.channelPointCardId) {
-						const deleteCustomReward = await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
-						console.log({ deleteCustomReward });
+						await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
 					}
 					unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
 					console.log(`stopped listening: ${ircTarget}`);
@@ -327,8 +324,16 @@ function listenToChannel(item, access_token) {
 }
 
 async function sendTokensToApi(items, payload) {
-	const tokens = items.map(({ authenticated: { refresh_token }, ircTarget }) => {
-		return ({ refreshToken: refresh_token, ircTarget, channelPointCardId: payload[ircTarget].channelPointCardId });
+	// TypeError: Cannot destructure property `refresh_token` of 'undefined' or 'null'.
+	// const tokens = items.map(({ authenticated: { refresh_token }, ircTarget }) => {
+	// 	return ({ refreshToken: refresh_token, ircTarget, channelPointCardId: payload[ircTarget].channelPointCardId });
+	// });	
+	const tokens = items.map(({ authenticated, ircTarget }) => {
+		return { 
+			refreshToken: authenticated ? authenticated.refresh_token : null, 
+			ircTarget, 
+			channelPointCardId: payload[ircTarget].channelPointCardId 
+		};
 	});
 	const response = await databaseAPI.sendTokens({ tokens: tokens });
 	console.log({ response });

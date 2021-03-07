@@ -81,10 +81,12 @@ try {
 		});
 	
 		settingsSocket.on('initial-settings', req => {
+			console.log({ payload: req.payload });
 			pubsub.initialSettings(req);
 		});
 	
 		settingsSocket.on('update-livestream-settings', async req => {
+			console.log({ payload: req.payload });
 			pubsub.updateLivestreamSettings(req);
 		});
 	
