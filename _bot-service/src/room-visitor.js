@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const Queue = require('./utils/queue');
-const databaseApi = require('../../_api-service/database-api');
+const databaseApi = require('../../_api-shared/database-api');
 
 const SETTINGS_JOIN_LEAVE_INTERVAL_MS = 1000 * 60 * 0.5;
 const MAX_JOIN_RETRIES = 5;

@@ -159,6 +159,7 @@ function init() {
 module.exports = {
 	OUTPUT_TYPE,
 	init,
+	cleanChannelName,
 	setItemsObjects,
 	getChannelNames,
 	getMapChannelId,

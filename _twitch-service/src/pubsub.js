@@ -8,7 +8,7 @@ const WebSocket = require('ws');
 
 const twitchRequest = require('./twitch-request');
 
-const databaseAPI = require('../_api-service/database-api');
+const databaseAPI = require('../../_api-shared/database-api');
 
 const recentIds = [];
 let pingpongLog = '';

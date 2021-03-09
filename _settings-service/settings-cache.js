@@ -5,7 +5,7 @@
 
 "use strict";
 
-const databaseAPI = require('./database-api');
+const databaseAPI = require('../_api-shared/database-api');
 
 let cache = {};
 let idMap = {};

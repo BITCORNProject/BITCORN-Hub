@@ -2,7 +2,7 @@
 const fetch = require('node-fetch');
 
 const serverSettings = require('../../settings/server-settings.json');
-const databaseAPI = require('../../_api-service/database-api');
+const databaseAPI = require('../../_api-shared/database-api');
 const { getUsers, getChatters } = require('./request-api');
 const settingsHelper = require('../settings-helper');
 

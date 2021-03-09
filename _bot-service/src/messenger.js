@@ -6,8 +6,6 @@ const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
 const settingsHelper = require('../settings-helper');
 
-const { getChannelId, cleanChannelName } = require('../../_api-service/settings-cache');
-
 function _Queue() {
 	this.items = new Queue();
 	this.isBusy = false;
@@ -106,12 +104,12 @@ async function sendQueuedRewards() {
 async function handleTipRewards(type, channel, username, amount) {
 
 	const commandHelper = require('./shared-lib/command-helper');
-	const databaseAPI = require('../../_api-service/database-api');
+	const databaseAPI = require('../../_api-shared/database-api');
 	const { getUsers } = require('./request-api');
 
 	const { data: [toUser] } = await getUsers([username]);
 
-	const fromUserId = await getChannelId(channel);
+	const fromUserId = settingsHelper.getMapChannelId(channel);
 	const body = {
 		ircTarget: fromUserId,
 		from: `twitch|${fromUserId}`,
@@ -122,7 +120,7 @@ async function handleTipRewards(type, channel, username, amount) {
 	};
 
 	const result = await databaseAPI.request(fromUserId, body).tipcorn();
-	const { success, message } = commandHelper.handelTipResponse(result, cleanChannelName(channel), toUser.login, amount);
+	const { success, message } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, amount);
 	
 	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
 		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.tipEvent);

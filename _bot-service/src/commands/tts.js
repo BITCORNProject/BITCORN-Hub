@@ -4,7 +4,7 @@
 
 "use strict";
 
-const databaseAPI = require('../../../_api-service/database-api');
+const databaseAPI = require('../../../_api-shared/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const settingsHelper = require('../../settings-helper');
