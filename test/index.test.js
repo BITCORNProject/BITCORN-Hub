@@ -46,7 +46,7 @@ describe('#mocha promises', function () {
 
 	const serverSettings = require('../settings/server-settings.json');
 
-	const settingsCache = require('../../_api-shared/settings-cache');
+	const settingsCache = require('../_settings-service/settings-cache');
 	const { getUsers, getChatters } = require('../_bot-service/src/request-api');
 
 	const databaseAPI = isMock ? {
@@ -59,7 +59,7 @@ describe('#mocha promises', function () {
 			}
 		},
 		makeRequestChannels: () => Promise.resolve({ status: 500 })
-	} : require('../../_api-shared/database-api');
+	} : require('../_api-shared/database-api');
 
 	let broadcaster;
 
@@ -1022,7 +1022,7 @@ describe('#mocha promises', function () {
 
 describe('#mocha promises', function () {
 
-	const settingsCache = require('../../_api-shared/settings-cache');
+	const settingsCache = require('../_settings-service/settings-cache');
 	const settingsHelper = require('../_bot-service/settings-helper');
 
 	const serverSettings = require('../settings/server-settings.json');

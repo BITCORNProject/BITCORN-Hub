@@ -74,6 +74,11 @@ module.exports = {
 				}
 			}
 		}
-		return { success: success, message: message, irc_target: irc_target, configs: this.configs };
+		return { 
+			success: success, 
+			message: message, 
+			irc_target: irc_target, 
+			configs: this.configs 
+		};
 	}
 };

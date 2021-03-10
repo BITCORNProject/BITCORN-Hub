@@ -51,11 +51,14 @@ module.exports = {
 			message = `Howdy BITCORN Farmer! You have amassed ${result.balance} $BITCORN in your corn silo!  Your silo is currently located at this BITCORN Address: ${result.cornAddy}`;
 		}
 
+		const configs = JSON.parse(JSON.stringify(this.configs));
+		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
+
 		return { 
 			success: success, 
 			message: message, 
 			irc_target: irc_target, 
-			configs: this.configs 
+			configs: configs 
 		};
 	}
 };

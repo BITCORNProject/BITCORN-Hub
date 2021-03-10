@@ -139,6 +139,14 @@ module.exports = {
 			}
 		}
 
-		return Promise.resolve({ success: success, message: message, irc_target: irc_target, configs: this.configs });
+		const configs = JSON.parse(JSON.stringify(this.configs));
+		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
+
+		return { 
+			success: success, 
+			message: message, 
+			irc_target: irc_target, 
+			configs: configs 
+		};
 	}
 };

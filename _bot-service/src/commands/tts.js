@@ -41,6 +41,11 @@ module.exports = {
 		console.log({ result });
 		//({ message, success } = commandHelper.handelTTSResponse(result, event.twitchUsername, twitchUsername, amount));
 
-		return { success: success, message: message, irc_target: irc_target, configs: this.configs };
+		return { 
+			success: success, 
+			message: message, 
+			irc_target: irc_target, 
+			configs: this.configs 
+		};
 	}
 };

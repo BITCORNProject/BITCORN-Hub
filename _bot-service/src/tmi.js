@@ -110,19 +110,15 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	}
 
 	const result = await command.execute(event);
+	result.msg = msg;
 
-	const data = JSON.parse(JSON.stringify(result));
-
-	data.configs.irc_out = settingsHelper.getIrcMessageTarget(target, data.configs.irc_out, MESSAGE_TYPE);
-	data.msg = msg;
-
-	if (data.success === true) {
-		messenger.enqueueMessageByType(data.configs.irc_out, data.irc_target, data.message);
-		data.result = await messenger.sendQueuedMessagesByType(data.configs.irc_out);
+	if (result.success === true) {
+		messenger.enqueueMessageByType(result.configs.irc_out, result.irc_target, result.message);
+		result.result = await messenger.sendQueuedMessagesByType(result.configs.irc_out);
 	}
 
-	//console.log({ event, data });
-	return data;
+	//console.log({ event, result });
+	return result;
 }
 
 async function onMessageHandler(target, user, msg, self) {
