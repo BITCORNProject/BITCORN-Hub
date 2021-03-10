@@ -4,7 +4,7 @@
 
 "use strict";
 
-const databaseAPI = require('../../../../_api-shared/database-api');
+const databaseAPI = require('../../../_api-shared/database-api');
 
 async function asyncThrowAndLogError(event, obj) {
     
