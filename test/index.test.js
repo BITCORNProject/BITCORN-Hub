@@ -659,7 +659,7 @@ describe('#mocha promises', function () {
 
 		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
 		expect(obj.success).to.be.equal(true);
-		console,log(obj.configs.name);
+		console, log(obj.configs.name);
 		expect(obj.configs.name).to.be.equal('help');
 	});
 
@@ -751,10 +751,12 @@ describe('#mocha promises', function () {
 	});
 
 	it('should send chat message from reward tip', async () => {
+		const REWARD_TYPE = require('../_bot-service/src/utils/reward-type');
 		const channel = '#callowcreation';
 		const username = 'wollac';
 		const amount = 50;
-		const result = await messenger.handleTipRewards('Subscribing', channel, username, amount);
+		const bitAmount = 1;
+		const result = await messenger.handleTipRewards(REWARD_TYPE.cheer, channel, username, { amount, bitAmount });
 		if (result.success === false) {
 			expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
 		} else {
@@ -767,7 +769,7 @@ describe('#mocha promises', function () {
 		const channel = '#callowcreation';
 		const username = 'callowcreation';
 		const amount = 10;
-		messenger.enqueueReward('cheer', channel, username, amount);
+		messenger.enqueueReward('cheer', channel, username, { amount, bitAmount: amount });
 
 		const result = await messenger.sendQueuedRewards();
 
@@ -816,7 +818,7 @@ describe('#mocha promises', function () {
 		expect(results[1].success).to.be.equal(false);
 	});
 
-	it('should handle rewards events', async () => {
+	it.skip('should handle rewards events', async () => {
 
 		let result = null;
 		const promises = [];

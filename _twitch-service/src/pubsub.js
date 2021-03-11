@@ -13,6 +13,8 @@ const databaseAPI = require('../../_api-shared/database-api');
 const recentIds = [];
 let pingpongLog = '';
 
+const MAX_RECENT_ID_LENGTH = 5;
+
 const HEARTBEAT_INTERVAL = 1000 * 60 * 4;//ms between PING's
 const MAX_BACKOFF_THRESHOLD_INTERVAL = 1000 * 60 * 2;
 const BACKOFF_THRESHOLD_INTERVAL = 1000 * 3; //ms to wait before reconnect
@@ -24,6 +26,8 @@ let reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
 
 let pongWaitTimeout = null;
 let heartbeatCounter = 0;
+
+const CARD_TITLE = '(TESTMODE) BITCORNx420-TEST (TESTMODE)';
 
 // Source: https://www.thepolyglotdeveloper.com/2015/03/create-a-random-nonce-string-using-javascript/
 function nonce(length) {
@@ -112,20 +116,61 @@ function connect() {
 		switch (value.type) {
 			case 'MESSAGE':
 
-				const message = JSON.parse(value.data.message);
-				const id = message.data.redemption.id;
-				if (recentIds.includes(id)) break;
-				recentIds.push(id);
-				const reward = message.data.redemption.reward;
-				const user = message.data.redemption.user;
+				const redemptionUpdate = {
+					broadcaster_id: null,
+					redemption_id: null,
+					reward_id: null,
+					status: null,
+				};
 
-				/*
-					these redemption request may need to be queued and managed incase of failure
-					the redemption is FULFILLED so the channel points are use when the
-						'Redeem' button is clicked
-				*/
+				try {
+					const message = JSON.parse(value.data.message);
 
-				console.log(message.data);
+					const redemption = message.data.redemption;
+					const reward = redemption.reward;
+					const user = redemption.user;
+
+					if (reward.title !== CARD_TITLE) break;
+
+					if (recentIds.includes(redemption.id)) break;
+					recentIds.push(redemption.id);
+
+					if(recentIds.length > MAX_RECENT_ID_LENGTH) {
+						recentIds.splice(0, MAX_RECENT_ID_LENGTH / 2)
+					}
+
+					const data = {
+						ircTarget: redemption.channel_id,
+						from: `twitch|${redemption.channel_id}`,
+						to: `twitch|${user.id}`,
+						platform: 'twitch',
+						channelPointAmount: reward.cost,
+						columns: ['balance', 'twitchusername', 'isbanned']
+					};
+
+					const result = await databaseAPI.channelPointsRequest(user.id, data);
+
+					redemptionUpdate.broadcaster_id = redemption.channel_id;
+					redemptionUpdate.redemption_id = redemption.id;
+					redemptionUpdate.reward_id = reward.id;
+
+					if (result.status) {
+						redemptionUpdate.status = 'CANCELED';
+						throw new Error(`Channel Points Request Status: ${result.status}`);
+					}
+
+					redemptionUpdate.status = 'FULFILLED';
+
+					console.log({ result });
+
+					console.log(message.data);
+				} catch (error) {
+					console.error(error);
+				}
+
+				const redeemResult = await twitchRequest.updateRedemptionStatus(redemptionUpdate);
+				console.log({ redeemResult });
+
 				break;
 			case 'PONG':
 				console.log({ success: true, resultText: `${pingpongLog} RECV #${heartbeatCounter}: ${JSON.stringify(value)}` });
@@ -240,7 +285,6 @@ async function initialSettings({ payload }) {
 }
 
 async function handleChannelPointsCard(items, payload) {
-	const cardTitle = '(TESTMODE) BITCORNx420-TEST (TESTMODE)';
 
 	for (let i = 0; i < items.length; i++) {
 		// for (const key in items[i]) {
@@ -261,7 +305,7 @@ async function handleChannelPointsCard(items, payload) {
 			if (item.enableChannelpoints === true) {
 
 				await twitchRequest.getCustomReward(ircTarget)
-					.then(result => createListenCustomReward(result, cardTitle, item, authenticated))
+					.then(result => createListenCustomReward(result, CARD_TITLE, item, authenticated))
 					.then(({ item, access_token }) => {
 						listenToChannel(item, access_token);
 					})
@@ -294,9 +338,9 @@ async function createListenCustomReward(result, cardTitle, item, authenticated) 
 	if (!reward) {
 		const data = {
 			title: cardTitle,
-			cost: 420,
+			cost: 1,
 			prompt: `(TESTMODE) Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio. (TESTMODE)`,
-			should_redemptions_skip_request_queue: true
+			should_redemptions_skip_request_queue: false
 		};
 
 		const results = await twitchRequest.createCustomReward(item.ircTarget, data).catch(e => {
@@ -329,10 +373,10 @@ async function sendTokensToApi(items, payload) {
 	// 	return ({ refreshToken: refresh_token, ircTarget, channelPointCardId: payload[ircTarget].channelPointCardId });
 	// });	
 	const tokens = items.map(({ authenticated, ircTarget }) => {
-		return { 
-			refreshToken: authenticated ? authenticated.refresh_token : null, 
-			ircTarget, 
-			channelPointCardId: payload[ircTarget].channelPointCardId 
+		return {
+			refreshToken: authenticated ? authenticated.refresh_token : null,
+			ircTarget,
+			channelPointCardId: payload[ircTarget].channelPointCardId
 		};
 	});
 	const response = await databaseAPI.sendTokens({ tokens: tokens });

@@ -6,6 +6,7 @@ const messenger = require('./messenger');
 const commander = require('./commander');
 const allowedUsers = require('./utils/allowed-users');
 const MESSAGE_TYPE = require('./utils/message-type');
+const REWARD_TYPE = require('./utils/reward-type');
 const settingsHelper = require('../settings-helper');
 
 
@@ -47,6 +48,13 @@ const amounts = {
 		'2000': 1000,
 		'3000': 4200
 	}
+};
+
+const tiers = {
+	'Prime': 1,
+	'1000': 1,
+	'2000': 2,
+	'3000': 3
 };
 
 const client = new tmi.client({
@@ -91,7 +99,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 		cooldown: settingsHelper.getChannelCooldown(target, command.configs.cooldown),
 		global_cooldown: command.configs.global_cooldown
 	};
-	
+
 	if (commander.checkCooldown(settingsConfigs, selectedCooldownId, selectCooldowns) === false) {
 		return { success: false, msg, message: `Cooldown pending global=${command.configs.global_cooldown}`, irc_target: target, configs: commander.expectedCommandsConfigs };
 	}
@@ -141,33 +149,38 @@ async function onMessageHandler(target, user, msg, self) {
 Rewards
 
 */
+
 async function onCheer(channel, userstate, message) {
 	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onCheer` };
 	const username = userstate.username;
-	const amount = userstate.bits * amounts.cheer['0000'];
-	return handleRewardEvent('cheer', channel, username, amount);
+	const bitAmount = userstate.bits * settingsHelper.getBitcornPerBit(channel, amounts.cheer['0000']);
+	return handleRewardEvent(REWARD_TYPE.cheer, channel, username, { bitAmount });
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
 	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubGift` };
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubGift` };
 	const amount = amounts.subgift[methods.plan];
-	return handleRewardEvent('subgift', channel, username, amount);
+	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount });
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
 	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubscription` };
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubscription` };
-	const amount = amounts.subscription[methods.plan];
-	return handleRewardEvent('subscription', channel, username, amount);
+	//const amount = amounts.subscription[methods.plan];
+	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.subscription[methods.plan]);
+	const subTier = tiers[methods.plan];
+	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, { amount, subTier });
 }
 
 async function onResub(channel, username, months, message, userstate, methods) {
 	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onResub` };
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onResub` };
-	const amount = amounts.resub[methods.plan];
-	return handleRewardEvent('resub', channel, username, amount);
+	//const amount = amounts.resub[methods.plan];
+	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.resub[methods.plan]);
+	const subTier = tiers[methods.plan];
+	return handleRewardEvent(REWARD_TYPE.resub, channel, username, { amount, subTier });
 }
 
 function duplicateRewardCheck(rewardId) {
@@ -187,12 +200,11 @@ function hashReplace(channel) {
 	return channel.replace('#', '').toLowerCase();
 }
 
-async function handleRewardEvent(type, channel, username, amount) {
-	if (settingsHelper.getIrcMessageTarget(channel, type, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
-		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.rewardEvent);
-	}
+async function handleRewardEvent(type, channel, username, extras) {
 
-	messenger.enqueueReward(type, channel, username, amount);
+	if (!settingsHelper.getIrcEventPayments(channel, false)) return { msg: 'reward events disabled' };
+
+	messenger.enqueueReward(type, channel, username, extras);
 	const result = await messenger.sendQueuedRewards();
 
 	for (let i = 0; i < outRerwardCallbacks.length; i++) {

@@ -4,6 +4,7 @@ const { is_production } = require('../../prod');
 const serverSettings = require('../../settings/server-settings.json');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
+const REWARD_TYPE = require('./utils/reward-type');
 const settingsHelper = require('../settings-helper');
 
 function _Queue() {
@@ -25,8 +26,8 @@ const whisperQueue = new _Queue();
 
 const rewardQueue = new _Queue();
 
-function enqueueReward(type, channel, username, amount) {
-	rewardQueue.enqueue({ type, channel, username, amount });
+function enqueueReward(type, channel, username, extras) {
+	rewardQueue.enqueue({ type, channel, username, extras });
 }
 /* w3rk
 c = 0; 
@@ -70,7 +71,7 @@ async function sendQueuedRewards() {
 	let result = { message: 'No Result' };
 	try {
 
-		result = await handleTipRewards(item.type, item.channel, item.username, item.amount);
+		result = await handleTipRewards(item.type, item.channel, item.username, item.extras);
 
 		queue.dequeue();
 		success = true;
@@ -101,7 +102,8 @@ async function sendQueuedRewards() {
 	return { success, message: outMessage, error, result };
 }
 
-async function handleTipRewards(type, channel, username, amount) {
+// extras = { amount: 0, ... }
+async function handleTipRewards(type, channel, username, extras) {
 
 	const commandHelper = require('./shared-lib/command-helper');
 	const databaseAPI = require('../../_api-shared/database-api');
@@ -110,18 +112,43 @@ async function handleTipRewards(type, channel, username, amount) {
 	const { data: [toUser] } = await getUsers([username]);
 
 	const fromUserId = settingsHelper.getMapChannelId(channel);
-	const body = {
+	const data = {
 		ircTarget: fromUserId,
 		from: `twitch|${fromUserId}`,
 		to: `twitch|${toUser.id}`,
 		platform: 'twitch',
-		amount: amount,
 		columns: ['balance', 'twitchusername', 'isbanned']
 	};
 
-	const result = await databaseAPI.request(fromUserId, body).tipcorn();
-	const { success, message } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, amount);
+	for (const key in extras) {
+		data[key] = extras[key]
+	}
+
+	// const result = await databaseAPI.request(fromUserId, data).tipcorn();
+
+	let result = {};
+
+	switch (type) {
+		case REWARD_TYPE.cheer: {
+			result = await databaseAPI.bitDonationRequest(fromUserId, data);
+		} break;
+		case REWARD_TYPE.subgift: {
+			throw new Error(`Not implemented reward type: ${type}`);
+		} break;
+		case REWARD_TYPE.subscription: {
+			result = await databaseAPI.subEventRequest(fromUserId, data);
+		} break;
+		case REWARD_TYPE.resub: {
+			result = await databaseAPI.subEventRequest(fromUserId, data);
+		} break;
+		default:
+			throw new Error(`Unexpected reward type: ${type}`);
+	}
+
+	const amount = extras.amount || extras.bitAmount;
 	
+	const { success, message } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, amount);
+
 	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
 		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.tipEvent);
 	}

@@ -78,6 +78,26 @@ async function getCustomReward(broadcaster_id) {
 	return twitchOAuth.fetchEndpointWithCredentials(process.env.API_CLIENT_ID, store.access_token, url, options);
 }
 
+// status = FULFILLED or CANCELED
+async function updateRedemptionStatus({ broadcaster_id, redemption_id, reward_id, status }) {
+	const store = tokenOrThrow(broadcaster_id);
+
+	const searchParamsEntries = [
+		['broadcaster_id', broadcaster_id],
+		['id', redemption_id],
+		['reward_id', reward_id]
+	];
+	const searchParams = new URLSearchParams(searchParamsEntries);
+	const urlQuery = searchParams.toString();
+	
+	const url = `${HELIX_API_BASE_PATH}/channel_points/custom_rewards/redemptions?${urlQuery}`;
+	const options = {
+		method: 'PATCH',
+		body: JSON.stringify({ status })
+	};
+	return twitchOAuth.fetchEndpointWithCredentials(process.env.API_CLIENT_ID, store.access_token, url, options);
+}
+
 async function refreshAccessToken({ refresh_token, client_id, client_secret }) {
 	return twitchOAuth.fetchRefreshTokenWithCredentials(client_id, client_secret, refresh_token);
 }
@@ -109,5 +129,6 @@ module.exports = {
 	getTokenStore,
 	createCustomReward,
 	deleteCustomReward,
-	getCustomReward
+	getCustomReward,
+	updateRedemptionStatus
 };

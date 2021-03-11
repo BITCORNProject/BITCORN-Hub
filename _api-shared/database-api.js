@@ -220,13 +220,13 @@ DatabaseEndpoint.prototype.errorlogRequest = async function (sendData) {
 
 
 // v3
-DatabaseEndpoint.prototype.request = function (twitchId, body) {
+DatabaseEndpoint.prototype.request = function (twitchId, data) {
 	return {
-		tts: () => this._criticalArbitraryRequest(this.db_endpoints.tts, twitchId, body),
-		rain: () => this._criticalArbitraryRequest(this.db_endpoints.rain, twitchId, body),
-		tipcorn: () => this._criticalArbitraryRequest(this.db_endpoints.tipcorn, twitchId, body),
+		tts: () => this._criticalArbitraryRequest(this.db_endpoints.tts, twitchId, data),
+		rain: () => this._criticalArbitraryRequest(this.db_endpoints.rain, twitchId, data),
+		tipcorn: () => this._criticalArbitraryRequest(this.db_endpoints.tipcorn, twitchId, data),
 		bitcorn: () => this.makeRequestUser(`${this.db_endpoints.bitcorn}${twitchId}`, null),
-		withdraw: () => this.criticalRequestDirect(this.rooturl().wallet, twitchId, body)
+		withdraw: () => this.criticalRequestDirect(this.rooturl().wallet, twitchId, data)
 	};
 }
 
@@ -269,6 +269,18 @@ DatabaseEndpoint.prototype.makeRequestChannelsSettings = async function () {
 
 DatabaseEndpoint.prototype.sendTokens = async function (data) {
 	return this.makeRequestUser(this.db_endpoints.livestreams.tokens, data);
+}
+
+DatabaseEndpoint.prototype.channelPointsRequest = async function (twitchId, data) {
+	return this._criticalArbitraryRequest(this.db_endpoints.channelpoints, twitchId, data);
+}
+
+DatabaseEndpoint.prototype.subEventRequest = async function (twitchId, data) {
+	return this._criticalArbitraryRequest(this.db_endpoints.subevent, twitchId, data);
+}
+
+DatabaseEndpoint.prototype.bitDonationRequest = async function (twitchId, data) {
+	return this._criticalArbitraryRequest(this.db_endpoints.bitdonation, twitchId, data);
 }
 
 module.exports = new DatabaseEndpoint();

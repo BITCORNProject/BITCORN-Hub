@@ -13,6 +13,8 @@ const timeValues = {
 
 async function performPayout(channel) {
 
+	if (!settingsHelper.getIrcEventPayments(channel, false)) return { msg: 'idle disabled' };
+
 	let viewers = [];
 
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
@@ -63,7 +65,7 @@ async function init() {
 		const promises = channels.map(performPayout);
 		const result = await Promise.all(promises);
 		console.log({ result });
-	}, /*1000 * 30 */ timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
+	},/* 1000 * 30 */ timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
 
 	return { success: true };
 }
