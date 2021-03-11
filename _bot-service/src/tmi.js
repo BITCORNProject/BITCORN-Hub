@@ -9,6 +9,8 @@ const MESSAGE_TYPE = require('./utils/message-type');
 const REWARD_TYPE = require('./utils/reward-type');
 const settingsHelper = require('../settings-helper');
 
+const NoDups = require('../../_api-shared/no-dups');
+
 
 const commandsMap = commander.createCommandsMap();
 
@@ -21,7 +23,7 @@ const global_cooldowns = {};
 // to stop duplicate rewards being processed
 // example image location
 // \misc\duplicate-reward.PNG
-const rewardedIds = [];
+const rewardedIds = new NoDups(200);
 
 //const channels = ['markettraderstv', 'd4rkcide'];
 const channels = [];
@@ -151,7 +153,7 @@ Rewards
 */
 
 async function onCheer(channel, userstate, message) {
-	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onCheer` };
+	duplicateRewardCheck(userstate.id);
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onCheer` };
 	const username = userstate.username;
 	const bitAmount = userstate.bits * settingsHelper.getBitcornPerBit(channel, amounts.cheer['0000']);
@@ -159,14 +161,15 @@ async function onCheer(channel, userstate, message) {
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
-	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubGift` };
+	duplicateRewardCheck(userstate.id);
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubGift` };
 	const amount = amounts.subgift[methods.plan];
+	
 	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount });
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
-	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onSubscription` };
+	duplicateRewardCheck(userstate.id);
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubscription` };
 	//const amount = amounts.subscription[methods.plan];
 	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.subscription[methods.plan]);
@@ -175,7 +178,7 @@ async function onSubscription(channel, username, methods, message, userstate) {
 }
 
 async function onResub(channel, username, months, message, userstate, methods) {
-	if (duplicateRewardCheck(userstate.id) === true) return { success: false, message: `Duplicate reward id ${userstate.id} onResub` };
+	duplicateRewardCheck(userstate.id);
 	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onResub` };
 	//const amount = amounts.resub[methods.plan];
 	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.resub[methods.plan]);
@@ -184,9 +187,7 @@ async function onResub(channel, username, months, message, userstate, methods) {
 }
 
 function duplicateRewardCheck(rewardId) {
-	if (rewardedIds.includes(rewardId) === true) return true;
-	rewardedIds.push(rewardId);
-	return false;
+	rewardedIds.addItem(rewardId);
 }
 
 function noRewardCheck(channel) {

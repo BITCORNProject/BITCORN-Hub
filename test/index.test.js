@@ -779,8 +779,8 @@ describe('#mocha promises', function () {
 	it('should not allow duplicate rewards', async () => {
 		const rewardId = '1234567890';
 		tmi.duplicateRewardCheck(rewardId);
-		const result = tmi.duplicateRewardCheck(rewardId);
-		expect(result).to.be.equal(true);
+
+		expect(tmi.duplicateRewardCheck.bind(tmi, rewardId)).to.throws(`This id is not unique: ${rewardId}`);
 	});
 
 	it('should not give reward got no-reward channels', async () => {
@@ -808,17 +808,14 @@ describe('#mocha promises', function () {
 		methods = null;
 		channel = '#callowcreation';
 		username = 'callowcreation';
-		promises.push(tmi.onCheer(channel, userstate, message));
 
-		promises.push(tmi.onCheer(channel, userstate, message));
+		const result = await tmi.onCheer(channel, userstate, message);
 
-		const results = await Promise.all(promises);
-
-		expect(results[0].error).to.be.equal(null);
-		expect(results[1].success).to.be.equal(false);
+		expect(result.error).to.be.equal(null);
+		expect(tmi.onCheer(channel, userstate, message)).to.eventually.equal(`This id is not unique: ${userstate.id}`);
 	});
 
-	it.skip('should handle rewards events', async () => {
+	it('should handle rewards events', async () => {
 
 		let result = null;
 		const promises = [];

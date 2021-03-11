@@ -2,8 +2,6 @@
     
 */
 
-"use strict";
-
 function Math() {}
 
 Math.prototype.fixed = function fixed8(value, precision) {

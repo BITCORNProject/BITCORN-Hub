@@ -11,8 +11,6 @@ const twitchRequest = require('./twitch-request');
 const databaseAPI = require('../../_api-shared/database-api');
 
 const recentIds = [];
-let pingpongLog = '';
-
 const MAX_RECENT_ID_LENGTH = 5;
 
 const HEARTBEAT_INTERVAL = 1000 * 60 * 4;//ms between PING's
@@ -24,6 +22,7 @@ const MAX_PONG_WAIT_INTERVAL = 1000 * 10;
 let ws;
 let reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
 
+let pingpongLog = '';
 let pongWaitTimeout = null;
 let heartbeatCounter = 0;
 
@@ -319,6 +318,8 @@ async function handleChannelPointsCard(items, payload) {
 						await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
 					}
 					unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
+					
+					item.channelPointCardId = null;
 					console.log(`stopped listening: ${ircTarget}`);
 				} else {
 					console.log({ message: 'Can not unlistenn no access token', item });

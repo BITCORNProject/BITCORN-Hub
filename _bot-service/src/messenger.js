@@ -124,7 +124,7 @@ async function handleTipRewards(type, channel, username, extras) {
 		data[key] = extras[key]
 	}
 
-	// const result = await databaseAPI.request(fromUserId, data).tipcorn();
+	// const 
 
 	let result = {};
 
@@ -133,7 +133,7 @@ async function handleTipRewards(type, channel, username, extras) {
 			result = await databaseAPI.bitDonationRequest(fromUserId, data);
 		} break;
 		case REWARD_TYPE.subgift: {
-			throw new Error(`Not implemented reward type: ${type}`);
+			result = await databaseAPI.request(fromUserId, data).tipcorn();
 		} break;
 		case REWARD_TYPE.subscription: {
 			result = await databaseAPI.subEventRequest(fromUserId, data);
@@ -146,7 +146,7 @@ async function handleTipRewards(type, channel, username, extras) {
 	}
 
 	const amount = extras.amount || extras.bitAmount;
-	
+
 	const { success, message } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, amount);
 
 	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
