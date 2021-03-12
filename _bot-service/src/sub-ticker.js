@@ -13,7 +13,7 @@ const timeValues = {
 
 async function performPayout(channel) {
 
-	if (!settingsHelper.getIrcEventPayments(channel, false)) return { msg: 'idle disabled' };
+	if (!settingsHelper.getProperty(channel, 'ircEventPayments')) return { msg: 'idle disabled' };
 
 	let viewers = [];
 

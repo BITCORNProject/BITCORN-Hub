@@ -1058,68 +1058,6 @@ describe('#mocha promises', function () {
 		expect(items[channelId].ircTarget.toLowerCase()).to.be.equal(channelId);
 	});
 
-	it('should clear settings cache', async () => {
-
-		const channel = 'clayman666'.toLowerCase();
-
-		const sitems = mockSettingsCacheResponse({
-			"ircTarget": settingsCache.getChannelId(`#${channel}`)
-		});
-		settingsCache.setItems([sitems]);
-
-		// const results = await databaseAPI.makeRequestChannelsSettings();
-		// settingsCache.setItems(results);
-
-		let items = settingsCache.getItems();
-		expect(items).to.be.ownProperty(settingsCache.getChannelId(channel));
-
-		settingsCache.clear();
-		items = settingsCache.getItems();
-		expect(items).to.be.not.ownProperty(settingsCache.getChannelId(channel));
-		expect(Object.keys(items).length).to.be.equal(0);
-
-	});
-
-	it('should get a specific livestreams channel settings from cache', async () => {
-
-		const channel = 'callowcreation';
-		settingsCache.clear();
-
-		let item = settingsCache.getItem(channel);
-
-		expect(item).to.be.equal(undefined);
-
-		const sitems = mockSettingsCacheResponse({
-			"ircTarget": settingsCache.getChannelId(`#${channel}`)
-		});
-		settingsCache.setItems([sitems]);
-
-		item = settingsCache.getItem(channel);
-
-		expect(item).to.be.ownProperty('ircTarget');
-
-		expect(item.ircTarget).to.be.equal(settingsCache.getChannelId(`#${channel}`));
-	});
-
-	it('should early out with channel enable transaction is false', async () => {
-
-		settingsCache.clear();
-
-		const target = '#callowcreation';
-
-		const sitems = mockSettingsCacheResponse({
-			"ircTarget": settingsCache.getChannelId(target),
-			"enableTransactions": false
-		});
-		settingsCache.setItems([sitems]);
-		const item = {
-			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
-		};
-		settingsHelper.setItemsObjects(item);
-
-		expect(settingsHelper.transactionsDisabled(target)).to.be.equal(true);
-	});
-
 	it('should convert minutes to ms', () => {
 		const settingsHelper = require('../_bot-service/settings-helper');
 
@@ -1128,7 +1066,7 @@ describe('#mocha promises', function () {
 		expect(settingsHelper.convertMinsToMs(0.1)).to.be.equal(6000);
 	});
 
-	it('should get channel cooldown or set a default value', async () => {
+	it('should throw if target or property does not exist', async () => {
 
 		const target = '#callowcreation';
 
@@ -1146,9 +1084,10 @@ describe('#mocha promises', function () {
 		};
 		settingsHelper.setItemsObjects(item);
 
-		const result = settingsHelper.getChannelCooldown(target, 20);
-
-		expect(result).to.be.equal(6000);
+		const fakeTarget = 'woLLac';
+		const fakeName = 'NotxCooldownPerUser';
+		expect(settingsHelper.getProperty.bind(settingsHelper, fakeTarget, fakeName)).to.throws(`Missing settinge channel target ${fakeTarget}`);
+		expect(settingsHelper.getProperty.bind(settingsHelper, target, fakeName)).to.throws(`Missing settinge property ${fakeName} for target ${target}`);
 	});
 
 	it('should get irc output enabled from settings', async () => {
@@ -1230,140 +1169,6 @@ describe('#mocha promises', function () {
 			const matched = _.isEqual(items, result);
 			expect(matched).to.be.equal(false);
 		}
-	});
-
-	it('should get tipcorn min amount from settings helper', async () => {
-
-		const settingsHelper = require('../_bot-service/settings-helper');
-		const target = '#callowcreation';
-		const minTipAmount = 16.55;
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"minTipAmount": minTipAmount,
-			"ircTarget": settingsCache.getChannelId(target)
-		});
-		settingsCache.setItems([sitems]);
-		const item = {
-			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
-		};
-		settingsHelper.setItemsObjects(item);
-
-		const result = settingsHelper.getTipcornMinAmount(target, serverSettings.MIN_TIPCORN_AMOUNT);
-
-		expect(result).to.be.equal(minTipAmount);
-	});
-
-	it('should get rain min amount from settings helper', async () => {
-
-		const settingsHelper = require('../_bot-service/settings-helper');
-		const target = '#callowcreation';
-		const minRainAmount = 5.55555;
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"minRainAmount": minRainAmount,
-			"ircTarget": settingsCache.getChannelId(target)
-		});
-		settingsCache.setItems([sitems]);
-		const item = {
-			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
-		};
-		settingsHelper.setItemsObjects(item);
-
-		const result = settingsHelper.getRainMinAmount(target, serverSettings.MIN_RAIN_AMOUNT);
-
-		expect(result).to.be.equal(minRainAmount);
-	});
-
-
-	it('should get irc event payments from settings helper', async () => {
-
-		const settingsHelper = require('../_bot-service/settings-helper');
-		const target = '#callowcreation';
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"ircEventPayments": true
-		});
-		settingsCache.setItems([sitems]);
-		const item = {
-			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
-		};
-		settingsHelper.setItemsObjects(item);
-
-		const result = settingsHelper.getIrcEventPayments(target, false);
-
-		expect(result).to.be.equal(true);
-	});
-
-	it('should get bitcornhub funded from settings helper', async () => {
-
-		const settingsHelper = require('../_bot-service/settings-helper');
-		const target = '#callowcreation';
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"bitcornhubFunded": true
-		});
-		settingsCache.setItems([sitems]);
-		const item = {
-			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
-		};
-		settingsHelper.setItemsObjects(item);
-
-		const result = settingsHelper.getBitcornhubFunded(target, false);
-
-		expect(result).to.be.equal(true);
-	});
-
-	it('should get bitcorn per bit from settings helper', async () => {
-
-		const settingsHelper = require('../_bot-service/settings-helper');
-		const target = '#callowcreation';
-		const bitcornPerBit = 6.66;
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"bitcornPerBit": bitcornPerBit
-		});
-		settingsCache.setItems([sitems]);
-		const item = {
-			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
-		};
-		settingsHelper.setItemsObjects(item);
-
-		const result = settingsHelper.getBitcornPerBit(target, 1.000000);
-
-		expect(result).to.be.equal(bitcornPerBit);
-	});
-
-	it('should get bitcorn per donation from settings helper', async () => {
-
-		const settingsHelper = require('../_bot-service/settings-helper');
-		const target = '#clayman666';
-		const bitcornPerDonation = 4.20;
-
-		settingsCache.clear();
-
-		const sitems = mockSettingsCacheResponse({
-			"ircTarget": settingsCache.getChannelId(target),
-			"bitcornPerDonation": bitcornPerDonation
-		});
-		settingsCache.setItems([sitems]);
-		const item = {
-			[settingsCache.getChannelId(target)]: settingsCache.getItem(target)
-		};
-		settingsHelper.setItemsObjects(item);
-
-		const result = settingsHelper.getBitcornPerDonation(target, 4.000000);
-
-		expect(result).to.be.equal(bitcornPerDonation);
 	});
 
 	it('should populate channel id map store channel in cache', async () => {

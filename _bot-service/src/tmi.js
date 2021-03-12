@@ -26,37 +26,6 @@ const rewardedIds = new NoDups(200);
 //const channels = ['markettraderstv', 'd4rkcide'];
 const channels = [];
 
-const amounts = {
-	cheer: {
-		'0000': 10
-	},
-	subgift: {
-		'Prime': 420,
-		'1000': 420,
-		'2000': 1000,
-		'3000': 4200
-	},
-	subscription: {
-		'Prime': 420,
-		'1000': 420,
-		'2000': 1000,
-		'3000': 4200
-	},
-	resub: {
-		'Prime': 420,
-		'1000': 420,
-		'2000': 1000,
-		'3000': 4200
-	}
-};
-
-const tiers = {
-	'Prime': 1,
-	'1000': 1,
-	'2000': 2,
-	'3000': 3
-};
-
 const client = new tmi.client({
 	connection: {
 		cluster: "aws",
@@ -94,9 +63,10 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
 	const selectedCooldownId = command.configs.global_cooldown === true ? target : user['user-id'];
 
+	const cooldown = settingsHelper.getProperty(target, 'txCooldownPerUser');
 	const settingsConfigs = {
 		name: command.configs.name,
-		cooldown: settingsHelper.getChannelCooldown(target, command.configs.cooldown),
+		cooldown: cooldown,
 		global_cooldown: command.configs.global_cooldown
 	};
 
@@ -152,38 +122,38 @@ Rewards
 
 async function onCheer(channel, userstate, message) {
 	duplicateRewardCheck(userstate.id);
-	const username = userstate.username;
-	const bitAmount = userstate.bits * settingsHelper.getBitcornPerBit(channel, amounts.cheer['0000']);
-	return handleRewardEvent(REWARD_TYPE.cheer, channel, username, { bitAmount });
+	return handleRewardEvent(REWARD_TYPE.cheer, channel, userstate.username, { bitAmount: userstate.bits });
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
-	duplicateRewardCheck(userstate.id);
-	const amount = amounts.subgift[methods.plan];
-	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount });
+	duplicateRewardCheck(userstate.id);	
+	//: amounts.subgift[methods.plan]
+	//const amount = settingsHelper.getProperty(channel, '');
+	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount: 420, ircMessage: '' });
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
 	duplicateRewardCheck(userstate.id);
-	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.subscription[methods.plan]);
-	const subTier = tiers[methods.plan];
-	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, { amount, subTier });
+	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, { subTier: methods.plan });
 }
 
 async function onResub(channel, username, months, message, userstate, methods) {
 	duplicateRewardCheck(userstate.id);
-	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.resub[methods.plan]);
-	const subTier = tiers[methods.plan];
-	return handleRewardEvent(REWARD_TYPE.resub, channel, username, { amount, subTier });
+	return handleRewardEvent(REWARD_TYPE.resub, channel, username, { subTier: methods.plan });
 }
 
+/**
+ *
+ * @param {string} id unique id
+ * @throws if the id is not a unique item in the items list
+ */
 function duplicateRewardCheck(rewardId) {
 	rewardedIds.addItem(rewardId);
 }
 
 async function handleRewardEvent(type, channel, username, extras) {
 
-	if (!settingsHelper.getIrcEventPayments(channel, false)) return { msg: 'reward events disabled' };
+	if (!settingsHelper.getProperty(channel, 'ircEventPayments')) return { msg: 'reward events disabled' };
 
 	messenger.enqueueReward(type, channel, username, extras);
 	const result = await messenger.sendQueuedRewards();
@@ -246,8 +216,6 @@ module.exports = {
 
 	addMessageOutputListener,
 	addRewardOutputListener,
-
-	amounts,
 
 	onCheer,
 	onSubGift,

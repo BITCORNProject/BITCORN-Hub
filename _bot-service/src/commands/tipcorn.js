@@ -4,7 +4,6 @@
 
 "use strict";
 
-const serverSettings = require('../../../settings/server-settings.json');
 const databaseAPI = require('../../../_api-shared/database-api');
 const { getUsers } = require('../request-api');
 const cleanParams = require('../utils/clean-params');
@@ -36,7 +35,7 @@ module.exports = {
 		const amount = cleanParams.amount(event.args.params[1]);
 		const ircMessage = event.args.params.slice(2).join(' ');
 
-		const minTipAmount = settingsHelper.getTipcornMinAmount(event.channel, serverSettings.MIN_TIPCORN_AMOUNT);
+		const minTipAmount = settingsHelper.getProperty(event.channel, 'minTipAmount');
 
 		if (allowedUsers.activityTrackerOmitUsername(twitchUsername)) {
 			message = `${this.configs.name} used on omit username ${twitchUsername}`;

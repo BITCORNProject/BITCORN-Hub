@@ -55,22 +55,17 @@ function convertMinsToMs(minutes) {
 }
 
 function transactionsDisabled(target) {
-	const item = getItem(target);
-	return item ? !item.enableTransactions : true;
+	const enableTransactions = getProperty(target, 'enableTransactions');
+	return !enableTransactions;
 }
 
 function txDisabledOutput({ irc_target, configs }) {
 	return { success: false, message: 'Transactions not enabled', irc_target: irc_target, configs: configs };;
 }
 
-function getChannelCooldown(target, cooldown) {
-	const item = getItem(target);
-	return item ? Math.max(convertMinsToMs(item.txCooldownPerUser), cooldown) : cooldown;
-}
-
 function getIrcMessageTarget(target, irc_out, MESSAGE_TYPE) {
-	const item = getItem(target);
-	return (item ? item.txMessages : false) || irc_out === MESSAGE_TYPE.irc_whisper ? irc_out : MESSAGE_TYPE.irc_none;
+	const txMessages = getProperty(target, 'txMessages');
+	return txMessages || irc_out === MESSAGE_TYPE.irc_whisper ? irc_out : MESSAGE_TYPE.irc_none;
 }
 
 function txMessageOutput(type) {
@@ -82,43 +77,26 @@ function txMessageOutput(type) {
 }
 
 function getRainAlgorithmResult(target, items) {
-	const item = getItem(target);
-	if (!item) return items;
-
+	const rainAlgorithm = getProperty(target, 'rainAlgorithm');
 	return [
 		items.filter(x => x),
 		shuffleArray(JSON.parse(JSON.stringify(items.filter(x => x))))
-	][item.rainAlgorithm];
+	][rainAlgorithm];
 }
 
-function getTipcornMinAmount(target, minTipAmount) {
+/**
+ * 
+ * @param {string} target the channel name
+ * @param {string} name the (case-sensitive) name of the settings property name
+ * 
+ * @throws if the 'target' or the 'name' is not found
+ */
+function getProperty(target, name) {
 	const item = getItem(target);
-	return item ? item.minTipAmount : minTipAmount;
-}
+	if(!item) throw new Error(`Missing settinge channel target ${target}`);
+	if(!item.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
 
-function getRainMinAmount(target, minRainAmount) {
-	const item = getItem(target);
-	return item ? item.minRainAmount : minRainAmount;
-}
-
-function getIrcEventPayments(target, ircEventPayments) {
-	const item = getItem(target);
-	return item ? item.ircEventPayments : ircEventPayments;
-}
-
-function getBitcornhubFunded(target, bitcornhubFunded) {
-	const item = getItem(target);
-	return item ? item.bitcornhubFunded : bitcornhubFunded;
-}
-
-function getBitcornPerBit(target, bitcornPerBit) {
-	const item = getItem(target);
-	return item ? item.bitcornPerBit : bitcornPerBit;
-}
-
-function getBitcornPerDonation(target, bitcornPerDonation) {
-	const item = getItem(target);
-	return item ? item.bitcornPerDonation : bitcornPerDonation;
+	return item[name];
 }
 
 function init() {
@@ -166,14 +144,12 @@ module.exports = {
 	convertMinsToMs,
 	transactionsDisabled,
 	txDisabledOutput,
-	getChannelCooldown,
 	getIrcMessageTarget,
 	txMessageOutput,
 	getRainAlgorithmResult,
-	getTipcornMinAmount,
-	getRainMinAmount,
-	getIrcEventPayments,
-	getBitcornhubFunded,
-	getBitcornPerBit,
-	getBitcornPerDonation
+
+	/**
+	 * generic lookup test
+	 */
+	getProperty
 };

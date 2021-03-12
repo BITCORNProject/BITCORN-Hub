@@ -4,7 +4,6 @@
 
 "use strict";
 
-const serverSettings = require('../../../settings/server-settings.json');
 const databaseAPI = require('../../../_api-shared/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
@@ -34,7 +33,7 @@ module.exports = {
 		const rain_user_count = cleanParams.amount(event.args.params[1]);
 		const ircMessage = event.args.params.slice(2).join(' ');
 
-		const minRainAmount = settingsHelper.getRainMinAmount(event.channel, serverSettings.MIN_RAIN_AMOUNT);
+		const minRainAmount = settingsHelper.getProperty(event.channel, 'minRainAmount');
 
 		if (cleanParams.isNumber(rain_amount) === false ||
 			cleanParams.isNumber(rain_user_count) === false ||
