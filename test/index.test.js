@@ -764,12 +764,12 @@ describe('#mocha promises', function () {
 		}
 	});
 
-	it('should send message tyo chat from rewards queue', async () => {
+	it('should send message to chat from rewards queue', async () => {
 
 		const channel = '#callowcreation';
 		const username = 'callowcreation';
 		const amount = 10;
-		messenger.enqueueReward('cheer', channel, username, { amount, bitAmount: amount });
+		messenger.enqueueReward('cheer', channel, username, { bitAmount: amount });
 
 		const result = await messenger.sendQueuedRewards();
 
@@ -783,26 +783,13 @@ describe('#mocha promises', function () {
 		expect(tmi.duplicateRewardCheck.bind(tmi, rewardId)).to.throws(`This id is not unique: ${rewardId}`);
 	});
 
-	it('should not give reward got no-reward channels', async () => {
-		const channel = 'naivebot';
-
-		const result = tmi.noRewardCheck(channel);
-		expect(result).to.be.equal(true);
-
-	});
-
 	it('should not send two reward requests with the same message id', async () => {
-
-		const promises = [];
 
 		let userstate = null;
 		let methods = null;
 		let channel = null;
 		let username = null;
 		let message = null;
-		let streakMonths = null;
-		let recipient = null;
-		let months = null;
 
 		userstate = { bits: 10, username: 'callowcreation', id: '0932a496-50f2-4020-982d-09102ef36b13' };
 		methods = null;

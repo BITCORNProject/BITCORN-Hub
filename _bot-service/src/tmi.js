@@ -1,6 +1,5 @@
 "use strict";
 
-const fs = require('fs');
 const tmi = require('tmi.js');
 const messenger = require('./messenger');
 const commander = require('./commander');
@@ -10,7 +9,6 @@ const REWARD_TYPE = require('./utils/reward-type');
 const settingsHelper = require('../settings-helper');
 
 const NoDups = require('../../_api-shared/no-dups');
-
 
 const commandsMap = commander.createCommandsMap();
 
@@ -154,7 +152,6 @@ Rewards
 
 async function onCheer(channel, userstate, message) {
 	duplicateRewardCheck(userstate.id);
-	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onCheer` };
 	const username = userstate.username;
 	const bitAmount = userstate.bits * settingsHelper.getBitcornPerBit(channel, amounts.cheer['0000']);
 	return handleRewardEvent(REWARD_TYPE.cheer, channel, username, { bitAmount });
@@ -162,16 +159,12 @@ async function onCheer(channel, userstate, message) {
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
 	duplicateRewardCheck(userstate.id);
-	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubGift` };
 	const amount = amounts.subgift[methods.plan];
-	
 	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount });
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
 	duplicateRewardCheck(userstate.id);
-	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onSubscription` };
-	//const amount = amounts.subscription[methods.plan];
 	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.subscription[methods.plan]);
 	const subTier = tiers[methods.plan];
 	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, { amount, subTier });
@@ -179,8 +172,6 @@ async function onSubscription(channel, username, methods, message, userstate) {
 
 async function onResub(channel, username, months, message, userstate, methods) {
 	duplicateRewardCheck(userstate.id);
-	if (noRewardCheck(channel) === true) return { success: false, message: `no reward channel ${channel} onResub` };
-	//const amount = amounts.resub[methods.plan];
 	const amount = settingsHelper.getBitcornPerDonation(channel, amounts.resub[methods.plan]);
 	const subTier = tiers[methods.plan];
 	return handleRewardEvent(REWARD_TYPE.resub, channel, username, { amount, subTier });
@@ -188,17 +179,6 @@ async function onResub(channel, username, months, message, userstate, methods) {
 
 function duplicateRewardCheck(rewardId) {
 	rewardedIds.addItem(rewardId);
-}
-
-function noRewardCheck(channel) {
-	const noRewardFilename = __dirname + '/./../../settings/no-rewards.json';
-	const channels = JSON.parse(fs.readFileSync(noRewardFilename, 'utf-8'));
-
-	return channels.map(x => hashReplace(x)).includes(hashReplace(channel));
-}
-
-function hashReplace(channel) {
-	return channel.replace('#', '').toLowerCase();
 }
 
 async function handleRewardEvent(type, channel, username, extras) {
@@ -274,7 +254,6 @@ module.exports = {
 	onSubscription,
 	onResub,
 
-	duplicateRewardCheck,
-	noRewardCheck
+	duplicateRewardCheck
 
 };

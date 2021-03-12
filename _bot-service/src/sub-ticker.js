@@ -62,6 +62,8 @@ async function init() {
 
 	setInterval(async () => {
 		const channels = Object.values(settingsHelper.getChannelNames());
+		if(channels.length === 0) return;
+		
 		const promises = channels.map(performPayout);
 		const result = await Promise.all(promises);
 		console.log({ result });
