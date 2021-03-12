@@ -255,7 +255,7 @@ async function deleteCustomReward(broadcaster_id, card_id) {
 	return deleteUserAccessEndpoint(store.access_token, url);
 }
 
-async function getCustomReward(broadcaster_id) {
+async function getCustomRewards(broadcaster_id) {
 	const url = `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`;
 	
 	const store = tokenStore[broadcaster_id];
@@ -310,7 +310,7 @@ module.exports = {
 	getStreamById,
 	getUserFollows,
 	getGame,
-	getCustomReward,
+	getCustomRewards,
 	createCustomReward,
 	deleteCustomReward
 };

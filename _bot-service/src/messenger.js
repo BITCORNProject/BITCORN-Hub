@@ -111,15 +111,24 @@ async function handleTipRewards(type, channel, username, extras) {
 
 	const { data: [toUser] } = await getUsers([username]);
 
-	const fromUserId = settingsHelper.getMapChannelId(channel);
+	const channelId = settingsHelper.getProperty(channel, 'ircTarget');
+	
 	const data = {
-		ircTarget: fromUserId,
-		from: `twitch|${fromUserId}`,
+		ircTarget: channelId,
+		from: `twitch|${channelId}`,
 		to: `twitch|${toUser.id}`,
 		platform: 'twitch',
 		columns: ['balance', 'twitchusername', 'isbanned']
 	};
-
+	/*const body = {
+		ircTarget: event.channelId,
+		from: `twitch|${event.twitchId}`,
+		to: `twitch|${user.id}`,
+		platform: 'twitch',
+		columns: ['balance', 'twitchusername', 'isbanned'],
+		ircMessage: ircMessage,
+		amount: amount,
+	};*/
 	for (const key in extras) {
 		data[key] = extras[key]
 	}
@@ -130,16 +139,16 @@ async function handleTipRewards(type, channel, username, extras) {
 
 	switch (type) {
 		case REWARD_TYPE.cheer: {
-			result = await databaseAPI.bitDonationRequest(fromUserId, data);
+			result = await databaseAPI.bitDonationRequest(channelId, data);
 		} break;
 		case REWARD_TYPE.subgift: {
-			result = await databaseAPI.request(fromUserId, data).tipcorn();
+			result = await databaseAPI.request(channelId, data).tipcorn();
 		} break;
 		case REWARD_TYPE.subscription: {
-			result = await databaseAPI.subEventRequest(fromUserId, data);
+			result = await databaseAPI.subEventRequest(channelId, data);
 		} break;
 		case REWARD_TYPE.resub: {
-			result = await databaseAPI.subEventRequest(fromUserId, data);
+			result = await databaseAPI.subEventRequest(channelId, data);
 		} break;
 		default:
 			throw new Error(`Unexpected reward type: ${type}`);

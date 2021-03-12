@@ -26,7 +26,7 @@ module.exports = {
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
 
-		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
+		if (!settingsHelper.getProperty(event.channel, 'enableTransactions')) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const amount = cleanParams.amount(event.args.params[0]);
 		//IMPORTANT: Do not .toLowerCase() the address is case sensitive

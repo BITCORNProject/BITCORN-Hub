@@ -44,19 +44,9 @@ function getChannelNames() {
 	return Object.keys(idMap);
 }
 
-function getMapChannelId(channel) {
-	channel = cleanChannelName(channel);
-	return idMap[channel];
-}
-
 function convertMinsToMs(minutes) {
 	const MINUTES_AS_MILLISECONDS = 60000;
 	return +minutes * MINUTES_AS_MILLISECONDS;
-}
-
-function transactionsDisabled(target) {
-	const enableTransactions = getProperty(target, 'enableTransactions');
-	return !enableTransactions;
 }
 
 function txDisabledOutput({ irc_target, configs }) {
@@ -140,9 +130,7 @@ module.exports = {
 	cleanChannelName,
 	setItemsObjects,
 	getChannelNames,
-	getMapChannelId,
 	convertMinsToMs,
-	transactionsDisabled,
 	txDisabledOutput,
 	getIrcMessageTarget,
 	txMessageOutput,

@@ -68,7 +68,7 @@ async function deleteCustomReward(broadcaster_id, card_id) {
 	return twitchOAuth.fetchEndpointWithCredentials(process.env.API_CLIENT_ID, store.access_token, url, options);
 }
 
-async function getCustomReward(broadcaster_id) {
+async function getCustomRewards(broadcaster_id) {
 	const store = tokenOrThrow(broadcaster_id);
 
 	const url = `${HELIX_API_BASE_PATH}/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`;
@@ -129,6 +129,6 @@ module.exports = {
 	getTokenStore,
 	createCustomReward,
 	deleteCustomReward,
-	getCustomReward,
+	getCustomRewards,
 	updateRedemptionStatus
 };

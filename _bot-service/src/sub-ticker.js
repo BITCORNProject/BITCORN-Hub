@@ -46,7 +46,7 @@ async function performPayout(channel) {
 	const presults = await Promise.all(promises);
 	chatters = [].concat.apply([], presults);
 
-	const channelId = await settingsHelper.getMapChannelId(channel);
+	const channelId = await settingsHelper.getProperty(channel, 'ircTarget');
 	const body = {
 		ircTarget: channelId,
 		chatters: chatters,

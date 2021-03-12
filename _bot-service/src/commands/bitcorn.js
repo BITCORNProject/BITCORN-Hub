@@ -24,8 +24,8 @@ module.exports = {
 		let success = false;
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
-
-		if (settingsHelper.transactionsDisabled(event.channel)) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
+		
+		if (!settingsHelper.getProperty(event.channel, 'enableTransactions')) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const result = await databaseAPI.request(event.twitchId, null).bitcorn();
 		if (result.status && result.status === 500) {

@@ -126,10 +126,9 @@ async function onCheer(channel, userstate, message) {
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
-	duplicateRewardCheck(userstate.id);	
-	//: amounts.subgift[methods.plan]
-	//const amount = settingsHelper.getProperty(channel, '');
-	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount: 420, ircMessage: '' });
+	duplicateRewardCheck(userstate.id);
+	const amount = settingsHelper.getProperty(channel, 'subGiftDonationAmount');
+	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount, ircMessage: '' });
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {

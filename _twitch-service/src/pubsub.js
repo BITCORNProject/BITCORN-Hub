@@ -26,7 +26,8 @@ let pingpongLog = '';
 let pongWaitTimeout = null;
 let heartbeatCounter = 0;
 
-const CARD_TITLE = '(TESTMODE) BITCORNx420-TEST (TESTMODE)';
+const CARD_TITLE = '(TESTMODE) BITCORNx1000 (TESTMODE)';
+const CARD_PROMPT = `(TESTMODE) Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio. (TESTMODE)`;
 
 // Source: https://www.thepolyglotdeveloper.com/2015/03/create-a-random-nonce-string-using-javascript/
 function nonce(length) {
@@ -134,7 +135,7 @@ function connect() {
 					if (recentIds.includes(redemption.id)) break;
 					recentIds.push(redemption.id);
 
-					if(recentIds.length > MAX_RECENT_ID_LENGTH) {
+					if (recentIds.length > MAX_RECENT_ID_LENGTH) {
 						recentIds.splice(0, MAX_RECENT_ID_LENGTH / 2)
 					}
 
@@ -228,12 +229,8 @@ async function updateLivestreamSettings({ payload }) {
 
 	const tokenStore = twitchRequest.getTokenStore(ircTarget);
 	const items = [];
-	if (!tokenStore && twitchRefreshToken) {
-		const authenticated = await twitchRequest.refreshAccessToken({
-			refresh_token: twitchRefreshToken,
-			client_id: process.env.API_CLIENT_ID,
-			client_secret: process.env.API_SECRET
-		});
+	if (!tokenStore) {
+		const { authenticated, ircTarget } = await refreshToken(twitchRefreshToken, ircTarget);
 		items.push({ authenticated, ircTarget });
 		twitchRequest.storeTokens(items);
 	} else {
@@ -253,18 +250,7 @@ async function initialSettings({ payload }) {
 
 			const { twitchRefreshToken, ircTarget } = payload[channel];
 
-			promises.push(new Promise(async resolve => {
-				if (twitchRefreshToken) {
-					const authenticated = await twitchRequest.refreshAccessToken({
-						refresh_token: twitchRefreshToken,
-						client_id: process.env.API_CLIENT_ID,
-						client_secret: process.env.API_SECRET
-					});
-					resolve({ authenticated, ircTarget });
-				} else {
-					resolve({ authenticated: null, ircTarget });
-				}
-			}));
+			promises.push(refreshToken(twitchRefreshToken, ircTarget));
 		}
 
 		const items = await Promise.all(promises);
@@ -281,6 +267,21 @@ async function initialSettings({ payload }) {
 	} catch (error) {
 		console.log(error);
 	}
+}
+
+async function refreshToken(twitchRefreshToken, ircTarget) {
+	return new Promise(async (resolve) => {
+		if (twitchRefreshToken) {
+			const authenticated = await twitchRequest.refreshAccessToken({
+				refresh_token: twitchRefreshToken,
+				client_id: process.env.API_CLIENT_ID,
+				client_secret: process.env.API_SECRET
+			});
+			resolve({ authenticated, ircTarget });
+		} else {
+			resolve({ authenticated: null, ircTarget });
+		}
+	})
 }
 
 async function handleChannelPointsCard(items, payload) {
@@ -303,14 +304,10 @@ async function handleChannelPointsCard(items, payload) {
 
 			if (item.enableChannelpoints === true) {
 
-				await twitchRequest.getCustomReward(ircTarget)
-					.then(result => createListenCustomReward(result, CARD_TITLE, item, authenticated))
-					.then(({ item, access_token }) => {
-						listenToChannel(item, access_token);
-					})
-					.catch(e => {
-						console.log(e);
-					});
+				await twitchRequest.getCustomRewards(ircTarget)
+					.then(result => createCustomReward(result, item, authenticated))
+					.then(listenToChannel)
+					.catch(e => console.log(e));
 			} else {
 
 				if (authenticated) {
@@ -318,7 +315,7 @@ async function handleChannelPointsCard(items, payload) {
 						await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
 					}
 					unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
-					
+
 					item.channelPointCardId = null;
 					console.log(`stopped listening: ${ircTarget}`);
 				} else {
@@ -332,15 +329,15 @@ async function handleChannelPointsCard(items, payload) {
 	}
 }
 
-async function createListenCustomReward(result, cardTitle, item, authenticated) {
+async function createCustomReward(result, item, authenticated) {
 
-	const reward = result.data ? result.data.find(x => x.title === cardTitle) : null;
+	const reward = result.data ? result.data.find(x => x.title === CARD_TITLE) : null;
 
 	if (!reward) {
 		const data = {
-			title: cardTitle,
+			title: CARD_TITLE,
 			cost: 1,
-			prompt: `(TESTMODE) Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio. (TESTMODE)`,
+			prompt: CARD_PROMPT,
 			should_redemptions_skip_request_queue: false
 		};
 
@@ -361,7 +358,7 @@ async function createListenCustomReward(result, cardTitle, item, authenticated) 
 	return { item, access_token: authenticated.access_token };
 }
 
-function listenToChannel(item, access_token) {
+function listenToChannel({ item, access_token }) {
 	if (item.channelPointCardId) {
 		listen(`channel-points-channel-v1.${item.ircTarget}`, access_token);
 		console.log(`listening: ${item.ircTarget}`);

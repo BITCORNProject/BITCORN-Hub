@@ -802,7 +802,7 @@ describe('#mocha promises', function () {
 		expect(tmi.onCheer(channel, userstate, message)).to.eventually.equal(`This id is not unique: ${userstate.id}`);
 	});
 
-	it('should handle rewards events', async () => {
+	it.skip('should handle rewards events', async () => {
 
 		let result = null;
 		const promises = [];
