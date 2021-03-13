@@ -4,8 +4,7 @@ request_result1.refused
 */
 
 "use strict";
-
-const { is_production } = require('../prod');
+const { is_production } = require('./prod');
 
 const apiRequest = require('./api-request');
 
@@ -71,11 +70,11 @@ DatabaseEndpoint.prototype.baseAuth = function () {
 }
 
 // v3
-DatabaseEndpoint.prototype.makeErrorRequest = async function (data) {
-	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
-	const url = `${this.base()}/${this.rooturl().errorlog}`;
-	return apiRequest.makeRequest(url, access_token, data);
-}
+// DatabaseEndpoint.prototype.makeErrorRequest = async function (data) {
+// 	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+// 	const url = `${this.base()}/${this.rooturl().errorlog}`;
+// 	return apiRequest.makeRequest(url, access_token, data);
+// }
 
 DatabaseEndpoint.prototype.makeRequestBase = async function (baseUrl, endpoint, data) {
 	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);

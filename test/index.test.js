@@ -156,11 +156,6 @@ describe('#mocha promises', function () {
 		expect(commandsMap).to.have.all.keys(mapped);
 	});
 
-	it('should have a $ prefix', () => {
-		const args = commander.messageAsCommand('$tipcorn @naivebot 420');
-		expect(args.prefix).to.be.equal('$');
-	});
-
 	it('should get command and params from chat message', () => {
 		const msg = '$tipcorn @naivebot 420';
 		const args = commander.messageAsCommand(msg);
@@ -922,21 +917,6 @@ describe('#mocha promises', function () {
 		const results = await subTicker.performPayout(channel);
 
 		expect(results).to.be.greaterThan(0);
-	});
-
-	it('should send error to database logger', async () => {
-
-		const errorLogger = require('../_bot-service/src/utils/error-logger');
-
-		const error = new Error('Failed test as expected');
-		const errorcode = 0;
-		const result = await errorLogger.asyncErrorLogger(error, errorcode);
-		expect(result).to.be.equal(true);
-	});
-
-	it('should be able to get env development variable not in production', () => {
-		const { is_production } = require('../prod');
-		expect(is_production).to.be.equal(false);
 	});
 
 	it('should envoke a command as test in a development state', async () => {

@@ -1,6 +1,6 @@
 "use strict";
 
-const { is_production } = require('../../prod');
+const { is_production } = require('../../_api-shared/prod');
 const moduleloader = require('./utils/moduleloader');
 
 const commandsPath = '../commands';

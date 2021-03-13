@@ -10,10 +10,6 @@ function at(value) {
     return brackets(value).replace('@', '');
 }
 
-function atLower(value) {
-    return at(value).toLowerCase();
-}
-
 function amount(value) {
     return +brackets(value);
 }

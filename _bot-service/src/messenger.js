@@ -1,6 +1,6 @@
 "use strict";
 
-const { is_production } = require('../../prod');
+const { is_production } = require('../../_api-shared/prod');
 const serverSettings = require('../../settings/server-settings.json');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');

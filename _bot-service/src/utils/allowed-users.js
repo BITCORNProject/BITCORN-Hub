@@ -7,10 +7,7 @@
 const fs = require('fs');
 
 exports.isCommandTesters = function(username) {
-	let path = 'command_testers.txt';
-	if(!fs.existsSync(path)) {
-		path = '../command_testers.txt';
-	}
+	let path = '_data/command_testers.txt';
 	const data = fs.readFileSync(path, 'utf-8');
 	const json = JSON.parse(data);
 	const allowed_testers = json.filter(x => x);
@@ -19,10 +16,8 @@ exports.isCommandTesters = function(username) {
 }
 
 exports.activityTrackerOmitUsername = function(username) {	
-	let path = 'omit_usernames.txt';
-	if(!fs.existsSync(path)) {
-		path = '../omit_usernames.txt';
-	}
+	let path = '_data/omit_usernames.txt';
+
 	const data = fs.readFileSync(path, 'utf-8');
 	const json = JSON.parse(data);
 	const omit_usernames = json.filter(x => x);
