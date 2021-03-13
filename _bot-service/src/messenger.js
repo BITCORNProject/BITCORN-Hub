@@ -105,7 +105,7 @@ async function sendQueuedRewards() {
 // extras = { amount: 0, ... }
 async function handleTipRewards(type, channel, username, extras) {
 
-	const commandHelper = require('./shared-lib/command-helper');
+	const commandHelper = require('./utils/command-helper');
 	const databaseAPI = require('../../_api-shared/database-api');
 	const { getUsers } = require('./request-api');
 
@@ -120,20 +120,10 @@ async function handleTipRewards(type, channel, username, extras) {
 		platform: 'twitch',
 		columns: ['balance', 'twitchusername', 'isbanned']
 	};
-	/*const body = {
-		ircTarget: event.channelId,
-		from: `twitch|${event.twitchId}`,
-		to: `twitch|${user.id}`,
-		platform: 'twitch',
-		columns: ['balance', 'twitchusername', 'isbanned'],
-		ircMessage: ircMessage,
-		amount: amount,
-	};*/
+
 	for (const key in extras) {
 		data[key] = extras[key]
 	}
-
-	// const 
 
 	let result = {};
 
@@ -142,7 +132,7 @@ async function handleTipRewards(type, channel, username, extras) {
 			result = await databaseAPI.bitDonationRequest(channelId, data);
 		} break;
 		case REWARD_TYPE.subgift: {
-			result = await databaseAPI.request(channelId, data).tipcorn();
+			result = await databaseAPI.subEventRequest(channelId, data);
 		} break;
 		case REWARD_TYPE.subscription: {
 			result = await databaseAPI.subEventRequest(channelId, data);

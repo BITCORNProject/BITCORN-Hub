@@ -26,6 +26,13 @@ const rewardedIds = new NoDups(200);
 //const channels = ['markettraderstv', 'd4rkcide'];
 const channels = [];
 
+const tiers = {
+	'Prime': '1000',
+	'1000': '1000',
+	'2000': '2000',
+	'3000': '3000',
+};
+
 const client = new tmi.client({
 	connection: {
 		cluster: "aws",
@@ -127,18 +134,17 @@ async function onCheer(channel, userstate, message) {
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
 	duplicateRewardCheck(userstate.id);
-	const amount = settingsHelper.getProperty(channel, 'subGiftDonationAmount');
-	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { amount, ircMessage: '' });
+	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { subTier: tiers[methods.plan] });
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
 	duplicateRewardCheck(userstate.id);
-	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, { subTier: methods.plan });
+	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, { subTier: tiers[methods.plan] });
 }
 
 async function onResub(channel, username, months, message, userstate, methods) {
 	duplicateRewardCheck(userstate.id);
-	return handleRewardEvent(REWARD_TYPE.resub, channel, username, { subTier: methods.plan });
+	return handleRewardEvent(REWARD_TYPE.resub, channel, username, { subTier: tiers[methods.plan] });
 }
 
 /**

@@ -454,7 +454,7 @@ describe('#mocha promises', function () {
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
 		const target = '#callowcreation';
-		const msg = `${commander.commandName('$tipcorn')} @3412q 103`;
+		const msg = `${commander.commandName('$tipcorn')} @3412q 423`;
 		const self = false;
 
 		const obj = await tmi.onMessageHandler(target, user, msg, self).catch(console.log);
@@ -802,7 +802,7 @@ describe('#mocha promises', function () {
 		expect(tmi.onCheer(channel, userstate, message)).to.eventually.equal(`This id is not unique: ${userstate.id}`);
 	});
 
-	it.skip('should handle rewards events', async () => {
+	it('should handle rewards events', async () => {
 
 		let result = null;
 		const promises = [];

@@ -10,7 +10,7 @@ const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const allowedUsers = require('../utils/allowed-users');
 const settingsHelper = require('../../settings-helper');
-const commandHelper = require('../shared-lib/command-helper');
+const commandHelper = require('../utils/command-helper');
 
 module.exports = {
 	configs: {
