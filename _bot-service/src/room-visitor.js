@@ -13,10 +13,14 @@ const joinedChannels = [];
 
 
 async function partChannels(tmi, leaves) {
+	if(leaves.length === 0) return;
 	for (let i = 0; i < leaves.length; i++) {
 		const result = await tmi.partChannel(leaves[i]);
 		console.log({ left_channel: result.join() });
 	}
+	const items = joinedChannels.filter(x => !leaves.includes(x));
+	joinedChannels.splice(0);
+	joinedChannels.push(...items);
 }
 
 async function joinChannels(tmi, channel) {
@@ -60,7 +64,7 @@ async function joinChannelsFromQueue(tmi) {
 	}
 	joinChannelsFromQueue(tmi);
 
-	//console.log(result);
+	console.log(result);
 
 	await new Promise(resolve => setTimeout(resolve, 500));
 	return result;
