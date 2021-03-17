@@ -67,27 +67,22 @@ module.exports = {
 				to: recipients,
 				platform: 'twitch',
 				amount: amount,
-				columns: ['balance', 'twitchusername', 'isbanned', 'twitchid']
+				columns: ['balance', 'twitchusername', 'isbanned', 'twitchid', 'islocked']
 			};
 			
 			const results = await databaseAPI.request(event.twitchId, body).rain();
 
 			if (results.status && results.status === 500) {
-
 				// NOTE needs to be logged to the locally as an error
 				message = `${message}: ${results.status} ${results.statusText}`;
-
 			} else if (results.status && results.status === 420) {
-
 				message = `API access locked for ${event.twitchId}`;
-
 			} else if (results.status) {
-
 				message = `${message}: ${results.status} ${results.statusText}`;
 			} else if (!results[0].from) {
 				message = `DogePls SourPls You failed to summon rain, with your weak ass rain dance. You need to register and deposit / earn BITCORN in order to make it rain! DogePls SourPls`;
 				success = true;
-			} else if (results.length > 0 && results[0].from.isbanned === false) {
+			} else if (results.length > 0 && results[0].from.isbanned === false && !results[0].from.islocked) {
 
 				success = true;
 
@@ -132,9 +127,12 @@ module.exports = {
 					success = false;
 					message = `${event.twitchUsername} rained on noone`;
 				}
-
 			} else {
-				message = `ERROR: ${results.status || results.code} - Hmmmmm Rain Fail ${event.twitchUsername} ${amount}`;
+				if(results[0].from.islocked) {
+					message = `@${event.twitchUsername} your wallet is locked and cannot perform this tx`;
+				} else {
+					message = `ERROR: ${results.status || results.code} - Hmmmmm Rain Fail ${event.twitchUsername} ${amount}`;
+				}
 			}
 		}
 
