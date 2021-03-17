@@ -910,11 +910,12 @@ describe('#mocha promises', function () {
 		const subTicker = require('../_bot-service/src/sub-ticker');
 
 		const channel = 'callowcreation';
+		const channelId = '75987197';
 
 		const initResult = await subTicker.init();
 		expect(initResult.success).to.be.equal(true);
 
-		const results = await subTicker.performPayout(channel);
+		const results = await subTicker.performPayout({ channel, channelId });
 
 		expect(results).to.be.greaterThan(0);
 	});
