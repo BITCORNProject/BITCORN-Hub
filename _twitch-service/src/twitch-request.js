@@ -40,6 +40,11 @@ async function getUsersByIds(user_ids) {
 	return twitchOAuth.getEndpoint(`${HELIX_API_PATH}/users?${params.join('&')}`);
 }
 
+async function getStreamsByIds(user_ids) {
+	const params = user_ids.map(x => `user_id=${x}`);
+	return twitchOAuth.getEndpoint(`${HELIX_API_PATH}/streams?${params.join('&')}`);
+}
+
 function tokenOrThrow(broadcaster_id) {
 	const store = getTokenStore(broadcaster_id);
 	if (!store) throw new Error(`No access token for ${broadcaster_id} custom rewards`);
@@ -155,6 +160,7 @@ module.exports = {
 	authorize,
 	getUsersByIds,
 	getUsersByName,
+	getStreamsByIds,
 	refreshAccessToken,
 	storeTokens,
 	getTokenStore,

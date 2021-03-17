@@ -38,6 +38,10 @@ async function getIds(ids) {
 	return postRequest(`${localUrl}/users`, { ids });
 }
 
+async function getStreamsByIds(ids) {
+	return postRequest(`${localUrl}/streams`, { ids });
+}
+
 async function getChatters(channel) {
 	return getRequest(`https://tmi.twitch.tv/group/user/${channel}/chatters`);
 }
@@ -45,5 +49,6 @@ async function getChatters(channel) {
 module.exports = {
 	getUsers,
 	getIds,
+	getStreamsByIds,
 	getChatters
 };

@@ -48,7 +48,20 @@ app.post('/users', async (req, res) => {
 		console.error(err);
 		res.status(500).send(err.message);
 	}
+});
 
+app.post('/streams', async (req, res) => {
+
+	try {
+		const { ids } = req.body;
+
+		const resUsers = await twitchRequest.getStreamsByIds(ids);
+		res.json(resUsers);
+		
+	} catch (err) {
+		console.error(err);
+		res.status(500).send(err.message);
+	}
 });
 
 try {

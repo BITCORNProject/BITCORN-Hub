@@ -44,6 +44,10 @@ function getChannelNames() {
 	return Object.keys(idMap);
 }
 
+function getChannelsAndIds() {
+	return Object.keys(idMap).map(x => ({ channel: x, channelId: idMap[x] }));
+}
+
 function convertMinsToMs(minutes) {
 	const MINUTES_AS_MILLISECONDS = 60000;
 	return +minutes * MINUTES_AS_MILLISECONDS;
@@ -83,8 +87,8 @@ function getRainAlgorithmResult(target, items) {
  */
 function getProperty(target, name) {
 	const item = getItem(target);
-	if(!item) throw new Error(`Missing settinge channel target ${target}`);
-	if(!item.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
+	if (!item) throw new Error(`Missing settinge channel target ${target}`);
+	if (!item.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
 
 	return item[name];
 }
@@ -95,27 +99,27 @@ function init() {
 			reconnection: true
 		});
 		const settingsSocket = settings_io.connect({ reconnect: true });
-	
+
 		settingsSocket.on('error', e => {
 			console.log(`error settings service server id: ${settingsSocket.id}`, e);
 		});
-	
+
 		settingsSocket.on('connect', async () => {
 			console.log(`connected to settings service server id: ${settingsSocket.id}`);
-	
+
 			settingsSocket.emit('initial-settings-request');
 		});
-	
+
 		settingsSocket.on('initial-settings', req => {
 			console.log(req);
 			setItemsObjects(req.payload);
 		});
-	
+
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log(req);
 			setItemsObjects({ [req.payload.ircTarget]: req.payload });
 		});
-	
+
 		settingsSocket.on('disconnect', () => {
 			console.log(`disconnected settings service server`);
 		});
@@ -130,6 +134,7 @@ module.exports = {
 	cleanChannelName,
 	setItemsObjects,
 	getChannelNames,
+	getChannelsAndIds,
 	convertMinsToMs,
 	txDisabledOutput,
 	getIrcMessageTarget,

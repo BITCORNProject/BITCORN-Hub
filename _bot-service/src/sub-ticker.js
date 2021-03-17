@@ -1,9 +1,8 @@
 "use strict";
-const fetch = require('node-fetch');
 
 const serverSettings = require('../../settings/server-settings.json');
 const databaseAPI = require('../../_api-shared/database-api');
-const { getUsers, getChatters } = require('./request-api');
+const { getUsers, getChatters, getStreamsByIds } = require('./request-api');
 const settingsHelper = require('../settings-helper');
 
 const timeValues = {
@@ -11,7 +10,7 @@ const timeValues = {
 	MINUTE: 1000 * 60,
 };
 
-async function performPayout(channel) {
+async function performPayout({ channel, channelId }) {
 
 	if (!settingsHelper.getProperty(channel, 'ircEventPayments')) return { msg: 'idle disabled' };
 
@@ -31,7 +30,6 @@ async function performPayout(channel) {
 	}
 
 	const promises = [];
-	let chatters = [];
 	while (viewers.length > 0) {
 		const usernames = viewers.splice(0, 100);
 		promises.push(new Promise(async (resolve) => {
@@ -44,9 +42,8 @@ async function performPayout(channel) {
 		}));
 	}
 	const presults = await Promise.all(promises);
-	chatters = [].concat.apply([], presults);
+	const chatters = [].concat.apply([], presults);
 
-	const channelId = await settingsHelper.getProperty(channel, 'ircTarget');
 	const body = {
 		ircTarget: channelId,
 		chatters: chatters,
@@ -61,13 +58,28 @@ async function init() {
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
-		const channels = Object.values(settingsHelper.getChannelNames());
-		if(channels.length === 0) return;
-		
-		const promises = channels.map(performPayout);
-		const result = await Promise.all(promises);
+		const items = Object.values(settingsHelper.getChannelsAndIds());
+		if (items.length === 0) return;
+
+		const promises = [];
+		while (items.length > 0) {
+			const item = items.splice(0, 100);
+			promises.push(new Promise(async (resolve) => {
+				try {
+					const { data } = await getStreamsByIds(item.map(x => x.channelId));
+					resolve(data.map(x => ({ channel: x.user_login, channelId: x.user_id })));
+				} catch (error) {
+					resolve(null);
+				}
+			}));
+		}
+		const presults = await Promise.all(promises);
+		const streams = [].concat.apply([], presults);
+
+		const payoutPromises = streams.map(performPayout);
+		const result = await Promise.all(payoutPromises);
 		console.log({ result });
-	},/* 1000 * 30 */ timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
+	}, /* 1000 * 30 */ timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
 
 	return { success: true };
 }
