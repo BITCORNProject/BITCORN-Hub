@@ -9,7 +9,6 @@ const WebSocket = require('ws');
 const twitchRequest = require('./twitch-request');
 
 const databaseAPI = require('../../_api-shared/database-api');
-const { storeTokens, getTokenAllStores } = require('./twitch-request');
 
 const recentIds = [];
 const MAX_RECENT_ID_LENGTH = 5;
@@ -106,7 +105,7 @@ function connect() {
 
 		reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
 
-		const stores = getTokenAllStores();
+		const stores = twitchRequest.getTokenAllStores();
 		for (const channel_id in stores) {
 			const store = stores[channel_id];
 			listenToChannel({ channel_id, access_token: store.access_token });
@@ -239,7 +238,7 @@ async function updateLivestreamSettings({ payload }) {
 	if (!tokenStore) {
 		const { authenticated, ircTarget } = await refreshToken(twitchRefreshToken, ircTarget);
 		items.push({ authenticated, ircTarget });
-		storeTokens(items);
+		twitchRequest.storeTokens(items);
 	} else {
 		items.push({ authenticated: tokenStore, ircTarget });
 	}
@@ -262,7 +261,7 @@ async function initialSettings({ payload }) {
 
 		const items = await Promise.all(promises);
 
-		storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
+		twitchRequest.storeTokens(items.map(({ authenticated, ircTarget }) => ({ authenticated, ircTarget })));
 
 		while (ws.readyState !== WebSocket.OPEN) {
 			await new Promise(resolve => setTimeout(resolve, 100));
