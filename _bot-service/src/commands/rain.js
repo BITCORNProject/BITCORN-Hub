@@ -17,7 +17,7 @@ module.exports = {
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Rain a certain Amount to the last 1-10 of People who were active',
-		example: '$rain <amount> <1-25>',
+		example: `$rain <amount> <1-${databaseAPI.MAX_RAIN_USERS}>`,
 		enabled: true,
 		irc_in: MESSAGE_TYPE.irc_chat,
 		irc_out: MESSAGE_TYPE.irc_chat
