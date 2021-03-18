@@ -80,6 +80,9 @@ function getItem(channel) {
 	return cache[channelId];
 }
 
+/**
+ * Required for tests
+ */
 async function requestSettings() {
 	const results = await databaseAPI.makeRequestChannelsSettings();
 	applySettings(results);
@@ -128,7 +131,7 @@ module.exports = {
 	getInitialValues,
 	clear,
 	getItem,
-	requestSettings,
+	requestSettings, // Required for tests
 	applySettings,
 	applyItem,
 	getChannelId,

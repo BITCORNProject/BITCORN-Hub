@@ -749,13 +749,42 @@ describe('#mocha promises', function () {
 		const REWARD_TYPE = require('../_bot-service/src/utils/reward-type');
 		const channel = '#callowcreation';
 		const username = 'wollac';
-		const amount = 50;
-		const bitAmount = 1;
-		const result = await messenger.handleTipRewards(REWARD_TYPE.cheer, channel, username, { amount, bitAmount });
-		if (result.success === false) {
-			expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
-		} else {
-			expect(result.success).to.be.equal(true);
+		{
+			const bitAmount = 50;
+			const result = await messenger.handleTipRewards(REWARD_TYPE.cheer, channel, username, { bitAmount });
+			if (result.success === false) {
+				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+			} else {
+				expect(result.success).to.be.equal(true);
+			}
+		}
+		{
+			const subTier = '3000';
+			const result = await messenger.handleTipRewards(REWARD_TYPE.resub, channel, username, { subTier });
+			//if(result.)
+			if (result.success === false) {
+				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+			} else {
+				expect(result.success).to.be.equal(true);
+			}
+		}
+		{
+			const subTier = '1000';
+			const result = await messenger.handleTipRewards(REWARD_TYPE.subgift, channel, username, { subTier });
+			if (result.success === false) {
+				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+			} else {
+				expect(result.success).to.be.equal(true);
+			}
+		}
+		{
+			const subTier = '2000';
+			const result = await messenger.handleTipRewards(REWARD_TYPE.subscription, channel, username, { subTier });
+			if (result.success === false) {
+				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+			} else {
+				expect(result.success).to.be.equal(true);
+			}
 		}
 	});
 
@@ -987,12 +1016,10 @@ describe('#mocha promises', function () {
 	});
 });
 
-describe('#mocha promises', function () {
+describe.only('#settings server cache', function () {
 
 	const settingsCache = require('../_settings-service/settings-cache');
 	const settingsHelper = require('../_bot-service/settings-helper');
-
-	const serverSettings = require('../settings/server-settings.json');
 
 	const activityTracker = require('../_bot-service/src/activity-tracker');
 

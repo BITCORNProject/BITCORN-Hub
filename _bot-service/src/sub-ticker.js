@@ -14,39 +14,28 @@ async function performPayout({ channel, channelId }) {
 
 	if (!settingsHelper.getProperty(channel, 'ircEventPayments')) return { msg: 'idle disabled' };
 
-	let viewers = [];
+	let stack = [];
 
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	const { chatters: chatters_json } = await getChatters(channel);
 
-	viewers = [];
+	stack = [];
 	for (const key in chatters_json) {
 		const chatters = chatters_json[key];
 		for (const k in chatters) {
 			if (k === 'broadcaster') continue;
-			viewers = viewers.concat(chatters[k]);
+			stack = stack.concat(chatters[k]);
 		}
 	}
 
-	const promises = [];
-	while (viewers.length > 0) {
-		const usernames = viewers.splice(0, 100);
-		promises.push(new Promise(async (resolve) => {
-			try {
-				const { data } = await getUsers(usernames);
-				resolve(data.map(x => x.id));
-			} catch (error) {
-				resolve(null);
-			}
-		}));
-	}
-	const presults = await Promise.all(promises);
-	const chatters = [].concat.apply([], presults);
+	const requester = async chunk => getUsers(chunk);
+	const mapper = x => x.id;
+	const results = await chunkRequests(stack, requester, mapper);
 
 	const body = {
 		ircTarget: channelId,
-		chatters: chatters,
+		chatters: results,
 		minutes: MINUTE_AWARD_MULTIPLIER
 	};
 
@@ -58,33 +47,35 @@ async function init() {
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
-		const items = Object.values(settingsHelper.getChannelsAndIds());
-		if (items.length === 0) return;
+		const stack = Object.values(settingsHelper.getChannelsAndIds());
+		if (stack.length === 0) return;
 
-		const promises = [];
-		while (items.length > 0) {
-			const item = items.splice(0, 100);
-			promises.push(new Promise(async (resolve) => {
-				try {
-					const { data } = await getStreamsByIds(item.map(x => x.channelId));
-					resolve(data.map(x => ({ channel: x.user_login, channelId: x.user_id })));
-				} catch (error) {
-					resolve(null);
-				}
-			}));
-		}
-		const presults = await Promise.all(promises);
-		const streams = [].concat.apply([], presults);
+		const requester = async chunk => getStreamsByIds(chunk.map(x => x.channelId));
+		//const requester = async chunk => ({ data: chunk.map(x => ({ user_login: x.channel, user_id: x.channelId })) });
+		const mapper = x => ({ channel: x.user_login, channelId: x.user_id });
+		const results = await chunkRequests(stack, requester, mapper);
 
-		const payoutPromises = streams.map(performPayout);
+		const payoutPromises = results.map(performPayout);
 		const result = await Promise.all(payoutPromises);
 		console.log({ result });
-	}, /* 1000 * 30 */ timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
+	}, /* 1000 * 30 */timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
 
-	return { success: true };
+	return { success: settingsHelper.getChannelNames().length > 0 };
 }
 
 module.exports = {
 	init,
 	performPayout
 };
+
+async function chunkRequests(stack, requester, mapper) {
+	const promises = [];
+	while (stack.length > 0) {
+		const chunk = stack.splice(0, 100);
+		const promise = requester(chunk).then(({ data }) => data.map(mapper)).catch(e => console.log(e));
+		promises.push(promise);
+	}
+	const resolved = await Promise.all(promises);
+	const results = [].concat.apply([], resolved);
+	return results;
+}

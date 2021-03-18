@@ -27,7 +27,7 @@ async function postRequest(url, data) {
 	};
 	return fetch(url, options)
 		.then(res => res.json())
-		.catch(err => err);
+		.catch(err => console.error(err));
 }
 
 async function getUsers(usernames) {

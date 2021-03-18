@@ -8,7 +8,7 @@ const MESSAGE_TYPE = require('./utils/message-type');
 const REWARD_TYPE = require('./utils/reward-type');
 const settingsHelper = require('../settings-helper');
 
-const NoDups = require('../../_api-shared/no-dups');
+const NoDups = require('./utils/no-dups');
 
 const commandsMap = commander.createCommandsMap();
 
