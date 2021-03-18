@@ -38,7 +38,7 @@ async function performPayout({ channel, channelId }) {
 
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
-	const stack = getChannelChatters(channel);	
+	const stack = await getChannelChatters(channel);	
 	const results = await chunkRequests(stack, getUsers, x => x.id);
 
 	const body = {

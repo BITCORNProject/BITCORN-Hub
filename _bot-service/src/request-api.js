@@ -11,10 +11,14 @@ const fetch = require('node-fetch');
 
 const localUrl = `http://localhost:${process.env.TWITCH_SERVER_PORT}`;
 
+function fetchRequest(url, options) {
+	return fetch(url, options)
+		.then(res => res.json())
+		.catch(err => console.error(err));
+}
+
 async function getRequest(url) {
-	return fetch(url)
-	.then(res => res.json())
-	.catch(err => err);
+	return fetchRequest(url, { method: 'GET' });
 }
 
 async function postRequest(url, data) {
@@ -25,9 +29,7 @@ async function postRequest(url, data) {
 		method: 'POST',
 		body: JSON.stringify(data)
 	};
-	return fetch(url, options)
-		.then(res => res.json())
-		.catch(err => console.error(err));
+	return fetchRequest(url, options);
 }
 
 async function getUsers(usernames) {
