@@ -16,7 +16,7 @@ const db_endpoints = require('../settings/db_endpoints.json');
 function DatabaseEndpoint() {
 
 	this.MAX_WALLET_AMOUNT = 100000000000;
-	this.MAX_RAIN_USERS = 10;
+	this.MAX_RAIN_USERS = 25;
 
 	this.sql_db_auth = sql_db_auth[this.baseAuth()];
 	this.db_endpoints = db_endpoints;
