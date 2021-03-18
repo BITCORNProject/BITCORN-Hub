@@ -174,7 +174,8 @@ function connect() {
 					console.error(error);
 				}
 
-				const redeemResult = await twitchRequest.updateRedemptionStatus(redemptionUpdate);
+				const redeemResult = await twitchRequest.updateRedemptionStatus(redemptionUpdate)
+					.catch(e => console.error(e));
 				console.log({ redeemResult });
 
 				break;

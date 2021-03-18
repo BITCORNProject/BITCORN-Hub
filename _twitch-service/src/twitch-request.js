@@ -68,9 +68,12 @@ async function refreshOrValidateStore(broadcaster_id) {
 		const time = d.getTime();
 		const secondsInHour = 3600;
 		const next_validation_ms = store.last_validated + (secondsInHour * 1000);
+		
 		if (time > next_validation_ms) {
 			const validate = await twitchOAuth.validateWithCredentials(process.env.API_CLIENT_ID, store.access_token);
 			console.log({ validate });
+
+			store.last_validated = time;
 		}
 	}
 	return store;
