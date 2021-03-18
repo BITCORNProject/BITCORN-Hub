@@ -8,6 +8,7 @@ chai.use(chaiAsPromised);
 const fetch = require('node-fetch');
 const _ = require('lodash');
 const settingsHelper = require('../_bot-service/settings-helper');
+const subTicker = require('../_bot-service/src/sub-ticker');
 
 function log(...value) {
 	//console.log(value);
@@ -44,10 +45,8 @@ describe('#mocha promises', function () {
 	const activityTracker = require('../_bot-service/src/activity-tracker');
 	const allowedUsers = require('../_bot-service/src/utils/allowed-users');
 
-	const serverSettings = require('../settings/server-settings.json');
-
 	const settingsCache = require('../_settings-service/settings-cache');
-	const { getUsers, getChatters } = require('../_bot-service/src/request-api');
+	const { getUsers } = require('../_bot-service/src/request-api');
 
 	const databaseAPI = isMock ? {
 		request(twitchId, body) {
@@ -763,7 +762,7 @@ describe('#mocha promises', function () {
 			const result = await messenger.handleTipRewards(REWARD_TYPE.resub, channel, username, { subTier });
 			//if(result.)
 			if (result.success === false) {
-				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+				expect(['Tx Tip Event Message Send Disabled', 'Command failed: 400 Bad Request']).to.be.include(result.message);
 			} else {
 				expect(result.success).to.be.equal(true);
 			}
@@ -772,7 +771,7 @@ describe('#mocha promises', function () {
 			const subTier = '1000';
 			const result = await messenger.handleTipRewards(REWARD_TYPE.subgift, channel, username, { subTier });
 			if (result.success === false) {
-				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+				expect(['Tx Tip Event Message Send Disabled', 'Command failed: 400 Bad Request']).to.be.include(result.message);
 			} else {
 				expect(result.success).to.be.equal(true);
 			}
@@ -781,7 +780,7 @@ describe('#mocha promises', function () {
 			const subTier = '2000';
 			const result = await messenger.handleTipRewards(REWARD_TYPE.subscription, channel, username, { subTier });
 			if (result.success === false) {
-				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
+				expect(['Tx Tip Event Message Send Disabled', 'Command failed: 400 Bad Request']).to.be.include(result.message);
 			} else {
 				expect(result.success).to.be.equal(true);
 			}
@@ -884,57 +883,6 @@ describe('#mocha promises', function () {
 		}
 	});
 
-	it('should send sub ticker payout request', async () => {
-
-		const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
-		let viewers = [];
-
-		const channel = 'callowcreation';
-		const { chatters: chatters_json } = await getChatters(channel);
-		viewers = [];
-		for (const key in chatters_json) {
-			const chatters = chatters_json[key];
-			for (const k in chatters) {
-				if (k === 'broadcaster') continue;
-				viewers = viewers.concat(chatters[k]);
-			}
-		}
-
-		log(viewers.length);
-
-		const promises = [];
-		let chatters = [];
-		while (viewers.length > 0) {
-			const usernames = viewers.splice(0, 100);
-			promises.push(new Promise(async (resolve) => {
-				const { data } = await getUsers(usernames);
-				resolve(data.map(x => x.id));
-			}));
-		}
-		const presults = await Promise.all(promises);
-		chatters = [].concat.apply([], presults);
-
-		//log(chatters.length);
-		//chatters.length = 5;
-
-		//log(chatters);
-
-		const { data: [{ id: senderId }] } = await getUsers([channel]);
-		const body = {
-			ircTarget: senderId,
-			chatters: chatters,
-			minutes: MINUTE_AWARD_MULTIPLIER,
-		};
-
-		log(`---------------> ${senderId}`);
-
-		const results = await databaseAPI.requestPayout(body);
-
-		log(body, { results });
-
-		expect(results).to.be.greaterThan(0);
-	});
-
 	it('should perform sub ticker after init', async () => {
 		const subTicker = require('../_bot-service/src/sub-ticker');
 
@@ -1016,7 +964,7 @@ describe('#mocha promises', function () {
 	});
 });
 
-describe.only('#settings server cache', function () {
+describe('#settings server cache', function () {
 
 	const settingsCache = require('../_settings-service/settings-cache');
 	const settingsHelper = require('../_bot-service/settings-helper');
