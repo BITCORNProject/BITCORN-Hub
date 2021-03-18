@@ -128,8 +128,10 @@ module.exports = {
 					message = `${event.twitchUsername} rained on noone`;
 				}
 			} else {
-				if(results[0].from.islocked) {
+				if(results.length > 0 && results[0].from.islocked === true) {
 					message = `@${event.twitchUsername} your wallet is locked and cannot perform this tx`;
+				} else if(results.length > 0 && results[0].from.isbanned === true) {
+					message = `User BANNED: ${resultUser.twitchusername}`;
 				} else {
 					message = `ERROR: ${results.status || results.code} - Hmmmmm Rain Fail ${event.twitchUsername} ${amount}`;
 				}
