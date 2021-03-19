@@ -476,7 +476,6 @@ describe('#mocha promises', function () {
 
 	// Chat message and whisper handler merge into one method
 	it('should process whispers and chat messages - chat', async () => {
-		await _wait(50);
 
 		const type = require('../_bot-service/src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
@@ -494,12 +493,10 @@ describe('#mocha promises', function () {
 
 	it('should process whispers and chat messages - whisper', async () => {
 
-		await _wait(50);
-
 		const type = require('../_bot-service/src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
-		const twitchUsername = 'callowcreation';
+		const twitchUsername = 'clayman666';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -518,12 +515,10 @@ describe('#mocha promises', function () {
 	*/
 	it('should process withdraw insufficient funds', async () => {
 
-		await _wait(50);
-
 		const type = require('../_bot-service/src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
-		const twitchUsername = 'callowcreation';
+		const twitchUsername = 'd4rkcide';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -598,8 +593,6 @@ describe('#mocha promises', function () {
 	});
 
 	it('should send many message from chat queue', async () => {
-
-		await _wait(500);
 
 		const MESSAGE_TYPE = require('../_bot-service/src/utils/message-type');
 
@@ -678,7 +671,6 @@ describe('#mocha promises', function () {
 	});
 
 	it('should get $rain response from invoking execute', async () => {
-		await _wait(1000);
 		const command = isMock ? {
 			execute(event) {
 				return Promise.resolve({ success: true });
@@ -758,8 +750,7 @@ describe('#mocha promises', function () {
 			}
 		}
 		{
-			const subTier = '3000';
-			const result = await messenger.handleTipRewards(REWARD_TYPE.resub, channel, username, { subTier });
+			const result = await messenger.handleTipRewards(REWARD_TYPE.resub, channel, username, tmi.getExtras(channel, '3000'));
 			//if(result.)
 			if (result.success === false) {
 				expect(['Tx Tip Event Message Send Disabled', 'Command failed: 400 Bad Request']).to.be.include(result.message);
@@ -768,8 +759,7 @@ describe('#mocha promises', function () {
 			}
 		}
 		{
-			const subTier = '1000';
-			const result = await messenger.handleTipRewards(REWARD_TYPE.subgift, channel, username, { subTier });
+			const result = await messenger.handleTipRewards(REWARD_TYPE.subgift, channel, username, tmi.getExtras(channel, '1000'));
 			if (result.success === false) {
 				expect(['Tx Tip Event Message Send Disabled', 'Command failed: 400 Bad Request']).to.be.include(result.message);
 			} else {
@@ -777,8 +767,7 @@ describe('#mocha promises', function () {
 			}
 		}
 		{
-			const subTier = '2000';
-			const result = await messenger.handleTipRewards(REWARD_TYPE.subscription, channel, username, { subTier });
+			const result = await messenger.handleTipRewards(REWARD_TYPE.subscription, channel, username, tmi.getExtras(channel, '2000'));
 			if (result.success === false) {
 				expect(['Tx Tip Event Message Send Disabled', 'Command failed: 400 Bad Request']).to.be.include(result.message);
 			} else {
@@ -839,16 +828,15 @@ describe('#mocha promises', function () {
 		let recipient = null;
 		let months = null;
 
-		userstate = { bits: 10, username: 'callowcreation', id: 'random-id-lol' };
+		userstate = { bits: 10, username: 'clayman666', id: 'random-id-lol' };
 		methods = null;
 		channel = '#callowcreation';
-		username = 'callowcreation';
+		//username = 'callowcreation';
 		result = await tmi.onCheer(channel, userstate, message);
 		expect(result.error).to.be.equal(null);
 		if (result.message !== 'Tx Reward Event Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
-		await _wait(100);
 
 		userstate = { id: 'random-id-kappa' };
 		methods = { plan: '1000' };
@@ -859,23 +847,21 @@ describe('#mocha promises', function () {
 		if (result.message !== 'Tx Reward Event Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
-		await _wait(100);
 
 		userstate = { id: 'random-id-callowbruh' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
-		username = 'callowcreation';
+		username = 'wollac';
 		result = await tmi.onSubscription(channel, username, methods, message, userstate);
 		expect(result.error).to.be.equal(null);
 		if (result.message !== 'Tx Reward Event Message Send Disabled') {
 			expect(result.success).to.be.equal(true);
 		}
-		await _wait(100);
 
 		userstate = { id: 'random-id-mttv420' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
-		username = 'callowcreation';
+		username = 'd4rkcide';
 		result = await tmi.onResub(channel, username, months, message, userstate, methods);
 		expect(result.error).to.be.equal(null);
 		if (result.message !== 'Tx Reward Event Message Send Disabled') {

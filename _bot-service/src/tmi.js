@@ -134,17 +134,27 @@ async function onCheer(channel, userstate, message) {
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
 	duplicateRewardCheck(userstate.id);
-	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, { subTier: tiers[methods.plan] });
+	return handleRewardEvent(REWARD_TYPE.subgift, channel, username, getExtras(channel, methods.plan));
 }
 
 async function onSubscription(channel, username, methods, message, userstate) {
 	duplicateRewardCheck(userstate.id);
-	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, { subTier: tiers[methods.plan] });
+	return handleRewardEvent(REWARD_TYPE.subscription, channel, username, getExtras(channel, methods.plan));
 }
 
 async function onResub(channel, username, months, message, userstate, methods) {
 	duplicateRewardCheck(userstate.id);
-	return handleRewardEvent(REWARD_TYPE.resub, channel, username, { subTier: tiers[methods.plan] });
+	return handleRewardEvent(REWARD_TYPE.resub, channel, username, getExtras(channel, methods.plan));
+}
+
+function getExtras(channel, plan) {
+	const tier = tiers[plan];
+	const amounts = {
+		'1000': settingsHelper.getProperty(channel, 'tier1SubReward'),
+		'2000': settingsHelper.getProperty(channel, 'tier2SubReward'),
+		'3000': settingsHelper.getProperty(channel, 'tier3SubReward'),
+	};
+	return { subTier: tier, amount: amounts[tier] };
 }
 
 /**
@@ -221,6 +231,8 @@ module.exports = {
 
 	addMessageOutputListener,
 	addRewardOutputListener,
+
+	getExtras,
 
 	onCheer,
 	onSubGift,

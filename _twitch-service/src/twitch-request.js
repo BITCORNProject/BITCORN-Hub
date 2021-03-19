@@ -15,11 +15,6 @@ const twitchOAuth = new TwitchOAuth({
 	client_secret: process.env.HELIX_SECRET,
 	redirect_uri: process.env.HELIX_CALLBACK_URL,
 	scopes: [
-		'user:edit:broadcast',
-		'user:edit',
-		'user:read:email',
-		'analytics:read:games',
-		'bits:read',
 		'channel:read:redemptions',
 		'channel:manage:redemptions'
 	]

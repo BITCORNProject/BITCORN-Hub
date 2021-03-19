@@ -88,9 +88,15 @@ function getRainAlgorithmResult(target, items) {
 function getProperty(target, name) {
 	const item = getItem(target);
 	if (!item) throw new Error(`Missing settinge channel target ${target}`);
-	if (!item.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
+	
+	const trimmed = {};
+	for (const key in item) {
+		trimmed[key.trim()] = item[key];
+	}
+	
+	if (!trimmed.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
 
-	return item[name];
+	return trimmed[name];
 }
 
 function init() {
