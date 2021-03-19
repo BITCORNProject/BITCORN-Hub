@@ -129,7 +129,10 @@ Rewards
 
 async function onCheer(channel, userstate, message) {
 	duplicateRewardCheck(userstate.id);
-	return handleRewardEvent(REWARD_TYPE.cheer, channel, userstate.username, { bitAmount: userstate.bits });
+	// amount and bitAmount carry the same information
+	// amount is for backwards compatibility
+	// amount is in the extras handelTipResponse parameter
+	return handleRewardEvent(REWARD_TYPE.cheer, channel, userstate.username, { bitAmount: userstate.bits, amount: userstate.bits });
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {

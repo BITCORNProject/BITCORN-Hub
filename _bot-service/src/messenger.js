@@ -144,9 +144,7 @@ async function handleTipRewards(type, channel, username, extras) {
 			throw new Error(`Unexpected reward type: ${type}`);
 	}
 
-	const amount = extras.amount || extras.bitAmount;
-
-	const { success, message } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, amount);
+	const { success, message } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, extras.amount);
 
 	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
 		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.tipEvent);
@@ -156,7 +154,7 @@ async function handleTipRewards(type, channel, username, extras) {
 		enqueueMessageByType(MESSAGE_TYPE.irc_chat, channel, message);
 		return sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 	}
-	return { success, message, type, channel, username, amount };
+	return { success, message, type, channel, username, amount: extras.amount };
 }
 
 /*

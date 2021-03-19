@@ -742,7 +742,7 @@ describe('#mocha promises', function () {
 		const username = 'wollac';
 		{
 			const bitAmount = 50;
-			const result = await messenger.handleTipRewards(REWARD_TYPE.cheer, channel, username, { bitAmount });
+			const result = await messenger.handleTipRewards(REWARD_TYPE.cheer, channel, username, { bitAmount, amount: bitAmount });
 			if (result.success === false) {
 				expect(result.message).to.be.equal('Tx Tip Event Message Send Disabled');
 			} else {
