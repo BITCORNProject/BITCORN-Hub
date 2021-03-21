@@ -24,7 +24,7 @@ async function chunkRequests(stack, requester, mapper) {
 
 async function getChannelChatters(channel) {
 	const { chatters: chatters_json } = await getChatters(channel);
-	const stack = [];	
+	const stack = [];
 	for (const key in chatters_json) {
 		if (key === 'broadcaster') continue;
 		stack.push(...chatters_json[key]);
@@ -38,7 +38,7 @@ async function performPayout({ channel, channelId }) {
 
 	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
-	const stack = await getChannelChatters(channel);	
+	const stack = await getChannelChatters(channel);
 	const results = await chunkRequests(stack, getUsers, x => x.id);
 
 	const body = {
@@ -65,7 +65,11 @@ async function init() {
 
 		const payoutPromises = results.map(performPayout);
 		const result = await Promise.all(payoutPromises);
-		console.log({ result });
+		if (result.length && result.length > 0) {
+			console.log({ result });
+		} else if(!result.hasOwnProperty('length')) {
+			console.log({ 'sub-ticker-ERROR': result });
+		}
 	}, /* 1000 * 30 */timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
 
 	return { success: settingsHelper.getChannelNames().length > 0 };
