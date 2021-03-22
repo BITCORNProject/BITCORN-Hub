@@ -16,7 +16,7 @@ module.exports = {
 		global_cooldown: false,
 		description: 'Use text to speech',
 		example: '$tts <message>',
-		enabled: true,
+		enabled: false,
 		irc_in: MESSAGE_TYPE.irc_chat,
 		irc_out: MESSAGE_TYPE.irc_chat
 	},

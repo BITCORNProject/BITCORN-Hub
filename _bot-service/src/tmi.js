@@ -66,6 +66,8 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	if (command.configs.irc_in !== type) {
 		return { success: false, msg, message: `Wrong irc_in=${command.configs.irc_in} command=${command.configs.name} type=${type}`, irc_target: target, configs: commander.expectedCommandsConfigs };
 	}
+	
+	if(command.configs.enabled === false) return { success: true, msg, message: `Command ${command.configs.name} is not enabled` };
 
 	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
 	const selectedCooldownId = command.configs.global_cooldown === true ? target : user['user-id'];

@@ -474,6 +474,23 @@ describe('#mocha promises', function () {
 		expect(results.success).to.be.not.equal(false);
 	});
 
+	it('should not invoke disabled command', async () => {
+
+		const type = require('../_bot-service/src/utils/message-type').irc_chat;
+		const target = '#callowcreation';
+
+		const twitchUsername = 'd4rkcide';
+		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
+		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
+
+		const msg = `${commander.commandName('$tts')} corn for all`;
+		const self = false;
+
+		const obj = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
+		expect(obj.success).to.be.equal(true);
+		expect(obj.message).to.be.equal('Command tts is not enabled');
+	});
+
 	// Chat message and whisper handler merge into one method
 	it('should process whispers and chat messages - chat', async () => {
 
