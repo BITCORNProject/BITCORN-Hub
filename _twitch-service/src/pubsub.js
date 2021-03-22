@@ -9,6 +9,7 @@ const WebSocket = require('ws');
 const twitchRequest = require('./twitch-request');
 
 const databaseAPI = require('../../_api-shared/database-api');
+const allowedUsers = require('../../_api-shared/allowed-users');
 
 const recentIds = [];
 const MAX_RECENT_ID_LENGTH = 5;
@@ -141,6 +142,15 @@ function connect() {
 					if (recentIds.includes(redemption.id)) break;
 					recentIds.push(redemption.id);
 
+					redemptionUpdate.broadcaster_id = redemption.channel_id;
+					redemptionUpdate.redemption_id = redemption.id;
+					redemptionUpdate.reward_id = reward.id;
+
+					if (allowedUsers.isCommandTesters(user.login) === false) {		
+						redemptionUpdate.status = 'CANCELED';
+						throw new Error('User not allowed');
+					}
+
 					if (recentIds.length > MAX_RECENT_ID_LENGTH) {
 						recentIds.splice(0, MAX_RECENT_ID_LENGTH / 2)
 					}
@@ -155,10 +165,6 @@ function connect() {
 					};
 
 					const result = await databaseAPI.channelPointsRequest(user.id, data);
-
-					redemptionUpdate.broadcaster_id = redemption.channel_id;
-					redemptionUpdate.redemption_id = redemption.id;
-					redemptionUpdate.reward_id = reward.id;
 
 					if (result.status) {
 						redemptionUpdate.status = 'CANCELED';
@@ -229,6 +235,10 @@ function clearPongWaitTimeout() {
 }
 
 async function updateLivestreamSettings({ payload }) {
+
+	if(!payload) {
+		throw new Error('No payload from settings');
+	}
 
 	const { twitchRefreshToken, ircTarget } = payload;
 

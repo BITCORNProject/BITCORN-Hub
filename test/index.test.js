@@ -43,7 +43,7 @@ describe('#mocha promises', function () {
 	const commander = require('../_bot-service/src/commander');
 
 	const activityTracker = require('../_bot-service/src/activity-tracker');
-	const allowedUsers = require('../_bot-service/src/utils/allowed-users');
+	const allowedUsers = require('../_api-shared/allowed-users');
 
 	const settingsCache = require('../_settings-service/settings-cache');
 	const { getUsers } = require('../_bot-service/src/request-api');

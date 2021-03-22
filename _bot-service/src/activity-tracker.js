@@ -6,7 +6,7 @@
 
 const JsonFile = require('./utils/json-file');
 const serverSettings = require('../../settings/server-settings.json');
-const allowedUsers = require('./utils/allowed-users');
+const allowedUsers = require('../../_api-shared/allowed-users');
 const settingsHelper = require('../settings-helper');
 
 const MAX_RAIN_USER_CACHE = serverSettings.MAX_RAIN_USER_CACHE;
