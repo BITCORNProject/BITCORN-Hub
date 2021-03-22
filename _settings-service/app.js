@@ -6,6 +6,10 @@
 
 require('dotenv').config({ path: __dirname + './../.env' });
 
+const { is_production } = require('../_api-shared/prod');
+
+const rooturl = require('../settings/rooturl.json');
+
 const WebSocket = require('ws');
 
 const express = require('express');
@@ -61,7 +65,8 @@ function floorJitterInterval(interval) {
 
 function connect() {
 
-	ws = new WebSocket("wss://bitcorndataservice-dev.azurewebsites.net/bitcornhub");
+	const uri = is_production ? rooturl.websocket.production : rooturl.websocket.development;
+	ws = new WebSocket(uri);
 
 	ws.onerror = (error) => {
 		console.log({ message: error.message, error, timestamp: new Date().toLocaleTimeString() });
