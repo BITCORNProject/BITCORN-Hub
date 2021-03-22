@@ -83,7 +83,7 @@ async function authenticateCode(code) {
 
     const { result } = await getChannel();
     channel._id = result ? result._id : '';
-
+    
     //const subs = await getChannelSubscribers();
 
     //console.log(subs);
@@ -101,7 +101,7 @@ async function keepAlive() {
         client_id: appOptions.client_id,
         client_secret: appOptions.client_secret,
     };
-
+   
     const options = { method: 'POST', body: new URLSearchParams(form) };
 
     const json = await fetch(url, options)

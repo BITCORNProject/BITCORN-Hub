@@ -65,7 +65,8 @@ module.exports = {
 					to: `twitch|${user.id}`,
 					platform: 'twitch',
 					amount: amount,
-					columns: ['balance', 'twitchusername', 'isbanned']
+					columns: ['balance', 'twitchusername', 'isbanned'],
+					ircTarget:event.irc_target
 				};
 
 				const result = await databaseAPI.request(event.twitchId, body).tipcorn();

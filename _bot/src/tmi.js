@@ -23,7 +23,7 @@ const global_cooldowns = {};
 const rewardedIds = [];
 
 //const channels = ['markettraderstv', 'd4rkcide'];
-const channels = ['callowcreation'];
+const channels = ['markettraderstv'];
 
 const amounts = {
 	cheer: {
