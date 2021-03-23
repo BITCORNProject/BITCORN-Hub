@@ -25,7 +25,7 @@ function cleanChannelName(channel) {
 }
 
 function getItem(channel) {
-	channel = cleanChannelName(channel);
+	channel = cleanChannelName(channel).toLowerCase();
 	const channelId = idMap[channel];
 	return cache[channelId];
 }
@@ -33,7 +33,7 @@ function getItem(channel) {
 function setItemsObjects(items) {
 	for (const key in items) {
 		const item = items[key];
-		const channel = cleanChannelName(item.twitchUsername);
+		const channel = cleanChannelName(item.twitchUsername).toLowerCase();
 
 		cache[key] = item;
 		idMap[channel] = item.ircTarget;
