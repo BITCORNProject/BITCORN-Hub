@@ -4,7 +4,7 @@
 
 "use strict";
 
-const JsonFile = require('./utils/json-file');
+const JsonFile = require('../../_api-shared/json-file');
 const serverSettings = require('../../settings/server-settings.json');
 const allowedUsers = require('../../_api-shared/allowed-users');
 const settingsHelper = require('../settings-helper');

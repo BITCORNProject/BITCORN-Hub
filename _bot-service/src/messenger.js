@@ -1,6 +1,6 @@
 "use strict";
 
-const { is_production } = require('../../_api-shared/prod');
+const { wrap_in_test_mode } = require('../../_api-shared/prod');
 const serverSettings = require('../../settings/server-settings.json');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
@@ -202,7 +202,7 @@ async function sendQueuedMessagesByType(type) {
 	const item = queue.peek();
 
 	let result = 'No Result';
-	const item_message = is_production ? item.message : `(TESTMODE) ${item.message} (TESTMODE)`
+	const item_message = wrap_in_test_mode(item.message);
 	try {
 		if (type === MESSAGE_TYPE.irc_chat) {
 			result = await queue.client.say(item.target, item_message)

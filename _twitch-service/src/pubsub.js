@@ -8,6 +8,7 @@ const WebSocket = require('ws');
 
 const twitchRequest = require('./twitch-request');
 
+const { wrap_in_test_mode } = require('../../_api-shared/prod');
 const databaseAPI = require('../../_api-shared/database-api');
 const allowedUsers = require('../../_api-shared/allowed-users');
 
@@ -27,8 +28,8 @@ let pingpongLog = '';
 let pongWaitTimeout = null;
 let heartbeatCounter = 0;
 
-const CARD_TITLE = '(TESTMODE) BITCORNx1000 (TESTMODE)';
-const CARD_PROMPT = `(TESTMODE) Must be sync'd with BITCORNfarms in order to receive reward. 100:1 ratio. (TESTMODE)`;
+const CARD_TITLE = wrap_in_test_mode('BITCORNx100');
+const CARD_PROMPT = wrap_in_test_mode(`Must be sync'd with BITCORNfarms in order to receive reward`);
 
 // Source: https://www.thepolyglotdeveloper.com/2015/03/create-a-random-nonce-string-using-javascript/
 function nonce(length) {
@@ -353,7 +354,7 @@ async function createCustomReward(result, item, authenticated) {
 	if (!reward) {
 		const data = {
 			title: CARD_TITLE,
-			cost: 1,
+			cost: 100000,
 			prompt: CARD_PROMPT,
 			should_redemptions_skip_request_queue: false
 		};

@@ -56,14 +56,14 @@ async function refreshOrValidateStore(broadcaster_id) {
 			client_secret: process.env.API_SECRET
 		});
 		storeTokens([{ authenticated, ircTarget: broadcaster_id }]);
-				
+
 		store = getTokenStore(broadcaster_id);
 	} else {
 		const d = new Date();
 		const time = d.getTime();
 		const secondsInHour = 3600;
 		const next_validation_ms = store.last_validated + (secondsInHour * 1000);
-		
+
 		if (time > next_validation_ms) {
 			const validate = await twitchOAuth.validateWithCredentials(process.env.API_CLIENT_ID, store.access_token);
 			console.log({ validate });
@@ -134,6 +134,7 @@ async function refreshAccessToken({ refresh_token, client_id, client_secret }) {
 
 /* User token require ABOVE */
 
+//const JsonFile = require('../../_api-shared/json-file');
 function storeTokens(items) {
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
@@ -143,6 +144,9 @@ function storeTokens(items) {
 			delete tokenStore[item.ircTarget];
 		}
 	}
+
+	//const storeTokensTracker = new JsonFile(__dirname + './../../settings/storeTokens-tokenStore.json', tokenStore);
+	//console.log({ storeTokensTracker });
 }
 
 function getTokenStore(channelId) {

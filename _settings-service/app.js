@@ -67,7 +67,7 @@ function connect() {
 
 	const uri = is_production ? rooturl.websocket.production : rooturl.websocket.development;
 	ws = new WebSocket(uri);
-
+	
 	ws.onerror = (error) => {
 		console.log({ message: error.message, error, timestamp: new Date().toLocaleTimeString() });
 	};
