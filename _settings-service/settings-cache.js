@@ -111,7 +111,7 @@ function applyItem(result) {
 function mapNamesToIds() {
 	for (let i = 0; i < initialValues.length; i++) {
 		const item = initialValues[i];
-		idMap[item.twitchUsername] = item.ircTarget;
+		idMap[item.twitchUsername.toLowerCase()] = item.ircTarget;
 	}
 }
 
