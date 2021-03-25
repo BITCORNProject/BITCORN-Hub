@@ -78,20 +78,24 @@ function connect() {
 	};
 
 	ws.onmessage = ({ data }) => {
-		const obj = JSON.parse(data);
-		console.log({ obj, timestamp: new Date().toLocaleTimeString() });
-
-		switch (obj.type) {
-			case 'initial-settings':
-				settingsCache.applySettings(obj.payload);
-				io.emit(obj.type, { payload: settingsCache.getItems() });
-				break;
-			case 'update-livestream-settings':
-				settingsCache.applyItem(obj.payload);
-				io.emit(obj.type, { payload: settingsCache.getItem(obj.payload.twitchUsername) });
-				break;
-			default:
-				break;
+		try {
+			const obj = JSON.parse(data);
+			console.log({ obj, timestamp: new Date().toLocaleTimeString() });
+	
+			switch (obj.type) {
+				case 'initial-settings':
+					settingsCache.applySettings(obj.payload);
+					io.emit(obj.type, { payload: settingsCache.getItems() });
+					break;
+				case 'update-livestream-settings':
+					settingsCache.applyItem(obj.payload);
+					io.emit(obj.type, { payload: settingsCache.getItem(obj.payload.twitchUsername) });
+					break;
+				default:
+					break;
+			}
+		} catch (error) {
+			console.error(error);
 		}
 	};
 

@@ -171,6 +171,11 @@ function connect() {
 						redemptionUpdate.status = 'CANCELED';
 						throw new Error(`Channel Points Request Status: ${result.status} ${result.statusText}`);
 					}
+					
+					if (result.length > 0 && !result[0].txId) {
+						redemptionUpdate.status = 'CANCELED';
+						throw new Error(`Channel Points Request User: ${result[0].to.twitchusername}`);
+					}
 
 					redemptionUpdate.status = 'FULFILLED';
 
