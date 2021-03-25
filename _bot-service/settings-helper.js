@@ -121,8 +121,9 @@ function init() {
 			setItemsObjects(req.payload);
 		});
 
-		settingsSocket.on('reward-redemption', req => {
+		settingsSocket.on('reward-redemption', async req => {
 			console.log(req);
+			await invokeRedemptionCallbacks(req.data);
 		});
 
 		settingsSocket.on('update-livestream-settings', async req => {
@@ -135,6 +136,19 @@ function init() {
 		});
 	} catch (err) {
 		console.error(err);
+	}
+}
+
+const redemptionCallbacks = [];
+
+async function onRedemption(func) {
+	redemptionCallbacks.push(func);
+}
+
+async function invokeRedemptionCallbacks(data) {
+	for (let i = 0; i < redemptionCallbacks.length; i++) {
+		const callback = redemptionCallbacks[i];
+		callback(data);
 	}
 }
 
@@ -152,7 +166,9 @@ module.exports = {
 	getRainAlgorithmResult,
 
 	/**
-	 * generic lookup test
+	 * generic/dynamic property lookup
 	 */
-	getProperty
+	getProperty,
+
+	onRedemption
 };
