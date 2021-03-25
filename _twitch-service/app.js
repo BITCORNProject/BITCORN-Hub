@@ -92,14 +92,16 @@ try {
 			settingsSocket.emit('initial-settings-request');
 		});
 
-		settingsSocket.on('initial-settings', req => {
+		settingsSocket.on('initial-settings', async req => {
 			console.log({ payload: req.payload });
-			pubsub.initialSettings(req);
+			await pubsub.initialSettings(req)
+				.catch(e => console.error(e));
 		});
 
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log({ payload: req.payload });
-			pubsub.updateLivestreamSettings(req);
+			await pubsub.updateLivestreamSettings(req)
+				.catch(e => console.error(e));
 		});
 
 		settingsSocket.on('disconnect', () => {
