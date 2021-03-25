@@ -101,7 +101,7 @@ async function deleteCustomReward(broadcaster_id, card_id) {
 async function getCustomRewards(broadcaster_id) {
 	const store = await refreshOrValidateStore(broadcaster_id);
 
-	const url = `${HELIX_API_PATH}/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}`;
+	const url = `${HELIX_API_PATH}/channel_points/custom_rewards?broadcaster_id=${broadcaster_id}&only_manageable_rewards=true`;
 	const options = {
 		method: 'GET'
 	};
@@ -135,7 +135,7 @@ async function refreshAccessToken({ refresh_token, client_id, client_secret }) {
 /* User token require ABOVE */
 
 //const JsonFile = require('../../_api-shared/json-file');
-function storeTokens(items) {
+async function storeTokens(items) {
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
 		if (item.authenticated) {
@@ -145,8 +145,13 @@ function storeTokens(items) {
 		}
 	}
 
-	//const storeTokensTracker = new JsonFile(__dirname + './../../settings/storeTokens-tokenStore.json', tokenStore);
-	//console.log({ storeTokensTracker });
+	// for (const key in tokenStore) {
+	// 	const rewards = await getCustomRewards(key).catch(e => console.log(e));
+	// 	tokenStore[key].rewards = rewards;
+	// }
+
+	// const storeTokensTracker = new JsonFile(__dirname + './../../settings/storeTokens-tokenStore.json', tokenStore);
+	// console.log({ storeTokensTracker });
 }
 
 function getTokenStore(channelId) {

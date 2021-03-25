@@ -121,6 +121,10 @@ function init() {
 			setItemsObjects(req.payload);
 		});
 
+		settingsSocket.on('reward-redemption', req => {
+			console.log(req);
+		});
+
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log(req);
 			setItemsObjects({ [req.payload.ircTarget]: req.payload });

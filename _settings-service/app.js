@@ -67,7 +67,7 @@ function connect() {
 
 	const uri = is_production ? rooturl.websocket.production : rooturl.websocket.development;
 	ws = new WebSocket(uri);
-	
+
 	ws.onerror = (error) => {
 		console.log({ message: error.message, error, timestamp: new Date().toLocaleTimeString() });
 	};
@@ -78,20 +78,24 @@ function connect() {
 	};
 
 	ws.onmessage = ({ data }) => {
-		const obj = JSON.parse(data);
-		console.log({ obj, timestamp: new Date().toLocaleTimeString() });
-
-		switch (obj.type) {
-			case 'initial-settings':
-				settingsCache.applySettings(obj.payload);
-				io.emit(obj.type, { payload: settingsCache.getItems() });
-				break;
-			case 'update-livestream-settings':
-				settingsCache.applyItem(obj.payload);
-				io.emit(obj.type, { payload: settingsCache.getItem(obj.payload.twitchUsername) });
-				break;
-			default:
-				break;
+		try {
+			const obj = JSON.parse(data);
+			console.log({ obj, timestamp: new Date().toLocaleTimeString() });
+	
+			switch (obj.type) {
+				case 'initial-settings':
+					settingsCache.applySettings(obj.payload);
+					io.emit(obj.type, { payload: settingsCache.getItems() });
+					break;
+				case 'update-livestream-settings':
+					settingsCache.applyItem(obj.payload);
+					io.emit(obj.type, { payload: settingsCache.getItem(obj.payload.twitchUsername) });
+					break;
+				default:
+					break;
+			}
+		} catch (error) {
+			console.error(error);
 		}
 	};
 
@@ -123,6 +127,10 @@ if (module === require.main) {
 
 				socket.on('initial-settings-request', () => {
 					socket.emit('initial-settings', { payload: settingsCache.getItems() });
+				});
+
+				socket.on('reward-redemption', (data) => {
+					io.emit('reward-redemption', { data });
 				});
 
 				socket.on('disconnect', async () => {

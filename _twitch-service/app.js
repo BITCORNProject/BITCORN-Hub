@@ -21,7 +21,7 @@ app.get('/auth/helix/callback', async (req, res) => {
 	try {
 
 		await twitchRequest.authorize(req.query.code, req.query.state);
-		
+
 		console.log('authenticated');
 		res.status(200).send('Twitch API authenticated.  You can close this browser window/tab.');
 	} catch (err) {
@@ -57,7 +57,7 @@ app.post('/streams', async (req, res) => {
 
 		const resUsers = await twitchRequest.getStreamsByIds(ids);
 		res.json(resUsers);
-		
+
 	} catch (err) {
 		console.error(err);
 		res.status(500).send(err.message);
@@ -70,43 +70,49 @@ try {
 		const server = app.listen(process.env.TWITCH_SERVER_PORT || 7000, () => {
 			const port = server.address().port;
 			console.log(`App listening on port ${port}`);
-	
+
 			const open = require('open');
 			open(twitchRequest.authorizeUrl);
 		});
 		console.log({ success: true, message: `Server listening on port ${process.env.TWITCH_SERVER_PORT}` })
 
-		pubsub.connect();
 
 		const settings_io = io_client(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
 			reconnection: true
 		});
 		const settingsSocket = settings_io.connect();
-	
+
 		settingsSocket.on('error', e => {
 			console.log(`error settings service server id: ${settingsSocket.id}`, e);
 		});
-	
+
 		settingsSocket.on('connect', () => {
 			console.log(`connected to settings service server id: ${settingsSocket.id}`);
-	
+
 			settingsSocket.emit('initial-settings-request');
 		});
-	
+
 		settingsSocket.on('initial-settings', req => {
 			console.log({ payload: req.payload });
 			pubsub.initialSettings(req);
 		});
-	
+
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log({ payload: req.payload });
 			pubsub.updateLivestreamSettings(req);
 		});
-	
+
 		settingsSocket.on('disconnect', () => {
 			console.log('disconnected settings service server');
 		});
-		
+
+
+		pubsub.connect();
+
+		pubsub.onRedemption(data => {
+			settings_io.emit('reward-redemption', { data });
+		});
+
 	})();
 } catch (error) {
 	console.log({ success: false, message: `Uncaught error in main` });

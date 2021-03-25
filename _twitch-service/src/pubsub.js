@@ -147,7 +147,7 @@ function connect() {
 					redemptionUpdate.redemption_id = redemption.id;
 					redemptionUpdate.reward_id = reward.id;
 
-					if (allowedUsers.isCommandTesters(user.login) === false) {		
+					if (allowedUsers.isCommandTesters(user.login) === false) {
 						redemptionUpdate.status = 'CANCELED';
 						throw new Error('User not allowed');
 					}
@@ -172,6 +172,11 @@ function connect() {
 						throw new Error(`Channel Points Request Status: ${result.status} ${result.statusText}`);
 					}
 
+					if (result.length > 0 && !result[0].txId) {
+						redemptionUpdate.status = 'CANCELED';
+						throw new Error(`Channel Points Request User: ${result[0].to.twitchusername}`);
+					}
+
 					redemptionUpdate.status = 'FULFILLED';
 
 					console.log({ result });
@@ -184,6 +189,18 @@ function connect() {
 				const redeemResult = await twitchRequest.updateRedemptionStatus(redemptionUpdate)
 					.catch(e => console.error(e));
 				console.log({ redeemResult });
+
+				await invokeRedemptionCallbacks({ status: redemptionUpdate.status, redeemResult });
+
+				// switch (redemptionUpdate.status) {
+				// 	case 'FULFILLED':
+
+				// 		break;
+				// 	case 'CANCELED':
+				// 		break;
+				// 	default:
+				// 		break;
+				// }
 
 				break;
 			case 'PONG':
@@ -237,7 +254,7 @@ function clearPongWaitTimeout() {
 
 async function updateLivestreamSettings({ payload }) {
 
-	if(!payload) {
+	if (!payload) {
 		throw new Error('No payload from settings');
 	}
 
@@ -354,7 +371,7 @@ async function createCustomReward(result, item, authenticated) {
 	if (!reward) {
 		const data = {
 			title: CARD_TITLE,
-			cost: 100000,
+			cost: 1,//100000,
 			prompt: CARD_PROMPT,
 			should_redemptions_skip_request_queue: false
 		};
@@ -399,9 +416,23 @@ async function sendTokensToApi(items, payload) {
 	console.log({ response });
 }
 
+const redemptionCallbacks = [];
+
+async function onRedemption(func) {
+	redemptionCallbacks.push(func);
+}
+
+async function invokeRedemptionCallbacks(data) {
+	for (let i = 0; i < redemptionCallbacks.length; i++) {
+		const callback = redemptionCallbacks[i];
+		callback(data);
+	}
+}
+
 module.exports = {
 	connect,
 	initialSettings,
-	updateLivestreamSettings
+	updateLivestreamSettings,
+	onRedemption
 };
 
