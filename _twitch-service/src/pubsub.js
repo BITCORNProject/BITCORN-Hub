@@ -28,6 +28,12 @@ let pingpongLog = '';
 let pongWaitTimeout = null;
 let heartbeatCounter = 0;
 
+let listening = [];
+const LISTEN_TYPES = {
+	LISTEN: 'LISTEN', 
+	UNLISTEN: 'UNLISTEN'
+};
+
 const CARD_TITLE = wrap_in_test_mode('BITCORNx100');
 const CARD_PROMPT = wrap_in_test_mode(`Must be sync'd with BITCORNfarms in order to receive reward`);
 
@@ -60,31 +66,54 @@ function heartbeat() {
 	pongWaitTimeout = setTimeout(reconnect, MAX_PONG_WAIT_INTERVAL);
 }
 
-function listen(topic, access_token) {
+function listen(channel_id, access_token) {
 	if (ws.readyState !== WebSocket.OPEN) {
 		console.log({ success: true, resultText: `listen: ws.readyState === ${ws.readyState}` });
 		return;
 	}
+
+	const non = nonce(15);
+	const topic = `channel-points-channel-v1.${channel_id}`;
+
+	const item = listening.find(x => x.channel_id === channel_id);
+	if(!item) {
+		listening.push({ channel_id, nonce: non, type: LISTEN_TYPES.LISTEN });
+	} else {
+		item.nonce = non;
+		item.type = LISTEN_TYPES.LISTEN;
+	}
+
 	const message = {
-		type: 'LISTEN',
-		nonce: nonce(15),
+		type: LISTEN_TYPES.LISTEN,
+		nonce: non,
 		data: {
 			topics: [topic],
 			auth_token: access_token
 		}
 	};
 	console.log({ success: true, resultText: 'SENT: ' + JSON.stringify(message) });
+
 	ws.send(JSON.stringify(message));
 }
 
-function unlisten(topic, access_token) {
+function unlisten(channel_id, access_token) {
 	if (ws.readyState !== WebSocket.OPEN) {
 		console.log({ success: true, resultText: `unlisten: ws.readyState === ${ws.readyState}` });
 		return;
 	}
+
+	const non = nonce(15);
+	const topic = `channel-points-channel-v1.${channel_id}`;
+
+	const item = listening.find(x => x.channel_id === channel_id);
+	if(!item) return;
+
+	item.nonce = non;
+	item.type = LISTEN_TYPES.UNLISTEN;
+
 	const message = {
-		type: 'UNLISTEN',
-		nonce: nonce(15),
+		type: LISTEN_TYPES.UNLISTEN,
+		nonce: non,
 		data: {
 			topics: [topic],
 			auth_token: access_token
@@ -107,6 +136,7 @@ function connect() {
 
 		reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
 
+		listening = [];
 		const stores = twitchRequest.getTokenAllStores();
 		for (const channel_id in stores) {
 			const store = stores[channel_id];
@@ -211,8 +241,14 @@ function connect() {
 				reconnect();
 				break;
 			case 'RESPONSE':
+				
+				const item = listening.find(x => x.nonce === value.nonce);
 				if (value.error) {
 					console.log(value);
+					listening = listening.filter(x => x.nonce !== value.nonce);
+				} else {
+					const { channel_id, type } = item;
+					console.log(`${type}: ${channel_id}`);
 				}
 				break;
 			default:
@@ -254,13 +290,19 @@ function clearPongWaitTimeout() {
 
 async function updateLivestreamSettings({ payload }) {
 
-	if (!payload) {
-		throw new Error('No payload from settings');
-	}
+	if (!payload) throw new Error('No payload from settings');
 
 	const { twitchRefreshToken, ircTarget } = payload;
-
 	if (!twitchRefreshToken) return;
+
+	const item = listening.find(x => x.channel_id = ircTarget);
+	if (item) {
+		if(item.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
+			return;
+		} else if(item.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
+			return;
+		}
+	}
 
 	const tokenStore = twitchRequest.getTokenStore(ircTarget);
 	const items = [];
@@ -349,10 +391,9 @@ async function handleChannelPointsCard(items, payload) {
 					if (item.channelPointCardId) {
 						await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
 					}
-					unlisten(`channel-points-channel-v1.${ircTarget}`, authenticated.access_token);
+					unlisten(ircTarget, authenticated.access_token);
 
 					item.channelPointCardId = null;
-					console.log(`stopped listening: ${ircTarget}`);
 				} else {
 					console.log({ message: 'Can not unlistenn no access token', item });
 				}
@@ -394,10 +435,7 @@ async function createCustomReward(result, item, authenticated) {
 }
 
 function listenToChannel({ channel_id, access_token }) {
-	if (access_token) {
-		listen(`channel-points-channel-v1.${channel_id}`, access_token);
-		console.log(`listening: ${channel_id}`);
-	}
+	listen(channel_id, access_token);
 }
 
 async function sendTokensToApi(items, payload) {
