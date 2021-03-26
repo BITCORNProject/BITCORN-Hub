@@ -381,7 +381,7 @@ describe('#mocha promises', function () {
 				return Promise.resolve({ success: true });
 			}
 		} : require('../_bot-service/src/commands/tipcorn');
-		const event = await mockEvent('$tipcorn d4rkcide 100', 'callowcreation', '#callowcreation', '#callowcreation');
+		const event = await mockEvent('$tipcorn wollac 100', 'callowcreation', '#callowcreation', '#callowcreation');
 
 		const results = await commander.validateAndExecute(event, command);
 
@@ -402,7 +402,7 @@ describe('#mocha promises', function () {
 	// Integration test only ?? !! ??
 	it('should execute $tipcorn successfully with message handler', async () => {
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -423,7 +423,7 @@ describe('#mocha promises', function () {
 	// Integration test only ?? !! ??
 	it('should execute $tipcorn insufficient funds with message handler ', async () => {
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -443,7 +443,7 @@ describe('#mocha promises', function () {
 
 	it('should execute $tipcorn success for unregistered users with message handler', async () => {
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -479,7 +479,7 @@ describe('#mocha promises', function () {
 		const type = require('../_bot-service/src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -497,7 +497,7 @@ describe('#mocha promises', function () {
 		const type = require('../_bot-service/src/utils/message-type').irc_chat;
 		const target = '#callowcreation';
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -535,7 +535,7 @@ describe('#mocha promises', function () {
 		const type = require('../_bot-service/src/utils/message-type').irc_whisper;
 		const target = '#callowcreation';
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 		const user = { 'room-id': broadcaster.id, 'user-id': user_id, username: user_login };
 
@@ -693,7 +693,7 @@ describe('#mocha promises', function () {
 				return Promise.resolve({ success: true });
 			}
 		} : require('../_bot-service/src/commands/rain');
-		const event = await mockEvent('$rain 24.999999999999999 5', 'd4rkcide', '#callowcreation', '#callowcreation');
+		const event = await mockEvent('$rain 24.999999999999999 5', 'wollac', '#callowcreation', '#callowcreation');
 		const result = await commander.validateAndExecute(event, command);
 		log({ event, result });
 		expect(result.success).to.be.not.equal(false);
@@ -702,7 +702,7 @@ describe('#mocha promises', function () {
 	// Integration test only ?? !! ??
 	it('should execute $rain successfully with message handler', async () => {
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
@@ -723,7 +723,7 @@ describe('#mocha promises', function () {
 	// Integration test only ?? !! ??
 	it('should execute $rain insufficient funds with message handler', async () => {
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
@@ -878,7 +878,7 @@ describe('#mocha promises', function () {
 		userstate = { id: 'random-id-mttv420' };
 		methods = { plan: '1000' };
 		channel = 'callowcreation';
-		username = 'd4rkcide';
+		username = 'wollac';
 		result = await tmi.onResub(channel, username, months, message, userstate, methods);
 		expect(result.error).to.be.equal(null);
 		if (result.message !== 'Tx Reward Event Message Send Disabled') {
@@ -902,7 +902,7 @@ describe('#mocha promises', function () {
 
 	it('should envoke a command as test in a development state', async () => {
 
-		const twitchUsername = 'd4rkcide';
+		const twitchUsername = 'wollac';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';
