@@ -23,8 +23,12 @@ const activityTracker = new JsonFile(__dirname + './../../settings/activity-trac
 
 //console.log('MAX_RAIN_USER_CACHE_WITH_PADDING', activityTracker.data);
 
-function addToActiveChatters(target, id, username) {
+function addToActiveChatters(target, user_id, username) {
 	if (allowedUsers.activityTrackerOmitUsername(username) === true) return;
+
+	const channel_id = settingsHelper.getProperty(target, 'ircTarget');
+
+	settingsHelper.sendChannelActivity({ channel_id: channel_id, user_id: user_id, username });
 
 	if (activeChatters[target] === undefined) {
 		activeChatters[target] = [];
@@ -34,10 +38,10 @@ function addToActiveChatters(target, id, username) {
 
 	const indexed = activeChatters[target].filter(x => x).map((x, i) => ({ index: i, id: x.id, username: x.username, count: x.count }));
 
-	let found = indexed.filter(x => x.id === id)[0];
+	let found = indexed.filter(x => x.id === user_id)[0];
 
 	if (!found) {
-		activeChatters[target].unshift({ index: 0, id, username, count: 0 });
+		activeChatters[target].unshift({ index: 0, id: user_id, username, count: 0 });
 		found = activeChatters[target][0];
 	}
 

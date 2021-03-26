@@ -59,6 +59,7 @@ async function joinChannelsFromQueue(tmi) {
 		retrieCount++;
 		if (retrieCount === MAX_JOIN_RETRIES) {
 			queuedItems.dequeue();
+			retrieCount = 0;
 			result = { message: error.message };
 		}
 	}

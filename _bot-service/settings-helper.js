@@ -97,14 +97,17 @@ function getProperty(target, name) {
 	if (!trimmed.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
 
 	return trimmed[name];
-}
+}		
+
+let settings_io = null;
+let settingsSocket = null;
 
 function init() {
 	try {
-		const settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
+		settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
 			reconnection: true
 		});
-		const settingsSocket = settings_io.connect({ reconnect: true });
+		settingsSocket = settings_io.connect({ reconnect: true });
 
 		settingsSocket.on('error', e => {
 			console.log(`error settings service server id: ${settingsSocket.id}`, e);
@@ -126,6 +129,10 @@ function init() {
 			await invokeRedemptionCallbacks(req.data);
 		});
 
+		settingsSocket.on('chat-activity-tracker', async req => {
+			console.log(req);
+		});
+
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log(req);
 			setItemsObjects({ [req.payload.ircTarget]: req.payload });
@@ -140,7 +147,6 @@ function init() {
 }
 
 const redemptionCallbacks = [];
-
 async function onRedemption(func) {
 	redemptionCallbacks.push(func);
 }
@@ -149,6 +155,14 @@ async function invokeRedemptionCallbacks(data) {
 	for (let i = 0; i < redemptionCallbacks.length; i++) {
 		const callback = redemptionCallbacks[i];
 		callback(data);
+	}
+}
+
+function sendChannelActivity({ channel_id, user_id, username }) {
+	try {
+		settings_io.emit('set-activity-tracker', { channel_id, user_id, username });
+	} catch (error) {
+		console.error(error);
 	}
 }
 
@@ -170,5 +184,6 @@ module.exports = {
 	 */
 	getProperty,
 
-	onRedemption
+	onRedemption,
+	sendChannelActivity
 };

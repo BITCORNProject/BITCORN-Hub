@@ -133,6 +133,14 @@ if (module === require.main) {
 					io.emit('reward-redemption', { data });
 				});
 
+				socket.on('set-activity-tracker', (data) => {
+					io.emit('set-activity-tracker', { data });
+				});
+
+				socket.on('get-activity-tracker', (data) => {
+					io.emit('get-activity-tracker', { data });
+				});
+				
 				socket.on('disconnect', async () => {
 					console.log({ message: `disconnect: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 				});
