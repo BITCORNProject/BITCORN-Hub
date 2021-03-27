@@ -9,8 +9,7 @@ const serverSettings = require('../../settings/server-settings.json');
 const allowedUsers = require('../../_api-shared/allowed-users');
 const settingsHelper = require('../settings-helper');
 
-const MAX_RAIN_USER_CACHE = serverSettings.MAX_RAIN_USER_CACHE;
-const MAX_RAIN_USER_CACHE_WITH_PADDING = MAX_RAIN_USER_CACHE * 1.4;
+const MAX_RAIN_USER_CACHE_WITH_PADDING = serverSettings.MAX_RAIN_USERS * 1.4;
 let activeChatters = {};
 
 function onChatMessage(target, user, msg, self) {
@@ -58,11 +57,17 @@ function addToActiveChatters(target, user_id, username) {
 	activityTracker.setValues(activeChatters);
 }
 
-function getChatterActivity(target) {
+async function getChatterActivity(target) {
 
-	if (activeChatters[target] === undefined) return [];
+	const channel_id = settingsHelper.getProperty(target, 'ircTarget');
+	const chattersDB = await settingsHelper.getChannelActivity(channel_id, MAX_RAIN_USER_CACHE_WITH_PADDING)
+		.catch(e => console.error(e));
 
-	const chatternamesArr = settingsHelper.getRainAlgorithmResult(target, activeChatters[target]);
+	const chatters = chattersDB.data || activeChatters[target];
+
+	if (chatters === undefined) return [];
+
+	const chatternamesArr = settingsHelper.getRainAlgorithmResult(target, chatters);
 
 	return chatternamesArr;
 }

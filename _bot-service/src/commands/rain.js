@@ -53,10 +53,12 @@ module.exports = {
 				message = 'Invalid input';
 			}
 		} else {
-			const chatternamesArr = activityTracker.getChatterActivity(event.channel)
-				.filter(x => x.username !== event.twitchUsername && x.id);
 
-			const items = chatternamesArr.slice(0, rain_user_count);
+			const chatternamesArr = await activityTracker.getChatterActivity(event.channel);
+
+			const filtered = chatternamesArr.filter(x => x.id !== event.twitchId);
+			const items = filtered.slice(0, rain_user_count);
+
 			const amount = math.fixed8(rain_amount / items.length);
 			const recipients = items.map(x => `twitch|${x.id}`);
 
@@ -69,7 +71,7 @@ module.exports = {
 				amount: amount,
 				columns: ['balance', 'twitchusername', 'isbanned', 'twitchid', 'islocked']
 			};
-			
+
 			const results = await databaseAPI.request(event.twitchId, body).rain();
 
 			if (results.status && results.status === 500) {
@@ -92,20 +94,15 @@ module.exports = {
 				const ignore = results.filter(x => {
 					return x.to && x.to.isbanned === true;
 				}).map(x => x.to.twitchusername.toLowerCase());
-				/*
-				const failedItems = results.filter(x => {
-					return !x.to && !x.txId && x.to.isbanned === false;
-				}).map(x => x.to.twitchusername);*/
-				let failedItems = [];
-				if (failedItems.length === 0) {
-					for (let i = 0; i < items.length; i++) {
-						const item = items[i];
-						const name = item.username.toLowerCase();
-						if (successItems.includes(name) || ignore.includes(name)) continue;
-						//if (results.find(x => x.to && x.to.twitchusername === name)) continue;
 
-						failedItems.push(item.username);
-					}
+				const failedItems = [];
+				for (let i = 0; i < items.length; i++) {
+					const item = items[i];
+					const name = item.username.toLowerCase();
+					if (successItems.includes(name) || ignore.includes(name)) continue;
+					//if (results.find(x => x.to && x.to.twitchusername === name)) continue;
+
+					failedItems.push(item.username);
 				}
 
 				if (successItems.length > 0 && failedItems.length > 0) {
@@ -128,9 +125,9 @@ module.exports = {
 					message = `${event.twitchUsername} rained on noone`;
 				}
 			} else {
-				if(results.length > 0 && results[0].from.islocked === true) {
+				if (results.length > 0 && results[0].from.islocked === true) {
 					message = `@${event.twitchUsername} your wallet is locked and cannot perform this tx`;
-				} else if(results.length > 0 && results[0].from.isbanned === true) {
+				} else if (results.length > 0 && results[0].from.isbanned === true) {
 					message = `User BANNED: ${resultUser.twitchusername}`;
 				} else {
 					message = `ERROR: ${results.status || results.code} - Hmmmmm Rain Fail ${event.twitchUsername} ${amount}`;
@@ -141,11 +138,11 @@ module.exports = {
 		const configs = JSON.parse(JSON.stringify(this.configs));
 		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
 
-		return { 
-			success: success, 
-			message: message, 
-			irc_target: irc_target, 
-			configs: configs 
+		return {
+			success: success,
+			message: message,
+			irc_target: irc_target,
+			configs: configs
 		};
 	}
 };

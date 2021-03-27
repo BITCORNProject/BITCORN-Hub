@@ -121,7 +121,7 @@ if (module === require.main) {
 
 			io = require('socket.io')(server);
 
-			io.on('connection', async (socket) => {
+			io.on('connection', (socket) => {
 
 				console.log({ message: `client connection: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 
@@ -140,8 +140,12 @@ if (module === require.main) {
 				socket.on('get-activity-tracker', (data) => {
 					io.emit('get-activity-tracker', { data });
 				});
-				
-				socket.on('disconnect', async () => {
+
+				socket.on('send-activity-tracker', (data) => {
+					io.emit('send-activity-tracker', { data });
+				});
+
+				socket.on('disconnect', () => {
 					console.log({ message: `disconnect: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 				});
 			});

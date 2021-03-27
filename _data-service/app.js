@@ -75,12 +75,12 @@ async function createOrUpdate({ channel_id, user_id, username }) {
 }
 
 async function queryChannel({ channel_id, limit_amount }) {
-	const mysort = { timestamp: -1 };
 	return client.db(DB_NAME).collection(channel_id)
 		.find()
-		.sort(mysort)
+		.sort({ timestamp: -1 })
 		.limit(limit_amount)
-		.toArray();
+		.toArray()
+		.catch(e => console.log(e));
 }
 
 async function init() {
@@ -98,18 +98,20 @@ async function init() {
 	});
 
 	settingsSocket.on('set-activity-tracker', async ({ data }) => {
-		console.log(data);
-		const results = await createOrUpdate(data);
-		console.log({ results });
+		try {
+			await createOrUpdate(data);
+		} catch (error) {
+			console.error(error);
+		}
 	});
 
-	settingsSocket.on('get-activity-tracker', async req => {
-		const obj = { channel_id: req.channel_id, limit_amount: req.limit_amount };
-		console.log(obj);
-		const results = await queryChannel(obj);
-		console.log({ results });
-
-		settingsSocket.emit('chat-activity-tracker', results);
+	settingsSocket.on('get-activity-tracker', async ({ data }) => {
+		try {
+			const results = await queryChannel({ channel_id: data.channel_id, limit_amount: data.limit_amount });
+			settings_io.emit('send-activity-tracker', results.map(x => ({ id: x.user_id, username: x.username })));
+		} catch (error) {
+			console.error(error);
+		}
 	});
 
 	settingsSocket.on('disconnect', () => {

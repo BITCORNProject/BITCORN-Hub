@@ -88,16 +88,16 @@ function getRainAlgorithmResult(target, items) {
 function getProperty(target, name) {
 	const item = getItem(target);
 	if (!item) throw new Error(`Missing settinge channel target ${target}`);
-	
+
 	const trimmed = {};
 	for (const key in item) {
 		trimmed[key.trim()] = item[key];
 	}
-	
+
 	if (!trimmed.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
 
 	return trimmed[name];
-}		
+}
 
 let settings_io = null;
 let settingsSocket = null;
@@ -127,10 +127,6 @@ function init() {
 		settingsSocket.on('reward-redemption', async req => {
 			console.log(req);
 			await invokeRedemptionCallbacks(req.data);
-		});
-
-		settingsSocket.on('chat-activity-tracker', async req => {
-			console.log(req);
 		});
 
 		settingsSocket.on('update-livestream-settings', async req => {
@@ -166,6 +162,17 @@ function sendChannelActivity({ channel_id, user_id, username }) {
 	}
 }
 
+async function getChannelActivity(channel_id, limit_amount) {
+	return new Promise((resolve, reject) => {
+		settingsSocket.once('send-activity-tracker', async req => {
+			console.log(req);
+			resolve(req);
+		});
+		settingsSocket.emit('get-activity-tracker', {channel_id, limit_amount});
+		//setTimeout(reject, 1000);
+	}).catch(e => console.error(e));
+}
+
 module.exports = {
 	OUTPUT_TYPE,
 	init,
@@ -185,5 +192,6 @@ module.exports = {
 	getProperty,
 
 	onRedemption,
-	sendChannelActivity
+	sendChannelActivity,
+	getChannelActivity
 };
