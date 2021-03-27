@@ -701,7 +701,7 @@ describe('#mocha promises', function () {
 	// Integration test only ?? !! ??
 	it('should execute $rain successfully with message handler', async () => {
 
-		const twitchUsername = 'wollac';
+		const twitchUsername = 'clayman666';
 		const { data: [{ id: user_id, login: user_login }] } = await getUsers([twitchUsername]);
 
 		const target = '#callowcreation';

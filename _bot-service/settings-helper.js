@@ -120,17 +120,21 @@ function init() {
 		});
 
 		settingsSocket.on('initial-settings', req => {
-			console.log(req);
 			setItemsObjects(req.payload);
 		});
 
-		settingsSocket.on('reward-redemption', async req => {
-			console.log(req);
-			await invokeRedemptionCallbacks(req.data);
+		settingsSocket.on('reward-redemption', req => {
+			const promises = [];
+			promises.push(new Error('This happens'));
+			for (let i = 0; i < redemptionCallbacks.length; i++) {
+				const callback = redemptionCallbacks[i];
+				promises.push(callback(req.data));
+			}
+			Promise.all(promises)
+				.catch(e => console.error(e));
 		});
 
-		settingsSocket.on('update-livestream-settings', async req => {
-			console.log(req);
+		settingsSocket.on('update-livestream-settings', req => {
 			setItemsObjects({ [req.payload.ircTarget]: req.payload });
 		});
 
@@ -145,13 +149,6 @@ function init() {
 const redemptionCallbacks = [];
 async function onRedemption(func) {
 	redemptionCallbacks.push(func);
-}
-
-async function invokeRedemptionCallbacks(data) {
-	for (let i = 0; i < redemptionCallbacks.length; i++) {
-		const callback = redemptionCallbacks[i];
-		callback(data);
-	}
 }
 
 function sendChannelActivity({ channel_id, user_id, username }) {

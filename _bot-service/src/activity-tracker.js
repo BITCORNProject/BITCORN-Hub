@@ -25,14 +25,13 @@ function addToActiveChatters(target, user_id, username) {
 }
 
 async function getChatterActivity(target) {
-
 	try {
 		const channel_id = settingsHelper.getProperty(target, 'ircTarget');
-		const chattersDB = await settingsHelper.getChannelActivity(channel_id, MAX_RAIN_USER_CACHE_WITH_PADDING)
-			.catch(e => console.error(e));
+		const chattersDB = await settingsHelper.getChannelActivity(channel_id, MAX_RAIN_USER_CACHE_WITH_PADDING);
 	
 		return chattersDB ? settingsHelper.getRainAlgorithmResult(target, chattersDB.data) : [];
 	} catch (error) {
+		console.error(error);
 		return [];
 	}
 }

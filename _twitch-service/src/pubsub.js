@@ -30,7 +30,7 @@ let heartbeatCounter = 0;
 
 let listening = [];
 const LISTEN_TYPES = {
-	LISTEN: 'LISTEN', 
+	LISTEN: 'LISTEN',
 	UNLISTEN: 'UNLISTEN'
 };
 
@@ -76,7 +76,7 @@ function listen(channel_id, access_token) {
 	const topic = `channel-points-channel-v1.${channel_id}`;
 
 	const item = listening.find(x => x.channel_id === channel_id);
-	if(!item) {
+	if (!item) {
 		listening.push({ channel_id, nonce: non, type: LISTEN_TYPES.LISTEN });
 	} else {
 		item.nonce = non;
@@ -106,7 +106,7 @@ function unlisten(channel_id, access_token) {
 	const topic = `channel-points-channel-v1.${channel_id}`;
 
 	const item = listening.find(x => x.channel_id === channel_id);
-	if(!item) return;
+	if (!item) return;
 
 	item.nonce = non;
 	item.type = LISTEN_TYPES.UNLISTEN;
@@ -216,21 +216,11 @@ function connect() {
 					console.error(error);
 				}
 
-				const redeemResult = await twitchRequest.updateRedemptionStatus(redemptionUpdate)
+				const redeemed = await twitchRequest.updateRedemptionStatus(redemptionUpdate)
+					.then(redeemResult => invokeRedemptionCallbacks({ status: redemptionUpdate.status, redeemResult }))
 					.catch(e => console.error(e));
-				console.log({ redeemResult });
 
-				await invokeRedemptionCallbacks({ status: redemptionUpdate.status, redeemResult });
-
-				// switch (redemptionUpdate.status) {
-				// 	case 'FULFILLED':
-
-				// 		break;
-				// 	case 'CANCELED':
-				// 		break;
-				// 	default:
-				// 		break;
-				// }
+				console.log({ redeemed });
 
 				break;
 			case 'PONG':
@@ -241,7 +231,7 @@ function connect() {
 				reconnect();
 				break;
 			case 'RESPONSE':
-				
+
 				const item = listening.find(x => x.nonce === value.nonce);
 				if (value.error) {
 					console.log(value);
@@ -297,9 +287,9 @@ async function updateLivestreamSettings({ payload }) {
 
 	const item = listening.find(x => x.channel_id = ircTarget);
 	if (item) {
-		if(item.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
+		if (item.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
 			return;
-		} else if(item.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
+		} else if (item.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
 			return;
 		}
 	}
@@ -461,10 +451,12 @@ async function onRedemption(func) {
 }
 
 async function invokeRedemptionCallbacks(data) {
+	const promises = [];
 	for (let i = 0; i < redemptionCallbacks.length; i++) {
 		const callback = redemptionCallbacks[i];
-		callback(data);
+		promises.push(callback(data));
 	}
+	await Promise.all(promises);
 }
 
 module.exports = {
