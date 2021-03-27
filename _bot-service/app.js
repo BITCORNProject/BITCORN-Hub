@@ -45,7 +45,6 @@ if (module === require.main) {
 			messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
 		});
 
-		activityTracker.init();
 		const subInit = await subTicker.init();
 		console.log(subInit);
 

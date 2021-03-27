@@ -164,12 +164,12 @@ function sendChannelActivity({ channel_id, user_id, username }) {
 
 async function getChannelActivity(channel_id, limit_amount) {
 	return new Promise((resolve, reject) => {
-		settingsSocket.once('send-activity-tracker', async req => {
-			console.log(req);
-			resolve(req);
-		});
-		settingsSocket.emit('get-activity-tracker', {channel_id, limit_amount});
-		//setTimeout(reject, 1000);
+		try {
+			settingsSocket.once('send-activity-tracker', resolve);
+			settingsSocket.emit('get-activity-tracker', { channel_id, limit_amount });
+		} catch (error) {
+			reject(error);
+		}
 	}).catch(e => console.error(e));
 }
 

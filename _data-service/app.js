@@ -97,21 +97,15 @@ async function init() {
 		console.log(`connected to settings service server id: ${settingsSocket.id}`);
 	});
 
-	settingsSocket.on('set-activity-tracker', async ({ data }) => {
-		try {
-			await createOrUpdate(data);
-		} catch (error) {
-			console.error(error);
-		}
+	settingsSocket.on('set-activity-tracker', ({ data }) => {
+		createOrUpdate(data)
+			.catch(e => console.error(e));
 	});
 
-	settingsSocket.on('get-activity-tracker', async ({ data }) => {
-		try {
-			const results = await queryChannel({ channel_id: data.channel_id, limit_amount: data.limit_amount });
-			settings_io.emit('send-activity-tracker', results.map(x => ({ id: x.user_id, username: x.username })));
-		} catch (error) {
-			console.error(error);
-		}
+	settingsSocket.on('get-activity-tracker', ({ data }) => {
+		queryChannel({ channel_id: data.channel_id, limit_amount: data.limit_amount })
+			.then(results => settings_io.emit('send-activity-tracker', results.map(x => ({ id: x.user_id, username: x.username }))))
+			.catch(e => console.error(e));
 	});
 
 	settingsSocket.on('disconnect', () => {

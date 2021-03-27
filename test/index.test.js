@@ -83,10 +83,9 @@ describe('#mocha promises', function () {
 		messenger.chatQueue.client = tmi.chatClient;
 		messenger.whisperQueue.client = tmi.whisperClient;
 
-		activityTracker.init();
-
 		await settingsCache.requestSettings();
 
+		settingsHelper.init();
 		settingsHelper.setItemsObjects(settingsCache.getItems());
 
 		await tmi.connectToChat();
@@ -1003,8 +1002,6 @@ describe('#settings server cache', function () {
 		await settingsCache.requestSettings();
 
 		settingsHelper.setItemsObjects(settingsCache.getItems());
-
-		activityTracker.init();
 	});
 
 	it('should store livestreams settings to cache', async () => {
@@ -1096,8 +1093,7 @@ describe('#settings server cache', function () {
 			};
 			settingsHelper.setItemsObjects(item);
 
-			const activeChatters = activityTracker.getValues();
-			const items = activeChatters[target].filter(x => x);
+			const items = await activityTracker.getChatterActivity(target);
 
 			const result = settingsHelper.getRainAlgorithmResult(target, items);
 
@@ -1118,8 +1114,7 @@ describe('#settings server cache', function () {
 			};
 			settingsHelper.setItemsObjects(item);
 
-			const activeChatters = activityTracker.getValues();
-			const items = activeChatters[target].filter(x => x);
+			const items = await activityTracker.getChatterActivity(target);
 
 			log(items);
 
