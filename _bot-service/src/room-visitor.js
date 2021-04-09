@@ -65,7 +65,7 @@ async function joinChannelsFromQueue(tmi) {
 	}
 	joinChannelsFromQueue(tmi);
 
-	console.log(result);
+	console.log({result, timestamp: new Date().toLocaleTimeString()});
 
 	await new Promise(resolve => setTimeout(resolve, 500));
 	return result;

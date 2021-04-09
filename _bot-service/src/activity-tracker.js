@@ -19,16 +19,20 @@ function onChatMessage(target, user, msg, self) {
 function addToActiveChatters(target, user_id, username) {
 	if (allowedUsers.activityTrackerOmitUsername(username) === true) return;
 
-	const channel_id = settingsHelper.getProperty(target, 'ircTarget');
+	try {
+		const channel_id = settingsHelper.getProperty(target, 'ircTarget');
 
-	settingsHelper.sendChannelActivity({ channel_id, user_id, username });
+		settingsHelper.sendChannelActivity({ channel_id, user_id, username });
+	} catch (error) {
+		console.error(error);
+	}
 }
 
 async function getChatterActivity(target) {
 	try {
 		const channel_id = settingsHelper.getProperty(target, 'ircTarget');
 		const chattersDB = await settingsHelper.getChannelActivity(channel_id, MAX_RAIN_USER_CACHE_WITH_PADDING);
-	
+
 		return chattersDB ? settingsHelper.getRainAlgorithmResult(target, chattersDB.data) : [];
 	} catch (error) {
 		console.error(error);

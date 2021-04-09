@@ -169,10 +169,8 @@ function enqueueMessageByType(type, target, message) {
 		if (target.toLowerCase() !== process.env.BOT_USERNAME.toLowerCase()) {
 			whisperQueue.enqueue({ target, message });
 		} else {
-			console.error(`Bot ${process.env.BOT_USERNAME} attempt to whisper self`);
+			console.error({message: `Bot ${process.env.BOT_USERNAME} attempt to whisper self`, });
 		}
-	} else {
-		//console.log(`${type} ${target} ${message}`);
 	}
 }
 

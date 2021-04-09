@@ -22,10 +22,10 @@ app.get('/auth/helix/callback', async (req, res) => {
 
 		await twitchRequest.authorize(req.query.code, req.query.state);
 
-		console.log('authenticated');
+		console.log({ message: 'authenticated', timestamp: new Date().toLocaleTimeString() });
 		res.status(200).send('Twitch API authenticated.  You can close this browser window/tab.');
 	} catch (err) {
-		console.error(err);
+		console.error({ err, timestamp: new Date().toLocaleTimeString() });
 		res.status(500).send(err.message);
 	}
 });
@@ -45,7 +45,7 @@ app.post('/users', async (req, res) => {
 			res.status(404).end();
 		}
 	} catch (err) {
-		console.error(err);
+		console.error({ err, timestamp: new Date().toLocaleTimeString() });
 		res.status(500).send(err.message);
 	}
 });
@@ -59,7 +59,7 @@ app.post('/streams', async (req, res) => {
 		res.json(resUsers);
 
 	} catch (err) {
-		console.error(err);
+		console.error({ err, timestamp: new Date().toLocaleTimeString() });
 		res.status(500).send(err.message);
 	}
 });
@@ -69,13 +69,11 @@ try {
 
 		const server = app.listen(process.env.TWITCH_SERVER_PORT || 7000, () => {
 			const port = server.address().port;
-			console.log(`App listening on port ${port}`);
+			console.log({ message: `App listening on port ${port}`, timestamp: new Date().toLocaleTimeString() });
 
 			const open = require('open');
 			open(twitchRequest.authorizeUrl);
 		});
-		console.log({ success: true, message: `Server listening on port ${process.env.TWITCH_SERVER_PORT}` })
-
 
 		const settings_io = io_client(`ws://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
 			reconnection: true
@@ -83,11 +81,11 @@ try {
 		const settingsSocket = settings_io.connect();
 
 		settingsSocket.on('error', e => {
-			console.log(`error settings service server id: ${settingsSocket.id}`, e);
+			console.log({ message: `error settings service server id: ${settingsSocket.id}`, e, timestamp: new Date().toLocaleTimeString() });
 		});
 
 		settingsSocket.on('connect', () => {
-			console.log(`connected to settings service server id: ${settingsSocket.id}`);
+			console.log({ message: `connected to settings service server id: ${settingsSocket.id}`, timestamp: new Date().toLocaleTimeString() });
 
 			settingsSocket.emit('initial-settings-request');
 		});
@@ -95,17 +93,17 @@ try {
 		settingsSocket.on('initial-settings', async req => {
 			console.log({ payload: req.payload });
 			await pubsub.initialSettings(req)
-				.catch(e => console.error(e));
+				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 		});
 
 		settingsSocket.on('update-livestream-settings', async req => {
-			console.log({ payload: req.payload });
+			console.log({ payload: req.payload, timestamp: new Date().toLocaleTimeString() });
 			await pubsub.updateLivestreamSettings(req)
-				.catch(e => console.error(e));
+				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 		});
 
 		settingsSocket.on('disconnect', () => {
-			console.log('disconnected settings service server');
+			console.log({ message: 'disconnected settings service server', timestamp: new Date().toLocaleTimeString() });
 		});
 
 
@@ -117,6 +115,5 @@ try {
 
 	})();
 } catch (error) {
-	console.log({ success: false, message: `Uncaught error in main` });
-	console.error(error);
+	console.error({ error, timestamp: new Date().toLocaleTimeString() });
 }

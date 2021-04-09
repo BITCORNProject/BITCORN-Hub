@@ -14,7 +14,9 @@ async function chunkRequests(stack, requester, mapper) {
 	const promises = [];
 	while (stack.length > 0) {
 		const chunk = stack.splice(0, 100);
-		const promise = requester(chunk).then(({ data }) => data.map(mapper)).catch(e => console.log(e));
+		const promise = requester(chunk)
+			.then(({ data }) => data.map(mapper))
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 		promises.push(promise);
 	}
 	const resolved = await Promise.all(promises);
@@ -67,7 +69,7 @@ async function init() {
 		const result = await Promise.all(payoutPromises);
 		if (result.length && result.length > 0) {
 			console.log({ result });
-		} else if(!result.hasOwnProperty('length')) {
+		} else if (!result.hasOwnProperty('length')) {
 			console.log({ 'sub-ticker-ERROR': result });
 		}
 	}, /* 1000 * 30 */timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);

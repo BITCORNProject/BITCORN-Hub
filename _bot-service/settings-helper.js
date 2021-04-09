@@ -110,11 +110,11 @@ function init() {
 		settingsSocket = settings_io.connect({ reconnect: true });
 
 		settingsSocket.on('error', e => {
-			console.log(`error settings service server id: ${settingsSocket.id}`, e);
+			console.log({ message: `error settings service server id: ${settingsSocket.id}`, e, timestamp: new Date().toLocaleTimeString() });
 		});
 
 		settingsSocket.on('connect', async () => {
-			console.log(`connected to settings service server id: ${settingsSocket.id}`);
+			console.log({ message: `connected to settings service server id: ${settingsSocket.id}`, timestamp: new Date().toLocaleTimeString() });
 
 			settingsSocket.emit('initial-settings-request');
 		});
@@ -131,7 +131,7 @@ function init() {
 				promises.push(callback(req.data));
 			}
 			Promise.all(promises)
-				.catch(e => console.error(e));
+				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 		});
 
 		settingsSocket.on('update-livestream-settings', req => {
@@ -139,7 +139,7 @@ function init() {
 		});
 
 		settingsSocket.on('disconnect', () => {
-			console.log(`disconnected settings service server`);
+			console.log({ message: `disconnected settings service server`, timestamp: new Date().toLocaleTimeString() });
 		});
 	} catch (err) {
 		console.error(err);
@@ -167,7 +167,7 @@ async function getChannelActivity(channel_id, limit_amount) {
 		} catch (error) {
 			reject(error);
 		}
-	}).catch(e => console.error(e));
+	}).catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 }
 
 module.exports = {

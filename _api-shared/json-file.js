@@ -18,7 +18,6 @@ function JsonFile(file, data) {
             fs.mkdirSync(dir);
         }
         this.setValues(this.data);
-        //console.log(`JsonFile ${this.file} initial values`);
     }
     return this;
 }

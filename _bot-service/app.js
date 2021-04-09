@@ -23,7 +23,7 @@ if (module === require.main) {
 		tmi.addRewardHandlers();
 
 		const result = await tmi.connectToChat();
-		console.log(result);
+		console.log({ result, timestamp: new Date().toLocaleTimeString() });
 
 		tmi.addMessageOutputListener(console.log);
 		tmi.addRewardOutputListener(console.log);
@@ -46,7 +46,7 @@ if (module === require.main) {
 		});
 
 		const subInit = await subTicker.init();
-		console.log(subInit);
+		console.log({ success: subInit.success, timestamp: new Date().toLocaleTimeString() });
 
 		const roomResult = await roomVisitor(tmi);
 		console.log(roomResult);

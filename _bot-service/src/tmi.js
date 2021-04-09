@@ -103,8 +103,6 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 		messenger.enqueueMessageByType(result.configs.irc_out, result.irc_target, result.message);
 		result.result = await messenger.sendQueuedMessagesByType(result.configs.irc_out);
 	}
-
-	//console.log({ event, result });
 	return result;
 }
 
@@ -112,11 +110,7 @@ async function onMessageHandler(target, user, msg, self) {
 	if (self) return { success: false, msg, message: 'Message from self', configs: commander.expectedCommandsConfigs };
 
 	const data = await asyncOnMessageReceived(user['message-type'] || MESSAGE_TYPE.irc_chat, target, user, msg);
-	/*if (data.success === true) {
-		console.log(data);
-	} else {
-		console.log(`FAILED:`, data);
-	}*/
+
 	for (let i = 0; i < outMessageCallbacks.length; i++) {
 		outMessageCallbacks[i](data);
 	}

@@ -209,22 +209,21 @@ function connect() {
 
 					redemptionUpdate.status = 'FULFILLED';
 
-					console.log({ result });
+					console.log({ result, timestamp: new Date().toLocaleTimeString() });
 
-					console.log(message.data);
 				} catch (error) {
-					console.error(error);
+					console.error({ error, timestamp: new Date().toLocaleTimeString() });
 				}
 
 				const redeemed = await twitchRequest.updateRedemptionStatus(redemptionUpdate)
 					.then(redeemResult => invokeRedemptionCallbacks({ status: redemptionUpdate.status, redeemResult }))
-					.catch(e => console.error(e));
+					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 
-				console.log({ redeemed });
+				console.log({ redeemed, timestamp: new Date().toLocaleTimeString() });
 
 				break;
 			case 'PONG':
-				console.log({ success: true, resultText: `${pingpongLog} RECV #${heartbeatCounter}: ${JSON.stringify(value)}` });
+				console.log({ resultText: `${pingpongLog} RECV #${heartbeatCounter}: ${JSON.stringify(value)}`, timestamp: new Date().toLocaleTimeString() });
 				clearPongWaitTimeout();
 				break;
 			case 'RECONNECT':
@@ -238,7 +237,7 @@ function connect() {
 					listening = listening.filter(x => x.nonce !== value.nonce);
 				} else {
 					const { channel_id, type } = item;
-					console.log(`${type}: ${channel_id}`);
+					console.log({ [type]: channel_id, timestamp: new Date().toLocaleTimeString() });
 				}
 				break;
 			default:
@@ -374,7 +373,7 @@ async function handleChannelPointsCard(items, payload) {
 				await twitchRequest.getCustomRewards(ircTarget)
 					.then(result => createCustomReward(result, item, authenticated))
 					.then(listenToChannel)
-					.catch(e => console.log(e));
+					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 			} else {
 
 				if (authenticated) {
@@ -408,7 +407,7 @@ async function createCustomReward(result, item, authenticated) {
 		};
 
 		const results = await twitchRequest.createCustomReward(item.ircTarget, data).catch(e => {
-			console.log(e);
+			console.error({ e, timestamp: new Date().toLocaleTimeString() });
 		});
 
 		if (results) {
@@ -441,7 +440,7 @@ async function sendTokensToApi(items, payload) {
 		};
 	});
 	const response = await databaseAPI.sendTokens({ tokens: tokens });
-	console.log({ response });
+	console.log({ response, timestamp: new Date().toLocaleTimeString() });
 }
 
 const redemptionCallbacks = [];
