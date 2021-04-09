@@ -149,7 +149,7 @@ describe('#mocha promises', function () {
 
 	it('should create commands map from commands array', () => {
 		const commandsMap = commander.createCommandsMap();
-		const commandNames = ['tts', 'bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist'];
+		const commandNames = ['tts', 'popcorn', 'bitcorn', 'tipcorn', 'withdraw', 'help', 'rain', 'blacklist'];
 		const mapped = commandNames.map(commander.commandName);
 		expect(commandsMap).to.have.all.keys(mapped);
 	});
@@ -319,6 +319,17 @@ describe('#mocha promises', function () {
 		expect(obj.configs.name).to.be.equal('bitcorn');
 	});
 
+	it('should execute popcorn and get 200 response', async () => {
+
+		const twitchId = '120524051';
+		const body = {
+			userPlatformId: `twitch|${twitchId}`,
+			ircTarget: '75987197'
+		};
+
+		const result = await databaseAPI.request(twitchId, body).popcorn();
+		expect(result.twitchUsername).to.be.equal('clayman666');
+	});
 
 	/*
 	$tipcorn tests

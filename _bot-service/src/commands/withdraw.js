@@ -12,6 +12,7 @@ const settingsHelper = require('../../settings-helper');
 module.exports = {
 	configs: {
 		name: 'withdraw',
+		prefix: '$',
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Withraw your funds off the bot :: Commands do not work in Direct Messages',

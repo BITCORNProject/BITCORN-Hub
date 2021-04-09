@@ -100,6 +100,12 @@ DatabaseEndpoint.prototype.criticalRequestBase = async function (baseUrl, endpoi
 	return apiRequest.criticalRequest(url, twitchId, access_token, data);
 }
 
+DatabaseEndpoint.prototype.criticalRequestGame = async function (baseUrl, twitchId, data) {
+	const { access_token } = await apiRequest.getCachedToken(this.sql_db_auth);
+	const url = `${this.base()}/${this.rooturl().game}/${baseUrl}`;
+	return apiRequest.criticalRequest(url, twitchId, access_token, data);
+}
+
 DatabaseEndpoint.prototype.makeRequest = async function (endpoint, data) {
 	return this.makeRequestBase(this.rooturl().transaction, endpoint, data);
 }
@@ -225,7 +231,8 @@ DatabaseEndpoint.prototype.request = function (twitchId, data) {
 		rain: () => this._criticalArbitraryRequest(this.db_endpoints.rain, twitchId, data),
 		tipcorn: () => this._criticalArbitraryRequest(this.db_endpoints.tipcorn, twitchId, data),
 		bitcorn: () => this.makeRequestUser(`${this.db_endpoints.bitcorn}${twitchId}`, null),
-		withdraw: () => this.criticalRequestDirect(this.rooturl().wallet, twitchId, data)
+		popcorn: () => this.criticalRequestGame(this.db_endpoints.popcorn, twitchId, data),
+		withdraw: () => this.criticalRequestDirect(this.rooturl().wallet, twitchId, data),
 	};
 }
 

@@ -15,6 +15,7 @@ const commandHelper = require('../utils/command-helper');
 module.exports = {
 	configs: {
 		name: 'tipcorn',
+		prefix: '$',
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Tips a user with bitcorn',

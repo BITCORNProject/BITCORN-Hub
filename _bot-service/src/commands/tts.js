@@ -12,6 +12,7 @@ const settingsHelper = require('../../settings-helper');
 module.exports = {
 	configs: {
 		name: 'tts',
+		prefix: '$',
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Use text to speech',

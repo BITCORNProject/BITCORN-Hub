@@ -9,6 +9,7 @@ const MESSAGE_TYPE = require('../utils/message-type');
 module.exports = {
 	configs: {
 		name: 'help',
+		prefix: '$',
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Prints bitcorn commands to the chat.',

@@ -11,6 +11,7 @@ const settingsHelper = require('../../settings-helper');
 module.exports = {
 	configs: {
 		name: 'bitcorn',
+		prefix: '$',
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'View your BITCORN balance and get a BITCORN wallet address if you are not registered',

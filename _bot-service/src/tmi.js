@@ -56,10 +56,12 @@ function addRewardOutputListener(func) {
 async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const args = commander.messageAsCommand(msg);
-	if (args.prefix !== '$') return { success: false, msg, message: 'Just a message', irc_target: target, configs: commander.expectedCommandsConfigs };
+	if (args.prefix !== '$' && args.prefix !== '!') return { success: false, msg, message: 'Just a message', irc_target: target, configs: commander.expectedCommandsConfigs };
 
 	const command = commandsMap.get(args.name);
 	if (!command) return { success: false, msg, message: 'Command not found', irc_target: target, configs: commander.expectedCommandsConfigs };
+
+	if(command.configs.prefix !== args.prefix) return { success: false, msg, message: 'Prefix not found', irc_target: target, configs: commander.expectedCommandsConfigs };
 
 	if (allowedUsers.isCommandTesters(user.username) === false) return { success: false, msg, message: 'User not allowed', irc_target: target, configs: commander.expectedCommandsConfigs };
 

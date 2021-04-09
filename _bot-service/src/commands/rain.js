@@ -14,6 +14,7 @@ const activityTracker = require('../../src/activity-tracker');
 module.exports = {
 	configs: {
 		name: 'rain',
+		prefix: '$',
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Rain a certain Amount to the last 1-10 of People who were active',

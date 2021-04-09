@@ -12,6 +12,7 @@ const MESSAGE_TYPE = require('../utils/message-type');
 module.exports = {
 	configs: {
 		name: 'blacklist',
+		prefix: '$',
 		cooldown: 20,
 		global_cooldown: false,
 		description: 'Add user to the blacklist for all BITCORN services',
