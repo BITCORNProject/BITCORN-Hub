@@ -6,13 +6,14 @@
 
 require('dotenv').config({ path: __dirname + './../.env' });
 
-const { is_production } = require('../_api-shared/prod');
-
-const rooturl = require('../settings/rooturl.json');
-
 const WebSocket = require('ws');
-
 const express = require('express');
+
+const { is_production } = require('../_api-shared/prod');
+const apiRequest = require('../_api-shared/api-request');
+
+const sql_db_auth = require(`../settings/sql_db_auth.json`);
+const rooturl = require('../settings/rooturl.json');
 
 const settingsCache = require('./settings-cache');
 
@@ -25,30 +26,6 @@ const MAX_BACKOFF_THRESHOLD_INTERVAL = 1000 * 60 * 2;
 const BACKOFF_THRESHOLD_INTERVAL = 1000 * 3; //ms to wait before reconnect
 
 let reconnectInterval = BACKOFF_THRESHOLD_INTERVAL;
-
-/*
-
-{
-   "type":"update-livestream-settings",
-   "payload":{
-      "minRainAmount": 100000000.00000000,
-      "minTipAmount": 10000000.00000000,
-      "rainAlgorithm": 1,
-      "ircTarget": "120524051",
-      "txMessages": true,
-      "txCooldownPerUser": 0.00000000,
-      "enableTransactions": true,
-      "ircEventPayments": true,
-      "bitcornhubFunded": true,
-      "bitcornPerBit": 321.00000000,
-      "bitcornPerDonation": 123.00000000,
-      "twitchRefreshToken": "<token>",
-      "bitcornPerChannelpointsRedemption": 0.40000000,
-      "enableChannelpoints": true
-   }
-}
-
-*/
 
 function reconnect() {
 	console.log({ message: 'INFO: Reconnecting...' });
@@ -63,10 +40,13 @@ function floorJitterInterval(interval) {
 	return Math.floor(interval + Math.random() * 1000);
 }
 
-function connect() {
+async function connect() {
+
+	const sql_auth = is_production ? sql_db_auth['production'] : sql_db_auth['development'];
+	const { access_token } = await apiRequest.getCachedToken(sql_auth);
 
 	const uri = is_production ? rooturl.websocket.production : rooturl.websocket.development;
-	ws = new WebSocket(uri);
+	ws = new WebSocket(uri, ['client', access_token]);
 
 	ws.onerror = (error) => {
 		console.log({ message: error.message, error, timestamp: new Date().toLocaleTimeString() });
@@ -81,7 +61,7 @@ function connect() {
 		try {
 			const obj = JSON.parse(data);
 			console.log({ obj, timestamp: new Date().toLocaleTimeString() });
-	
+
 			switch (obj.type) {
 				case 'initial-settings':
 					settingsCache.applySettings(obj.payload);
