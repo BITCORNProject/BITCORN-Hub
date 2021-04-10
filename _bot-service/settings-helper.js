@@ -8,6 +8,8 @@ const io_client = require('socket.io-client');
 const cache = {};
 const idMap = {};
 
+const NOT_RESPONDING_TIMEOUT = 1000;
+
 const OUTPUT_TYPE = {
 	rewardEvent: 0,
 	tipEvent: 1
@@ -164,10 +166,11 @@ async function getChannelActivity(channel_id, limit_amount) {
 		try {
 			settingsSocket.once('send-activity-tracker', resolve);
 			settingsSocket.emit('get-activity-tracker', { channel_id, limit_amount });
+			setTimeout(() => reject(`Local data store not responding timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
 		} catch (error) {
 			reject(error);
 		}
-	}).catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
 }
 
 module.exports = {
