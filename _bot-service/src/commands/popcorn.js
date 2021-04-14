@@ -13,7 +13,7 @@ module.exports = {
 	configs: {
 		name: 'popcorn',
 		prefix: '!',
-		cooldown: 20,
+		cooldown: null,
 		global_cooldown: false,
 		description: 'Popcorn to join the battlegrounds round',
 		example: '!popcorn',

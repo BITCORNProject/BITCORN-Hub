@@ -13,7 +13,7 @@ module.exports = {
 	configs: {
 		name: 'tts',
 		prefix: '$',
-		cooldown: 20,
+		cooldown: null,
 		global_cooldown: false,
 		description: 'Use text to speech',
 		example: '$tts <message>',

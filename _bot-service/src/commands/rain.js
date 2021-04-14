@@ -15,7 +15,7 @@ module.exports = {
 	configs: {
 		name: 'rain',
 		prefix: '$',
-		cooldown: 20,
+		cooldown: null,
 		global_cooldown: false,
 		description: 'Rain a certain Amount to the last 1-10 of People who were active',
 		example: `$rain <amount> <1-${databaseAPI.MAX_RAIN_USERS}>`,

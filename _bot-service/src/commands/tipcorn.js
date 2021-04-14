@@ -16,7 +16,7 @@ module.exports = {
 	configs: {
 		name: 'tipcorn',
 		prefix: '$',
-		cooldown: 20,
+		cooldown: null,
 		global_cooldown: false,
 		description: 'Tips a user with bitcorn',
 		example: '$tipcorn <username> <amount>',

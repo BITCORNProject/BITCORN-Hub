@@ -12,7 +12,10 @@ const MAX_RAIN_USER_CACHE_WITH_PADDING = serverSettings.MAX_RAIN_USERS * 1.4;
 
 function onChatMessage(target, user, msg, self) {
 	const event = { target, user, msg, self };
-	//if (event.self) { return { success: false, message: `self`, event }; }
+	
+	if (event.self) { return { success: false, message: `self`, event }; }
+	if (event.user['message-type'] === 'whisper') { return { success: false, message: 'Not activity tracking whispers', event }; }
+	
 	addToActiveChatters(target, event.user['user-id'], event.user.username);
 }
 

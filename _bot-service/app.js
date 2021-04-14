@@ -25,7 +25,9 @@ if (module === require.main) {
 		const result = await tmi.connectToChat();
 		console.log({ result, timestamp: new Date().toLocaleTimeString() });
 
-		tmi.addMessageOutputListener(console.log);
+		tmi.addMessageOutputListener(d => {
+			if(d && d.message !== 'Just a message') console.log(d);
+		});
 		tmi.addRewardOutputListener(console.log);
 
 		settingsHelper.onRedemption(async ({ data }) => {

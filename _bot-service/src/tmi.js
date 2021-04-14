@@ -74,7 +74,7 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 	const selectCooldowns = command.configs.global_cooldown === true ? global_cooldowns : cooldowns;
 	const selectedCooldownId = command.configs.global_cooldown === true ? target : user['user-id'];
 
-	const cooldown = settingsHelper.getProperty(target, 'txCooldownPerUser');
+	const cooldown = command.configs.cooldown || settingsHelper.getProperty(target, 'txCooldownPerUser');
 	const settingsConfigs = {
 		name: command.configs.name,
 		cooldown: cooldown,

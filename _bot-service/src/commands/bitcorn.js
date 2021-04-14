@@ -12,7 +12,7 @@ module.exports = {
 	configs: {
 		name: 'bitcorn',
 		prefix: '$',
-		cooldown: 20,
+		cooldown: null,
 		global_cooldown: false,
 		description: 'View your BITCORN balance and get a BITCORN wallet address if you are not registered',
 		example: '$bitcorn',

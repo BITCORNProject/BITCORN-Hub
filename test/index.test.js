@@ -518,6 +518,22 @@ describe('#mocha promises', function () {
 		expect(obj.success).to.be.equal(true);
 	});
 
+	it('should process whispers Missing settinge channel target - whisper', async () => {
+
+		const type = require('../_bot-service/src/utils/message-type').irc_whisper;
+		const target = '#3412q';
+
+		const twitchUsername = 'clayman666';
+		const { data: [{ id: user_id, login: user_login }, { id: _id }] } = await getUsers([twitchUsername, '3412q']);
+		const user = { 'room-id': _id, 'user-id': user_id, username: user_login };
+
+		const msg = `${commander.commandName('$withdraw')} 1 CJWKXJGS3ESpMefAA83i6rmpX6tTAhvG9g`;
+		const self = false;
+
+		const result = await tmi.asyncOnMessageReceived(type, target, user, msg, self);
+		expect(result.message).to.be.equal('Wallet is down for maintenance');
+	});
+
 	it('should process whispers and chat messages - whisper', async () => {
 
 		const type = require('../_bot-service/src/utils/message-type').irc_whisper;

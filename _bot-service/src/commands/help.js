@@ -10,7 +10,7 @@ module.exports = {
 	configs: {
 		name: 'help',
 		prefix: '$',
-		cooldown: 20,
+		cooldown: null,
 		global_cooldown: false,
 		description: 'Prints bitcorn commands to the chat.',
 		example: '$help',
