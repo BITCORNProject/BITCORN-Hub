@@ -7,10 +7,21 @@ const databaseApi = require('../../_api-shared/database-api');
 const SETTINGS_JOIN_LEAVE_INTERVAL_MS = 1000 * 60 * 2;
 const MAX_JOIN_RETRIES = 5;
 let retrieCount = 0;
-const queuedItems = new Queue();
 
 const joinedChannels = [];
 
+function _Queue() {
+	this.items = new Queue();
+	this.isBusy = false;
+	this.attempts = 0;
+
+	this.size = function () { return this.items.size(); }
+	this.peek = function () { return this.items.peek(); }
+	this.enqueue = function (item) { return this.items.enqueue(item); }
+	this.dequeue = function () { return this.items.dequeue(); }
+}
+
+const queuedItems = new _Queue();
 
 async function partChannels(tmi, leaves) {
 	if(leaves.length === 0) return;
@@ -42,6 +53,12 @@ function getJoinQueue() {
 async function joinChannelsFromQueue(tmi) {
 
 	if (queuedItems.size() === 0) return { message: 'Empty Queue' };
+	
+	if (queuedItems.isBusy === true) return { message: `join queue is busy with size: ${queuedItems.size()}` };
+
+	queuedItems.isBusy = true;
+
+	await new Promise(resolve => setTimeout(resolve, 500));
 
 	const item = queuedItems.peek();
 
@@ -63,11 +80,13 @@ async function joinChannelsFromQueue(tmi) {
 			result = { message: error.message };
 		}
 	}
+	
+	queuedItems.isBusy = false;
+
 	joinChannelsFromQueue(tmi);
 
 	console.log({result, timestamp: new Date().toLocaleTimeString()});
 
-	await new Promise(resolve => setTimeout(resolve, 500));
 	return result;
 }
 
