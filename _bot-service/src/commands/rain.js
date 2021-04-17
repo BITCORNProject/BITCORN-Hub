@@ -18,7 +18,7 @@ module.exports = {
 		cooldown: null,
 		global_cooldown: false,
 		description: 'Rain a certain Amount to the last 1-10 of People who were active',
-		example: `$rain <amount> <1-${databaseAPI.MAX_RAIN_USERS}>`,
+		example: `$rain <amount> <1-${process.env.MAX_RAIN_USERS}>`,
 		enabled: true,
 		irc_in: MESSAGE_TYPE.irc_chat,
 		irc_out: MESSAGE_TYPE.irc_chat
@@ -39,15 +39,15 @@ module.exports = {
 		if (cleanParams.isNumber(rain_amount) === false ||
 			cleanParams.isNumber(rain_user_count) === false ||
 			rain_amount < minRainAmount ||
-			rain_amount >= databaseAPI.MAX_WALLET_AMOUNT ||
-			rain_user_count <= 0 || rain_user_count > databaseAPI.MAX_RAIN_USERS) {
+			rain_amount >= process.env.MAX_WALLET_AMOUNT ||
+			rain_user_count <= 0 || rain_user_count > process.env.MAX_RAIN_USERS) {
 			if (rain_amount < minRainAmount) {
 				success = true;
 				message = `Can not ${this.configs.name} an amount that small minimum amount ${minRainAmount} CORN - ${this.configs.example}`;
-			} else if (rain_user_count > databaseAPI.MAX_RAIN_USERS) {
+			} else if (rain_user_count > process.env.MAX_RAIN_USERS) {
 				success = true;
-				message = `Number of people you can ${this.configs.name} to is 1 to ${databaseAPI.MAX_RAIN_USERS}`;
-			} else if (rain_amount >= databaseAPI.MAX_WALLET_AMOUNT) {
+				message = `Number of people you can ${this.configs.name} to is 1 to ${process.env.MAX_RAIN_USERS}`;
+			} else if (rain_amount >= process.env.MAX_WALLET_AMOUNT) {
 				success = true;
 				message = `Can not ${this.configs.name} an amount that large - ${event.twitchUsername}`;
 			} else {

@@ -1,7 +1,6 @@
 "use strict";
 
 const { wrap_in_test_mode } = require('../../_api-shared/prod');
-const serverSettings = require('../../settings/server-settings.json');
 const Queue = require('./utils/queue');
 const MESSAGE_TYPE = require('./utils/message-type');
 const REWARD_TYPE = require('./utils/reward-type');
@@ -79,7 +78,7 @@ async function sendQueuedRewards() {
 		error = err;
 	}
 
-	await new Promise(resolve => setTimeout(resolve, serverSettings.IRC_DELAY_MS));
+	await new Promise(resolve => setTimeout(resolve, process.env.IRC_DELAY_MS));
 
 	queue.isBusy = false;
 	if (error) {
@@ -221,7 +220,7 @@ async function sendQueuedMessagesByType(type) {
 		error = err;
 	}
 
-	await new Promise(resolve => setTimeout(resolve, serverSettings.IRC_DELAY_MS));
+	await new Promise(resolve => setTimeout(resolve, process.env.IRC_DELAY_MS));
 
 	queue.isBusy = false;
 	if (error) {

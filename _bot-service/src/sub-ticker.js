@@ -1,6 +1,5 @@
 "use strict";
 
-const serverSettings = require('../../settings/server-settings.json');
 const databaseAPI = require('../../_api-shared/database-api');
 const { getUsers, getChatters, getStreamsByIds } = require('./request-api');
 const settingsHelper = require('../settings-helper');
@@ -38,23 +37,19 @@ async function performPayout({ channel, channelId }) {
 
 	if (!settingsHelper.getProperty(channel, 'ircEventPayments')) return { msg: 'idle disabled' };
 
-	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
-
 	const stack = await getChannelChatters(channel);
 	const results = await chunkRequests(stack, getUsers, x => x.id);
 
 	const body = {
 		ircTarget: channelId,
 		chatters: results,
-		minutes: MINUTE_AWARD_MULTIPLIER
+		minutes: process.env.MINUTE_AWARD_MULTIPLIER
 	};
 
 	return databaseAPI.requestPayout(body);
 }
 
 async function init() {
-
-	const MINUTE_AWARD_MULTIPLIER = serverSettings.MINUTE_AWARD_MULTIPLIER;
 
 	setInterval(async () => {
 		const stack = Object.values(settingsHelper.getChannelsAndIds());
@@ -72,7 +67,7 @@ async function init() {
 		} else if (!result.hasOwnProperty('length')) {
 			console.log({ 'sub-ticker-ERROR': result });
 		}
-	}, /* 1000 * 30 */timeValues.MINUTE * MINUTE_AWARD_MULTIPLIER);
+	}, /* 1000 * 30 */timeValues.MINUTE * process.env.MINUTE_AWARD_MULTIPLIER);
 
 	return { success: settingsHelper.getChannelNames().length > 0 };
 }

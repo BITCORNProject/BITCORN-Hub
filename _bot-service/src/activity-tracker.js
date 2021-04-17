@@ -4,11 +4,10 @@
 
 "use strict";
 
-const serverSettings = require('../../settings/server-settings.json');
 const allowedUsers = require('../../_api-shared/allowed-users');
 const settingsHelper = require('../settings-helper');
 
-const MAX_RAIN_USER_CACHE_WITH_PADDING = serverSettings.MAX_RAIN_USERS * 1.4;
+const MAX_RAIN_USER_CACHE_WITH_PADDING = process.env.MAX_RAIN_USERS * 1.4;
 
 function onChatMessage(target, user, msg, self) {
 	const event = { target, user, msg, self };
