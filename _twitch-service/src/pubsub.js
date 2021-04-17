@@ -8,7 +8,7 @@ const WebSocket = require('ws');
 
 const twitchRequest = require('./twitch-request');
 
-const { wrap_in_test_mode } = require('../../_api-shared/prod');
+const { is_production, wrap_in_test_mode } = require('../../_api-shared/prod');
 const databaseAPI = require('../../_api-shared/database-api');
 const allowedUsers = require('../../_api-shared/allowed-users');
 
@@ -296,7 +296,8 @@ async function updateLivestreamSettings({ payload }) {
 	const tokenStore = twitchRequest.getTokenStore(ircTarget);
 	const items = [];
 	if (!tokenStore) {
-		const { authenticated, ircTarget } = await refreshToken(twitchRefreshToken, ircTarget);
+		const { authenticated, ircTarget } = await refreshToken(twitchRefreshToken, ircTarget)
+			.catch(e => console.log(e));
 		items.push({ authenticated, ircTarget });
 		twitchRequest.storeTokens(items);
 	} else {
@@ -316,7 +317,13 @@ async function initialSettings({ payload }) {
 
 			const { twitchRefreshToken, ircTarget } = payload[channel];
 
-			promises.push(refreshToken(twitchRefreshToken, ircTarget));
+			const promise = refreshToken(twitchRefreshToken, ircTarget)
+				.catch(e => {
+					console.error(e);
+					return { authenticated: null, ircTarget };
+				});
+
+			promises.push(promise);
 		}
 
 		const items = await Promise.all(promises);
@@ -336,18 +343,16 @@ async function initialSettings({ payload }) {
 }
 
 async function refreshToken(twitchRefreshToken, ircTarget) {
-	return new Promise(async (resolve) => {
-		if (twitchRefreshToken) {
-			const authenticated = await twitchRequest.refreshAccessToken({
-				refresh_token: twitchRefreshToken,
-				client_id: process.env.API_CLIENT_ID,
-				client_secret: process.env.API_SECRET
-			});
-			resolve({ authenticated, ircTarget });
-		} else {
-			resolve({ authenticated: null, ircTarget });
-		}
-	});
+	if (twitchRefreshToken) {
+		const authenticated = await twitchRequest.refreshAccessToken({
+			refresh_token: twitchRefreshToken,
+			client_id: process.env.API_CLIENT_ID,
+			client_secret: process.env.API_SECRET
+		});
+		return { authenticated, ircTarget };
+	} else {
+		return { authenticated: null, ircTarget };
+	}
 }
 
 async function handleChannelPointsCard(items, payload) {
@@ -401,7 +406,7 @@ async function createCustomReward(result, item, authenticated) {
 	if (!reward) {
 		const data = {
 			title: CARD_TITLE,
-			cost: 1,//100000,
+			cost: is_production ? 100000 : 1,
 			prompt: CARD_PROMPT,
 			should_redemptions_skip_request_queue: false
 		};
