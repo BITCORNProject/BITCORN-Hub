@@ -31,6 +31,31 @@ module.exports = {
 		let irc_target = event.irc_target;
 
 		if (!settingsHelper.getProperty(event.channel, 'enableTransactions')) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
+		
+		const configs = JSON.parse(JSON.stringify(this.configs));
+		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
+
+		if(event.args.params.length < 2) {
+			configs.irc_out = MESSAGE_TYPE.irc_chat;
+			success = true;
+			return {
+				success: success,
+				message: `Here is an example ${configs.example}`,
+				irc_target: irc_target,
+				configs: configs
+			};
+		}
+
+		if(cleanParams.isNumber(event.args.params[0])) {
+			configs.irc_out = MESSAGE_TYPE.irc_chat;
+			success = true;
+			return {
+				success: success,
+				message: `Here is an example ${configs.example}`,
+				irc_target: irc_target,
+				configs: configs
+			};
+		}
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
 		const amount = cleanParams.amount(event.args.params[1]);
@@ -76,9 +101,6 @@ module.exports = {
 				({ message, success } = commandHelper.handelTipResponse(result, event.twitchUsername, twitchUsername, amount));
 			}
 		}
-		
-		const configs = JSON.parse(JSON.stringify(this.configs));
-		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
 
 		return { 
 			success: success, 

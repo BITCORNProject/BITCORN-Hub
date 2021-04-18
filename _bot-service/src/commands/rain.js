@@ -30,6 +30,20 @@ module.exports = {
 
 		if (!settingsHelper.getProperty(event.channel, 'enableTransactions')) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
+		const configs = JSON.parse(JSON.stringify(this.configs));
+		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
+
+		if(event.args.params.length < 2) {
+			configs.irc_out = MESSAGE_TYPE.irc_chat;
+			success = true;
+			return {
+				success: success,
+				message: `Here is an example ${configs.example}`,
+				irc_target: irc_target,
+				configs: configs
+			};
+		}
+
 		const rain_amount = cleanParams.amount(event.args.params[0]);
 		const rain_user_count = cleanParams.amount(event.args.params[1]);
 		const ircMessage = event.args.params.slice(2).join(' ');
@@ -135,9 +149,6 @@ module.exports = {
 				}
 			}
 		}
-
-		const configs = JSON.parse(JSON.stringify(this.configs));
-		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
 
 		return {
 			success: success,
