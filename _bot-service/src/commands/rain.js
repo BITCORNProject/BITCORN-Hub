@@ -10,6 +10,7 @@ const MESSAGE_TYPE = require('../utils/message-type');
 const math = require('../utils/math');
 const settingsHelper = require('../../settings-helper');
 const activityTracker = require('../../src/activity-tracker');
+const commandHelper = require('../utils/command-helper');
 
 module.exports = {
 	configs: {
@@ -34,14 +35,7 @@ module.exports = {
 		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
 
 		if(event.args.params.length < 2) {
-			configs.irc_out = MESSAGE_TYPE.irc_chat;
-			success = true;
-			return {
-				success: success,
-				message: `Here is an example ${configs.example}`,
-				irc_target: irc_target,
-				configs: configs
-			};
+			return commandHelper.exampleOutput(configs, irc_target);
 		}
 
 		const rain_amount = cleanParams.amount(event.args.params[0]);

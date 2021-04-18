@@ -2,6 +2,17 @@
 "use strict";
 
 const util = require('util');
+const MESSAGE_TYPE = require('../utils/message-type');
+
+function exampleOutput(configs, irc_target) {
+	configs.irc_out = MESSAGE_TYPE.irc_chat;
+	return {
+		success: true,
+		message: `Here is an example ${configs.example}`,
+		irc_target: irc_target,
+		configs: configs
+	};
+}
 
 function handelTipResponse(results, fromUsername, toUsername, amount) {
 	let success = false;
@@ -46,5 +57,6 @@ function handelTipResponse(results, fromUsername, toUsername, amount) {
 }
 
 module.exports = {
+	exampleOutput,
 	handelTipResponse
 };

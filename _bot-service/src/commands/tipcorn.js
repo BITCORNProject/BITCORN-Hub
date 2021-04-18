@@ -36,25 +36,11 @@ module.exports = {
 		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
 
 		if(event.args.params.length < 2) {
-			configs.irc_out = MESSAGE_TYPE.irc_chat;
-			success = true;
-			return {
-				success: success,
-				message: `Here is an example ${configs.example}`,
-				irc_target: irc_target,
-				configs: configs
-			};
+			return commandHelper.exampleOutput(configs, irc_target);
 		}
 
 		if(cleanParams.isNumber(event.args.params[0])) {
-			configs.irc_out = MESSAGE_TYPE.irc_chat;
-			success = true;
-			return {
-				success: success,
-				message: `Here is an example ${configs.example}`,
-				irc_target: irc_target,
-				configs: configs
-			};
+			return commandHelper.exampleOutput(configs, irc_target);
 		}
 
 		const twitchUsername = cleanParams.at(event.args.params[0]);
@@ -110,3 +96,4 @@ module.exports = {
 		};
 	}
 };
+
