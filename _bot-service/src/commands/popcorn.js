@@ -29,22 +29,25 @@ module.exports = {
 
 		const body = {
 			userPlatformId: `twitch|${event.twitchId}`,
-			ircTarget: event.channelId
+			ircTarget: event.channelId,
+			isSub: event.isSub
 		};
 
 		const result = await databaseAPI.request(event.twitchId, body).popcorn();
+		console.log({ result });
 		if (result.status && result.status === 500) {
 			success = false;
+		} else if(result.status && result.status === 404) {
 		} else {
 			success = true;
 			message = 'Command Completed';
 		}
 
-		return { 
-			success: success, 
-			message: message, 
-			irc_target: irc_target, 
-			configs: this.configs 
+		return {
+			success: success,
+			message: message,
+			irc_target: irc_target,
+			configs: this.configs
 		};
 	}
 };

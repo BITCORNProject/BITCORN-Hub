@@ -91,7 +91,8 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 		twitchUsername: user.username,
 		args: args,
 		irc_target: command.configs.irc_out == MESSAGE_TYPE.irc_chat ? target : user.username,
-		channel: target
+		channel: target,
+		isSub: user.subscriber
 	};
 
 	if (commander.validatedEventParameters(event) === false) {
@@ -130,7 +131,7 @@ async function onCheer(channel, userstate, message) {
 	// amount and bitAmount carry the same information
 	// amount is for backwards compatibility
 	// amount is in the extras handelTipResponse parameter
-	return handleRewardEvent(REWARD_TYPE.cheer, channel, userstate.username, { bitAmount: userstate.bits, amount: userstate.bits });
+	return handleRewardEvent(REWARD_TYPE.cheer, channel, userstate.username, { bitAmount: +userstate.bits, amount: +userstate.bits });
 }
 
 async function onSubGift(channel, username, streakMonths, recipient, methods, userstate) {
@@ -155,7 +156,7 @@ function getExtras(channel, plan) {
 		'2000': settingsHelper.getProperty(channel, 'tier2SubReward'),
 		'3000': settingsHelper.getProperty(channel, 'tier3SubReward'),
 	};
-	return { subTier: tier, amount: amounts[tier] };
+	return { subTier: tier, amount: +amounts[tier] };
 }
 
 /**
