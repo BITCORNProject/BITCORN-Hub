@@ -32,7 +32,7 @@ module.exports = {
 		if (!settingsHelper.getProperty(event.channel, 'enableTransactions')) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
 		const configs = JSON.parse(JSON.stringify(this.configs));
-		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
+		configs.irc_out = MESSAGE_TYPE.irc_none;//settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
 
 		if(event.args.params.length < 2) {
 			return commandHelper.exampleOutput(configs, irc_target);

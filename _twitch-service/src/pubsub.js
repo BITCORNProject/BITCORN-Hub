@@ -195,7 +195,7 @@ function connect() {
 						columns: ['balance', 'twitchusername', 'isbanned']
 					};
 
-					const result = await databaseAPI.channelPointsRequest(user.id, data);
+					const result = await databaseAPI.channelPointsRequest(redemption.channel_id, data);
 
 					if (result.status) {
 						redemptionUpdate.status = 'CANCELED';
