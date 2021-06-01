@@ -14,7 +14,14 @@ async function chunkRequests(stack, requester, mapper) {
 	while (stack.length > 0) {
 		const chunk = stack.splice(0, 100);
 		const promise = requester(chunk)
-			.then(({ data }) => data.map(mapper))
+			.then(data => {
+				console.log(data);
+				if(data) {
+					return data.data.map(mapper);
+				} else {
+					return [];
+				}
+			})
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 		promises.push(promise);
 	}
@@ -43,7 +50,7 @@ async function performPayout({ channel, channelId }) {
 	const body = {
 		ircTarget: channelId,
 		chatters: results,
-		minutes: process.env.MINUTE_AWARD_MULTIPLIER
+		minutes: +process.env.MINUTE_AWARD_MULTIPLIER
 	};
 
 	return databaseAPI.requestPayout(body);
@@ -67,7 +74,7 @@ async function init() {
 		} else if (!result.hasOwnProperty('length')) {
 			console.log({ 'sub-ticker-ERROR': result });
 		}
-	}, /* 1000 * 30 */timeValues.MINUTE * process.env.MINUTE_AWARD_MULTIPLIER);
+	}, /*1000 * 30*/ timeValues.MINUTE * process.env.MINUTE_AWARD_MULTIPLIER);
 
 	return { success: settingsHelper.getChannelNames().length > 0 };
 }
