@@ -31,20 +31,34 @@ module.exports = {
 		let irc_target = event.irc_target;
 
 		if (!settingsHelper.getProperty(event.channel, 'enableTransactions')) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
-		
+
 		const configs = JSON.parse(JSON.stringify(this.configs));
 		configs.irc_out = settingsHelper.getIrcMessageTarget(event.channel, this.configs.irc_out, MESSAGE_TYPE);
 
-		if(event.args.params.length < 2) {
+		if (event.args.params.length < 2) {
 			return commandHelper.exampleOutput(configs, irc_target);
 		}
 
-		if(cleanParams.isNumber(event.args.params[0])) {
+		if (cleanParams.isNumber(event.args.params[0])) {
 			return commandHelper.exampleOutput(configs, irc_target);
 		}
 
-		const twitchUsername = cleanParams.at(event.args.params[0]);
-		const amount = cleanParams.amount(event.args.params[1]);
+		let twitchUsername = '';
+		let amount = 0;
+
+		twitchUsername = cleanParams.replaceAtSymbol(cleanParams.replaceBrackets(event.args.params[0]));
+		amount = parseInt(cleanParams.replaceBrackets(event.args.params[1]), 10);
+		if(!cleanParams.isNumber(amount)) {
+			message = `Can not use an amount value of ${amount} from ${event.args.params[1]} which is not a number`;
+
+			return {
+				success: true,
+				message: message,
+				irc_target: irc_target,
+				configs: configs,
+			};
+		}
+
 		const ircMessage = event.args.params.slice(2).join(' ');
 
 		const minTipAmount = settingsHelper.getProperty(event.channel, 'minTipAmount');
@@ -57,10 +71,10 @@ module.exports = {
 
 			if (amount < minTipAmount) {
 				success = true;
-				message = `Can not ${this.configs.name} an amount that small minimum amount ${minTipAmount} CORN - ${this.configs.example}`;
+				message = `Can not ${this.configs.name} an amount of '${amount}' from ${event.args.params[1]} is to small for the minimum amount of ${minTipAmount} CORN - ${this.configs.example}`;
 			} else if (amount >= databaseAPI.MAX_WALLET_AMOUNT) {
 				success = true;
-				message = `Can not ${this.configs.name} an amount that large - ${event.twitchUsername}`;
+				message = `Can not ${this.configs.name} an amount of '${amount}' from ${event.args.params[1]} is to large - ${event.twitchUsername}`;
 			} else {
 				message = 'Invalid input';
 			}
@@ -88,11 +102,11 @@ module.exports = {
 			}
 		}
 
-		return { 
-			success: success, 
-			message: message, 
-			irc_target: irc_target, 
-			configs: configs 
+		return {
+			success: success,
+			message: message,
+			irc_target: irc_target,
+			configs: configs
 		};
 	}
 };
