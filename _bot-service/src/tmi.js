@@ -101,11 +101,23 @@ async function asyncOnMessageReceived(type, target, user, msg) {
 
 	const result = await command.execute(event);
 	result.msg = msg;
+	result.event = event;
 
 	if (result.success === true) {
 		messenger.enqueueMessageByType(result.configs.irc_out, result.irc_target, result.message);
 		result.result = await messenger.sendQueuedMessagesByType(result.configs.irc_out);
 	}
+
+	const model = {
+		in_message: result.msg,
+		out_message: result.message,
+		user_id: result.event.twitchId,
+		channel_id: result.event.channelId,
+		success: result.success,
+	};
+
+	settingsHelper.sendChannelTransaction(model);
+	
 	return result;
 }
 

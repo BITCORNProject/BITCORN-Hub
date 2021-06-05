@@ -166,7 +166,27 @@ async function getChannelActivity(channel_id, limit_amount) {
 		try {
 			settingsSocket.once('send-activity-tracker', resolve);
 			settingsSocket.emit('get-activity-tracker', { channel_id, limit_amount });
-			setTimeout(() => reject(`Local data store not responding timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
+			setTimeout(() => reject(`Local data store not responding for getChannelActivity timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
+		} catch (error) {
+			reject(error);
+		}
+	}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
+}
+
+function sendChannelTransaction({ in_message, out_message, user_id, channel_id, success }) {
+	try {		
+		settings_io.emit('set-transaction-tracker', { in_message, out_message, user_id, channel_id, success });
+	} catch (error) {
+		console.error(error);
+	}
+}
+
+async function getChannelTransaction(channel_id, user_id, limit_amount) {
+	return new Promise((resolve, reject) => {
+		try {
+			settingsSocket.once('send-transaction-tracker', resolve);
+			settingsSocket.emit('get-transaction-tracker', { channel_id, user_id, limit_amount });
+			setTimeout(() => reject(`Local data store not responding for getChannelTransaction timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
 		} catch (error) {
 			reject(error);
 		}
@@ -193,5 +213,7 @@ module.exports = {
 
 	onRedemption,
 	sendChannelActivity,
-	getChannelActivity
+	getChannelActivity,
+	sendChannelTransaction,
+	getChannelTransaction
 };

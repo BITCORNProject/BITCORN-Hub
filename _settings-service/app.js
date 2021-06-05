@@ -125,6 +125,19 @@ if (module === require.main) {
 					io.emit('send-activity-tracker', { data });
 				});
 
+
+				socket.on('set-transaction-tracker', (data) => {
+					io.emit('set-transaction-tracker', { data });
+				});
+
+				socket.on('get-transaction-tracker', (data) => {
+					io.emit('get-transaction-tracker', { data });
+				});
+
+				socket.on('send-transaction-tracker', (data) => {
+					io.emit('send-transaction-tracker', { data });
+				});
+
 				socket.on('disconnect', () => {
 					console.log({ message: `disconnect: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 				});

@@ -12,7 +12,8 @@ const io_client = require('socket.io-client');
 // any abturary value is on this is like any loop ment to keep the program alive
 const UPDATE_TICK_MS = 1000 * 60;
 
-const DB_NAME = 'activity-tracker';
+const ACTIVITY_TRACKER_DB_NAME = 'activity-tracker';
+const TRANSACTION_TRACKER_DB_NAME = 'transaction-tracker';
 
 /**
  * Connection URI. Update <username>, <password>, and <your-cluster-url> to reflect your cluster.
@@ -24,15 +25,30 @@ const client = new MongoClient(uri, {
 	useUnifiedTopology: true,
 });
 
-async function createOrUpdate({ channel_id, user_id, username }) {
-	return client.db(DB_NAME).collection(channel_id)
+async function createOrUpdateActivityTracker({ channel_id, user_id, username }) {
+	return client.db(ACTIVITY_TRACKER_DB_NAME).collection(channel_id)
 		.updateOne({ user_id }, { $set: { username, timestamp: Date.now() } }, { upsert: true })
 		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 }
 
-async function queryChannel({ channel_id, limit_amount }) {
-	return client.db(DB_NAME).collection(channel_id)
+async function queryChannelActivityTracker({ channel_id, limit_amount }) {
+	return client.db(ACTIVITY_TRACKER_DB_NAME).collection(channel_id)
 		.find()
+		.sort({ timestamp: -1 })
+		.limit(limit_amount)
+		.toArray()
+		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+}
+
+async function createOrUpdateTransactionTracker({ in_message, out_message, user_id, channel_id, success }) {
+	return client.db(TRANSACTION_TRACKER_DB_NAME).collection(channel_id)
+		.insertOne({ in_message, out_message, user_id, channel_id, success, timestamp: Date.now() })
+		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+}
+
+async function queryChannelTransactionTracker({ channel_id, user_id, limit_amount }) {
+	return client.db(TRANSACTION_TRACKER_DB_NAME).collection(channel_id)
+		.find({ user_id })
 		.sort({ timestamp: -1 })
 		.limit(limit_amount)
 		.toArray()
@@ -55,13 +71,30 @@ async function init() {
 	});
 
 	settingsSocket.on('set-activity-tracker', ({ data }) => {
-		createOrUpdate(data)
+		createOrUpdateActivityTracker(data)
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});
 
 	settingsSocket.on('get-activity-tracker', ({ data }) => {
-		queryChannel({ channel_id: data.channel_id, limit_amount: data.limit_amount })
+		queryChannelActivityTracker({ channel_id: data.channel_id, limit_amount: data.limit_amount })
 			.then(results => settings_io.emit('send-activity-tracker', results.map(x => ({ id: x.user_id, username: x.username }))))
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	});
+
+	settingsSocket.on('set-transaction-tracker', ({ data }) => {
+		createOrUpdateTransactionTracker(data)
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	});
+
+	settingsSocket.on('get-transaction-tracker', ({ data }) => {
+		queryChannelTransactionTracker(data)
+			.then(results => settings_io.emit('send-transaction-tracker', results.map(x => ({
+				in_message: x.in_message,
+				out_message: x.out_message,
+				user_id: x.user_id,
+				channel_id: x.channel_id,
+				success: x.success,
+			}))))
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});
 
