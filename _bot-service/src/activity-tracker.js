@@ -22,7 +22,7 @@ function addToActiveChatters(target, user_id, username) {
 	if (allowedUsers.activityTrackerOmitUsername(username) === true) return;
 
 	try {
-		const channel_id = settingsHelper.getProperty(target, 'ircTarget1');
+		const channel_id = settingsHelper.getProperty(target, 'ircTarget');
 
 		settingsHelper.sendChannelActivity({ channel_id, user_id, username });
 	} catch (error) {
