@@ -14,6 +14,7 @@ const UPDATE_TICK_MS = 1000 * 60;
 
 const ACTIVITY_TRACKER_DB_NAME = 'activity-tracker';
 const TRANSACTION_TRACKER_DB_NAME = 'transaction-tracker';
+const ERROR_TRACKER_DB_NAME = 'error-tracker';
 
 /**
  * Connection URI. Update <username>, <password>, and <your-cluster-url> to reflect your cluster.
@@ -40,7 +41,7 @@ async function queryChannelActivityTracker({ channel_id, limit_amount }) {
 		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 }
 
-async function createOrUpdateTransactionTracker({ in_message, out_message, user_id, channel_id, success }) {
+async function insertTransactionTracker({ in_message, out_message, user_id, channel_id, success }) {
 	return client.db(TRANSACTION_TRACKER_DB_NAME).collection(channel_id)
 		.insertOne({ in_message, out_message, user_id, channel_id, success, timestamp: Date.now() })
 		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
@@ -48,6 +49,22 @@ async function createOrUpdateTransactionTracker({ in_message, out_message, user_
 
 async function queryChannelTransactionTracker({ channel_id, user_id, limit_amount }) {
 	return client.db(TRANSACTION_TRACKER_DB_NAME).collection(channel_id)
+		.find({ user_id })
+		.sort({ timestamp: -1 })
+		.limit(limit_amount)
+		.toArray()
+		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+}
+
+async function insertErrorTracker({ service_tag, user_id, channel_id, error }) {
+	return client.db(ERROR_TRACKER_DB_NAME).collection(channel_id)
+		.insertOne({ service_tag, user_id, error, timestamp: Date.now() })
+		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+}
+
+// TODO: send user the error id so we could look up the error by id
+async function queryChannelErrorTracker({ channel_id, user_id, limit_amount }) {
+	return client.db(ERROR_TRACKER_DB_NAME).collection(channel_id)
 		.find({ user_id })
 		.sort({ timestamp: -1 })
 		.limit(limit_amount)
@@ -82,7 +99,7 @@ async function init() {
 	});
 
 	settingsSocket.on('set-transaction-tracker', ({ data }) => {
-		createOrUpdateTransactionTracker(data)
+		insertTransactionTracker(data)
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});
 
@@ -94,6 +111,22 @@ async function init() {
 				user_id: x.user_id,
 				channel_id: x.channel_id,
 				success: x.success,
+			}))))
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	});
+
+	settingsSocket.on('set-error-tracker', ({ data }) => {
+		insertErrorTracker(data)
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	});
+
+	settingsSocket.on('get-error-tracker', ({ data }) => {
+		queryChannelErrorTracker(data)
+			.then(results => settings_io.emit('send-error-tracker', results.map(x => ({
+				service_tag: x.service_tag,
+				user_id: x.user_id,
+				channel_id: x.channel_id,
+				error: x.error,
 			}))))
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});

@@ -138,6 +138,19 @@ if (module === require.main) {
 					io.emit('send-transaction-tracker', { data });
 				});
 
+
+				socket.on('set-error-tracker', (data) => {
+					io.emit('set-error-tracker', { data });
+				});
+
+				socket.on('get-error-tracker', (data) => {
+					io.emit('get-error-tracker', { data });
+				});
+
+				socket.on('send-error-tracker', (data) => {
+					io.emit('send-error-tracker', { data });
+				});
+
 				socket.on('disconnect', () => {
 					console.log({ message: `disconnect: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 				});

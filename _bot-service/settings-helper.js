@@ -15,6 +15,28 @@ const OUTPUT_TYPE = {
 	tipEvent: 1
 };
 
+const redemptionCallbacks = [];
+
+let settings_io = null;
+let settingsSocket = null;
+
+// https://stackoverflow.com/a/18391400/2759062
+if (!('toJSON' in Error.prototype)) {
+	Object.defineProperty(Error.prototype, 'toJSON', {
+		value: function () {
+			var alt = {};
+	
+			Object.getOwnPropertyNames(this).forEach(function (key) {
+				alt[key] = this[key];
+			}, this);
+	
+			return alt;
+		},
+		configurable: true,
+		writable: true
+	});
+}
+
 function shuffleArray(array) {
 	array.sort(function () {
 		return Math.random() - .5;
@@ -101,9 +123,6 @@ function getProperty(target, name) {
 	return trimmed[name];
 }
 
-let settings_io = null;
-let settingsSocket = null;
-
 function init() {
 	try {
 		settings_io = io_client(`http://localhost:${process.env.SETTINGS_SERVER_PORT}`, {
@@ -148,7 +167,6 @@ function init() {
 	}
 }
 
-const redemptionCallbacks = [];
 async function onRedemption(func) {
 	redemptionCallbacks.push(func);
 }
@@ -173,9 +191,9 @@ async function getChannelActivity(channel_id, limit_amount) {
 	}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
 }
 
-function sendChannelTransaction({ in_message, out_message, user_id, channel_id, success }) {
+function sendChannelTransaction({ out_message, user_id, channel_id, success }) {
 	try {		
-		settings_io.emit('set-transaction-tracker', { in_message, out_message, user_id, channel_id, success });
+		settings_io.emit('set-transaction-tracker', { out_message, user_id, channel_id, success });
 	} catch (error) {
 		console.error(error);
 	}
@@ -187,6 +205,26 @@ async function getChannelTransaction(channel_id, user_id, limit_amount) {
 			settingsSocket.once('send-transaction-tracker', resolve);
 			settingsSocket.emit('get-transaction-tracker', { channel_id, user_id, limit_amount });
 			setTimeout(() => reject(`Local data store not responding for getChannelTransaction timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
+		} catch (error) {
+			reject(error);
+		}
+	}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
+}
+
+function sendChannelError({ service_tag, user_id, channel_id, error }) {
+	try {		
+		settings_io.emit('set-error-tracker', { service_tag, user_id, channel_id, error: JSON.stringify(error) });
+	} catch (error) {
+		console.error(error);
+	}
+}
+
+async function getChannelError(channel_id, user_id, limit_amount) {
+	return new Promise((resolve, reject) => {
+		try {
+			settingsSocket.once('send-error-tracker', resolve);
+			settingsSocket.emit('get-error-tracker', { channel_id, user_id, limit_amount });
+			setTimeout(() => reject(`Local data store not responding for getChannelError timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
 		} catch (error) {
 			reject(error);
 		}
@@ -215,5 +253,7 @@ module.exports = {
 	sendChannelActivity,
 	getChannelActivity,
 	sendChannelTransaction,
-	getChannelTransaction
+	getChannelTransaction,
+	sendChannelError,
+	getChannelError
 };
