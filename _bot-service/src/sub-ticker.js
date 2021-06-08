@@ -14,10 +14,11 @@ async function chunkRequests(stack, requester, mapper) {
 	while (stack.length > 0) {
 		const chunk = stack.splice(0, 100);
 		const promise = requester(chunk)
-			.then(data => {
-				console.log(data);
-				if(data) {
-					return data.data.map(mapper);
+			.then(res => {
+				const { data } = res.data;
+				if (data && data.length > 0) {
+					console.log(data);
+					return data.map(mapper);
 				} else {
 					return [];
 				}

@@ -56,16 +56,21 @@ async function queryChannelTransactionTracker({ channel_id, user_id, limit_amoun
 		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 }
 
-async function insertErrorTracker({ service_tag, user_id, channel_id, error }) {
+/**
+ * @param {string} channel_id the channel id the error is associated with
+ * @param {string} service_tag the tag identifying the service sending the error
+ * @param {string} error a JSON.stringify error object
+ * @param {string} meta_data any JSON.stringify extra data to be stored (can be null)
+ */
+async function insertErrorTracker({ channel_id, service_tag, error, meta_data }) {
 	return client.db(ERROR_TRACKER_DB_NAME).collection(channel_id)
-		.insertOne({ service_tag, user_id, error, timestamp: Date.now() })
+		.insertOne({ service_tag, error, timestamp: Date.now(), meta_data })
 		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 }
 
 // TODO: send user the error id so we could look up the error by id
-async function queryChannelErrorTracker({ channel_id, user_id, limit_amount }) {
+async function queryChannelErrorTracker({ channel_id, limit_amount }) {
 	return client.db(ERROR_TRACKER_DB_NAME).collection(channel_id)
-		.find({ user_id })
 		.sort({ timestamp: -1 })
 		.limit(limit_amount)
 		.toArray()
@@ -123,9 +128,9 @@ async function init() {
 	settingsSocket.on('get-error-tracker', ({ data }) => {
 		queryChannelErrorTracker(data)
 			.then(results => settings_io.emit('send-error-tracker', results.map(x => ({
-				service_tag: x.service_tag,
-				user_id: x.user_id,
 				channel_id: x.channel_id,
+				service_tag: x.service_tag,
+				meta_data: x.meta_data,
 				error: x.error,
 			}))))
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));

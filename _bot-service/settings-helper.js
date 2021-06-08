@@ -25,11 +25,11 @@ if (!('toJSON' in Error.prototype)) {
 	Object.defineProperty(Error.prototype, 'toJSON', {
 		value: function () {
 			var alt = {};
-	
+
 			Object.getOwnPropertyNames(this).forEach(function (key) {
 				alt[key] = this[key];
 			}, this);
-	
+
 			return alt;
 		},
 		configurable: true,
@@ -192,7 +192,7 @@ async function getChannelActivity(channel_id, limit_amount) {
 }
 
 function sendChannelTransaction({ out_message, user_id, channel_id, success }) {
-	try {		
+	try {
 		settings_io.emit('set-transaction-tracker', { out_message, user_id, channel_id, success });
 	} catch (error) {
 		console.error(error);
@@ -211,19 +211,24 @@ async function getChannelTransaction(channel_id, user_id, limit_amount) {
 	}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
 }
 
-function sendChannelError({ service_tag, user_id, channel_id, error }) {
-	try {		
-		settings_io.emit('set-error-tracker', { service_tag, user_id, channel_id, error: JSON.stringify(error) });
+function sendChannelError({ channel_id, service_tag, error, meta_data }) {
+	try {
+		settings_io.emit('set-error-tracker', {
+			channel_id,
+			service_tag,
+			error: JSON.stringify(error),
+			meta_data: JSON.stringify(meta_data)
+		});
 	} catch (error) {
 		console.error(error);
 	}
 }
 
-async function getChannelError(channel_id, user_id, limit_amount) {
+async function getChannelError(channel_id, limit_amount) {
 	return new Promise((resolve, reject) => {
 		try {
 			settingsSocket.once('send-error-tracker', resolve);
-			settingsSocket.emit('get-error-tracker', { channel_id, user_id, limit_amount });
+			settingsSocket.emit('get-error-tracker', { channel_id, limit_amount });
 			setTimeout(() => reject(`Local data store not responding for getChannelError timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
 		} catch (error) {
 			reject(error);

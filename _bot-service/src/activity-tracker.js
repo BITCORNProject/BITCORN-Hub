@@ -31,10 +31,10 @@ function addToActiveChatters(target, user_id, username) {
 		const channel_id = settingsHelper.getProperty(target, 'ircTarget');
 
 		settingsHelper.sendChannelError({
-			service_tag: process.env.SERVICE_TAG_BOT,
 			channel_id,
-			user_id,
-			error
+			service_tag: process.env.SERVICE_TAG_BOT,
+			error,
+			meta_data: { user_id }
 		});
 	}
 }
@@ -47,14 +47,14 @@ async function getChatterActivity(target) {
 		return chattersDB ? settingsHelper.getRainAlgorithmResult(target, chattersDB.data) : [];
 	} catch (error) {
 		console.error(error);
-		
+
 		const channel_id = settingsHelper.getProperty(target, 'ircTarget');
-		
+
 		settingsHelper.sendChannelError({
-			service_tag: process.env.SERVICE_TAG_BOT,
 			channel_id,
-			user_id,
-			error
+			service_tag: process.env.SERVICE_TAG_BOT,
+			error,
+			meta_data: { user_id }
 		});
 		return [];
 	}
