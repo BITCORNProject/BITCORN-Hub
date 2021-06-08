@@ -191,9 +191,9 @@ async function getChannelActivity(channel_id, limit_amount) {
 	}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
 }
 
-function sendChannelTransaction({ out_message, user_id, channel_id, success }) {
+function sendChannelTransaction({ in_message, out_message, user_id, channel_id, success }) {
 	try {
-		settings_io.emit('set-transaction-tracker', { out_message, user_id, channel_id, success });
+		settings_io.emit('set-transaction-tracker', { in_message, out_message, user_id, channel_id, success });
 	} catch (error) {
 		console.error(error);
 	}
