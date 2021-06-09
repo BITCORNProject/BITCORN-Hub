@@ -25,7 +25,9 @@ module.exports = {
 
 		let success = false;
 		let message = 'Command failed';
-		let irc_target = event.irc_target;
+		let irc_target = event.channel.replace(/#/g, '');
+
+		const configs = JSON.parse(JSON.stringify(this.configs));
 
 		const body = {
 			userPlatformId: `twitch|${event.twitchId}`,
@@ -38,6 +40,10 @@ module.exports = {
 		if (result.status && result.status === 500) {
 			success = false;
 		} else if(result.status && result.status === 404) {
+			configs.irc_out = MESSAGE_TYPE.irc_chat;
+
+			success = true;
+			message = `@${event.twitchUsername} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID to use the ${this.configs.name} command and join in on the fun!`;
 		} else {
 			success = true;
 			message = 'Command Completed';
@@ -47,7 +53,7 @@ module.exports = {
 			success: success,
 			message: message,
 			irc_target: irc_target,
-			configs: this.configs
+			configs: configs
 		};
 	}
 };
