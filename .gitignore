@@ -10,8 +10,8 @@ command_testers.txt
 .vscode
 /entry-errors
 
-# v3
+# v4
 
-/_bot/settings/*.json
+/settings/*.json
 
 /coverage/

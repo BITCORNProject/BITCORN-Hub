@@ -1,0 +1,28 @@
+* active
+
+Here are some feature requests:
+*idle-rewards channel-owner
+custom sub-rewards
+*channelpoints -> bitcorn auto-payout(redeem)
+
+
+BlessCards
+!! no i would just want one - right now, i manually reward people who redeem 100,000 channel points for 1,000 BITCORN, by $tipcorn each person that redeems. i need this to happen automatically like your redeem works
+
+!! things i would want for MTTV: a. text to speech like this for auth/vip+ users, b. auto redemption for corn, c. youtube popup for authorized vip+ users, d. voice to text scroll on bottom - whatever is easiest for this
+
+
+MR_LOH_: someone redeemed 100k in my channel now (1:1 ratio). Did not see any wallet-update/balance-change. will check in a few min
+
+MR_LOH_: ok, channelpoints not refunded to the dude that did the 100k redeem (cryptodan) and I don't see the 100k corn deducted from my streamer balance. No rush, just wanted to give feedback
+
+MR_LOH_: I will disable the feature for now, so people don't lose their points
+
+6MR_LOH_: atlantiades1 tried now. channelpoints got insta-refunded
+4:36MR_LOH_: I can tipcorn him
+
+MR_LOH_: so cryptodan1 was synced too. so some error with the auto-payment then I guess. but the refund worked this time at least
+
+Steini20021: !tts can we make a feature so let's say i'm a streamer and i DISABLE transactions... THE BOT would say that to chat
+
+Steini20021: so let's say a streamer DISABLES rain or something
