@@ -11,6 +11,7 @@ const { MongoClient } = require('mongodb');
 const ACTIVITY_TRACKER_DB_NAME = 'activity-tracker';
 const TRANSACTION_TRACKER_DB_NAME = 'transaction-tracker';
 const ERROR_TRACKER_DB_NAME = 'error-tracker';
+const POINTS_CARD_DB_NAME = 'points-card';
 
 /**
  * Connection URI. Update <username>, <password>, and <your-cluster-url> to reflect your cluster.
@@ -73,6 +74,30 @@ async function queryChannelErrorTracker({ channel_id, limit_amount }) {
 		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 }
 
+async function createOrUpdateChannelPointsCardsAll(cards_data) {
+	const promises = [];
+	for (let i = 0; i < cards_data.length; i++) {
+		const card_data = cards_data[i];
+		promises.push(createOrUpdateChannelPointsCard(card_data));
+	}
+	return Promise.all(promises);
+}
+
+async function createOrUpdateChannelPointsCard({ channel_id, card_id, card_name }) {
+	return client.db(POINTS_CARD_DB_NAME).collection(channel_id)
+		.updateOne({ card_id }, { $set: { card_name, timestamp: Date.now() } }, { upsert: true })
+		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+}
+
+async function queryChannelPointsCard({ channel_id }) {
+	return client.db(POINTS_CARD_DB_NAME).collection(channel_id)
+		.find()
+		.sort({ timestamp: -1 })
+		.limit(1)
+		.toArray()
+		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+}
+
 module.exports = {
 	connect: async () => client.connect(),
 	createOrUpdateActivityTracker,
@@ -80,5 +105,8 @@ module.exports = {
 	insertTransactionTracker,
 	queryChannelTransactionTracker,
 	insertErrorTracker,
-	queryChannelErrorTracker
+	queryChannelErrorTracker,
+	createOrUpdateChannelPointsCardsAll,
+	createOrUpdateChannelPointsCard,
+	queryChannelPointsCard
 };

@@ -151,6 +151,26 @@ if (module === require.main) {
 					io.emit('send-error-tracker', { data });
 				});
 
+
+				socket.on('set-points-cards-all', (data) => {
+					io.emit('set-points-cards-all', { data });
+					console.log({ points_cards_all: data });
+				});
+
+				socket.on('set-points-card', (data) => {
+					io.emit('set-points-card', { data });
+					console.log({ points_card: data });
+				});
+
+				socket.on('get-points-card', (data) => {
+					io.emit('get-points-card', { data });
+				});
+
+				socket.on('send-points-card', (data) => {
+					io.emit('send-points-card', { data });
+				});
+
+
 				socket.on('disconnect', () => {
 					console.log({ message: `disconnect: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 				});

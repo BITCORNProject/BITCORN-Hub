@@ -14,7 +14,10 @@ const {
 	insertTransactionTracker,
 	queryChannelTransactionTracker,
 	insertErrorTracker,
-	queryChannelErrorTracker
+	queryChannelErrorTracker,
+	createOrUpdateChannelPointsCardsAll,
+	createOrUpdateChannelPointsCard,
+	queryChannelPointsCard
 } = require('./local-db');
 
 // any abturary value is on this is like any loop ment to keep the program alive
@@ -76,6 +79,22 @@ async function init() {
 				meta_data: x.meta_data,
 				error: x.error,
 			}))))
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	});
+
+	settingsSocket.on('set-points-cards-all', ({ data }) => {
+		createOrUpdateChannelPointsCardsAll(data)
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	});
+
+	settingsSocket.on('set-points-card', ({ data }) => {
+		createOrUpdateChannelPointsCard(data)
+			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+	});
+
+	settingsSocket.on('get-points-card', ({ data }) => {
+		queryChannelPointsCard({ channel_id: data.channel_id })
+			.then(results => settings_io.emit('send-points-card', results.map(x => ({ id: x.user_id, username: x.username }))))
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});
 

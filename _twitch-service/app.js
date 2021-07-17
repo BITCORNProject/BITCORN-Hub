@@ -13,6 +13,7 @@ const io_client = require('socket.io-client');
 const twitchRequest = require('./src/twitch-request');
 
 const pubsub = require('./src/pubsub');
+const settingsCache = require('../_settings-service/settings-cache');
 
 const app = express();
 app.use(bodyParser.json());
@@ -94,12 +95,46 @@ try {
 			console.log({ payload: req.payload });
 			await pubsub.initialSettings(req)
 				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+
+
+
+			const cards_data = [];
+			for (const key in req.payload) {
+
+				const channel_id = key;
+				const card_id = req.payload[channel_id]['channelPointCardId'];
+				const cornPerRedemption = req.payload[channel_id]['bitcornPerChannelpointsRedemption'];
+				const cardValue = 10000 * cornPerRedemption;
+				const card_name = `BITCORNx${cardValue}`;
+
+				const card_data = {
+					channel_id,
+					card_id,
+					card_name
+				};
+				cards_data.push(card_data);
+			}
+			settingsSocket.emit('set-points-cards-all', cards_data);
 		});
 
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log({ payload: req.payload, timestamp: new Date().toLocaleTimeString() });
 			await pubsub.updateLivestreamSettings(req)
 				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+
+
+
+			const channel_id = req.payload['ircTarget'];
+			const card_id = req.payload['channelPointCardId'];
+			const cornPerRedemption = req.payload['bitcornPerChannelpointsRedemption'];
+			const cardValue = 10000 * cornPerRedemption;
+			const card_name = `BITCORNx${cardValue}`;
+			const card_data = {
+				channel_id,
+				card_id,
+				card_name
+			};
+			settingsSocket.emit('set-points-card', card_data);
 		});
 
 		settingsSocket.on('disconnect', () => {
