@@ -94,7 +94,7 @@ async function init() {
 
 	settingsSocket.on('get-points-card', ({ data }) => {
 		queryChannelPointsCard({ channel_id: data.channel_id })
-			.then(results => settings_io.emit('send-points-card', results.map(x => ({ id: x.user_id, username: x.username }))))
+			.then(results => settings_io.emit('send-points-card', results.map(x => ({ card_id: x.card_id, card_title: x.card_title, corn_per_redemption: x.corn_per_redemption }))))
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});
 

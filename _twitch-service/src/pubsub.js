@@ -15,7 +15,7 @@ const allowedUsers = require('../../_api-shared/allowed-users');
 const recentIds = [];
 const MAX_RECENT_ID_LENGTH = 5;
 
-const HEARTBEAT_INTERVAL = 1000 * 60 * 4;//ms between PING's
+const HEARTBEAT_INTERVAL = 1000 * 60 * 4; //ms between PING's
 const MAX_BACKOFF_THRESHOLD_INTERVAL = 1000 * 60 * 2;
 const BACKOFF_THRESHOLD_INTERVAL = 1000 * 3; //ms to wait before reconnect
 
@@ -34,7 +34,6 @@ const LISTEN_TYPES = {
 	UNLISTEN: 'UNLISTEN'
 };
 
-const CARD_TITLE = wrap_in_test_mode('BITCORNx100');
 const CARD_PROMPT = wrap_in_test_mode(`Must be sync'd with BITCORNfarms in order to receive reward`);
 
 // Source: https://www.thepolyglotdeveloper.com/2015/03/create-a-random-nonce-string-using-javascript/
@@ -168,7 +167,8 @@ function connect() {
 					const reward = redemption.reward;
 					const user = redemption.user;
 
-					if (reward.title !== CARD_TITLE) break;
+					const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(redemption.channel_id);
+					if (reward.title !== wrapped_in_test_mode) break;
 
 					if (recentIds.includes(redemption.id)) break;
 					recentIds.push(redemption.id);
@@ -287,6 +287,10 @@ async function updateLivestreamSettings({ payload }) {
 	const item = listening.find(x => x.channel_id = ircTarget);
 	if (item) {
 		if (item.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
+
+			//const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(redemption.channel_id);
+			//if (reward.title !== wrapped_in_test_mode) break;
+
 			return;
 		} else if (item.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
 			return;
@@ -401,11 +405,12 @@ async function handleChannelPointsCard(items, payload) {
 
 async function createCustomReward(result, item, authenticated) {
 
-	const reward = result.data ? result.data.find(x => x.title === CARD_TITLE) : null;
+	const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(item.ircTarget);
+	const reward = result.data ? result.data.find(x => x.title === wrapped_in_test_mode) : null;
 
 	if (!reward) {
 		const data = {
-			title: CARD_TITLE,
+			title: wrapped_in_test_mode,
 			cost: is_production ? 100000 : 1,
 			prompt: CARD_PROMPT,
 			should_redemptions_skip_request_queue: false
@@ -426,6 +431,15 @@ async function createCustomReward(result, item, authenticated) {
 		item.channelPointCardId = reward.id;
 	}
 	return { channel_id: item.ircTarget, access_token: authenticated.access_token };
+}
+
+async function wrappedQueryPointsCardTitle(channel_id) {
+	try {
+		const { card_title } = await queryPointsCardInfo(channel_id);
+		return wrap_in_test_mode(card_title);
+	} catch (e) {
+		console.log(e);
+	}
 }
 
 function listenToChannel({ channel_id, access_token }) {
@@ -463,10 +477,23 @@ async function invokeRedemptionCallbacks(data) {
 	await Promise.all(promises);
 }
 
+let pointsCardCallback = null;
+async function queryPointsCardInfo(channel_id) {
+	if (pointsCardCallback === null) {
+		throw new Error('No callback for points card');
+	}
+	return pointsCardCallback(channel_id);
+}
+
+function onCardNameRequest(callback) {
+	pointsCardCallback = callback;
+}
+
 module.exports = {
 	connect,
 	initialSettings,
 	updateLivestreamSettings,
-	onRedemption
+	onRedemption,
+	onCardNameRequest
 };
 

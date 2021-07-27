@@ -83,9 +83,9 @@ async function createOrUpdateChannelPointsCardsAll(cards_data) {
 	return Promise.all(promises);
 }
 
-async function createOrUpdateChannelPointsCard({ channel_id, card_id, card_name }) {
+async function createOrUpdateChannelPointsCard({ channel_id, card_id, card_title, corn_per_redemption }) {
 	return client.db(POINTS_CARD_DB_NAME).collection(channel_id)
-		.updateOne({ card_id }, { $set: { card_name, timestamp: Date.now() } }, { upsert: true })
+		.updateOne({ card_id }, { $set: { card_title, corn_per_redemption, timestamp: Date.now() } }, { upsert: true })
 		.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 }
 

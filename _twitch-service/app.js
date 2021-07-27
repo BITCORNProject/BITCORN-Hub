@@ -15,6 +15,8 @@ const twitchRequest = require('./src/twitch-request');
 const pubsub = require('./src/pubsub');
 const settingsCache = require('../_settings-service/settings-cache');
 
+const NOT_RESPONDING_TIMEOUT = 1000;
+
 const app = express();
 app.use(bodyParser.json());
 
@@ -105,12 +107,13 @@ try {
 				const card_id = req.payload[channel_id]['channelPointCardId'];
 				const cornPerRedemption = req.payload[channel_id]['bitcornPerChannelpointsRedemption'];
 				const cardValue = 10000 * cornPerRedemption;
-				const card_name = `BITCORNx${cardValue}`;
+				const card_title = `BITCORNx${cardValue}`;
 
 				const card_data = {
 					channel_id,
 					card_id,
-					card_name
+					card_title,
+					corn_per_redemption: cornPerRedemption
 				};
 				cards_data.push(card_data);
 			}
@@ -128,11 +131,12 @@ try {
 			const card_id = req.payload['channelPointCardId'];
 			const cornPerRedemption = req.payload['bitcornPerChannelpointsRedemption'];
 			const cardValue = 10000 * cornPerRedemption;
-			const card_name = `BITCORNx${cardValue}`;
+			const card_title = `BITCORNx${cardValue}`;
 			const card_data = {
 				channel_id,
 				card_id,
-				card_name
+				card_title,
+				corn_per_redemption: cornPerRedemption
 			};
 			settingsSocket.emit('set-points-card', card_data);
 		});
@@ -141,12 +145,32 @@ try {
 			console.log({ message: 'disconnected settings service server', timestamp: new Date().toLocaleTimeString() });
 		});
 
-
-		pubsub.connect();
-
 		pubsub.onRedemption(data => {
 			settings_io.emit('reward-redemption', { data });
 		});
+
+		pubsub.onCardNameRequest(async (channel_id) => {
+			console.log({ channel_id, info: 'Card name request' });
+			const { data } = await getPointsCard(channel_id);
+
+			console.log({'data[0]': data[0]});
+			return data[0];
+		});
+
+		pubsub.connect();
+
+		async function getPointsCard(channel_id) {
+			return new Promise((resolve, reject) => {
+				try {
+					settingsSocket.once('send-points-card', resolve);
+					settingsSocket.emit('get-points-card', { channel_id });
+					setTimeout(() => reject(`Local data store not responding for getPointsCard timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
+				} catch (error) {
+					reject(error);
+				}
+			}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
+		}
+
 	})();
 } catch (error) {
 	console.error({ error, timestamp: new Date().toLocaleTimeString() });
