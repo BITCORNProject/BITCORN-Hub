@@ -169,8 +169,15 @@ if (module === require.main) {
 				socket.on('send-points-card', (data) => {
 					io.emit('send-points-card', { data });
 				});
+				
+				socket.on('send-created-points-card', (data) => {
+					io.emit('send-created-points-card', { data });
+				});
 
-
+				socket.on('send-created-points-cards-all', (data) => {
+					io.emit('send-created-points-cards-all', { data });
+				});
+				
 				socket.on('disconnect', () => {
 					console.log({ message: `disconnect: ${socket.id}`, timestamp: new Date().toLocaleTimeString() });
 				});

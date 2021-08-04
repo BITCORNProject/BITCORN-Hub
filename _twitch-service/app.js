@@ -95,10 +95,14 @@ try {
 
 		settingsSocket.on('initial-settings', async req => {
 			console.log({ payload: req.payload });
-			await pubsub.initialSettings(req)
-				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 
 
+			settingsSocket.once('send-created-points-cards-all', async data => {
+				console.log({ 'send-created-points-cards-all': data });
+
+				await pubsub.initialSettings(req)
+					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+			});
 
 			const cards_data = [];
 			for (const key in req.payload) {
@@ -122,9 +126,14 @@ try {
 
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log({ payload: req.payload, timestamp: new Date().toLocaleTimeString() });
-			await pubsub.updateLivestreamSettings(req)
-				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 
+
+			settingsSocket.once('send-created-points-card', async data => {
+				console.log({ 'send-created-points-card': data });
+
+				await pubsub.updateLivestreamSettings(req)
+					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+			});
 
 
 			const channel_id = req.payload['ircTarget'];
@@ -153,7 +162,7 @@ try {
 			console.log({ channel_id, info: 'Card name request' });
 			const { data } = await getPointsCard(channel_id);
 
-			console.log({'data[0]': data[0]});
+			console.log({ 'data[0]': data[0] });
 			return data[0];
 		});
 

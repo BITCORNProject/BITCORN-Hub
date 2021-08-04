@@ -288,8 +288,23 @@ async function updateLivestreamSettings({ payload }) {
 	if (item) {
 		if (item.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
 
-			//const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(redemption.channel_id);
-			//if (reward.title !== wrapped_in_test_mode) break;
+			const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(ircTarget);
+
+			
+			const createResult = await makeCustomRewardCard(wrapped_in_test_mode, ircTarget);
+			console.log({ createResult });
+
+
+			// const rewardsResult = await twitchRequest.getCustomRewards(ircTarget)
+			// 	.then(result => createCustomReward(result, item, authenticated))
+			// 	.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+
+			// console.log({ rewardsResult });
+			console.log({ wrapped_in_test_mode });
+			// if (reward.title !== wrapped_in_test_mode) {
+			// 	console.log({ wrapped_in_test_mode: 'wrapped_in_test_mode failed or db does not exist' });
+			// 	return;
+			// };
 
 			return;
 		} else if (item.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
@@ -408,17 +423,22 @@ async function createCustomReward(result, item, authenticated) {
 	const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(item.ircTarget);
 	const reward = result.data ? result.data.find(x => x.title === wrapped_in_test_mode) : null;
 
-	if (!reward) {
-		const data = {
-			title: wrapped_in_test_mode,
-			cost: is_production ? 100000 : 1,
-			prompt: CARD_PROMPT,
-			should_redemptions_skip_request_queue: false
-		};
+	if (!wrapped_in_test_mode) {
+		if (item.channelPointCardId) {
+			const deleteResult = await twitchRequest.deleteCustomReward(item.ircTarget, item.channelPointCardId)
+				.catch(e => e);
+			if (deleteResult.message === 'Not Found') {
+				console.log('Points Card Not Found');
+			}
+			console.log({ deleteResult });
+		}
+	}
 
-		const results = await twitchRequest.createCustomReward(item.ircTarget, data).catch(e => {
-			console.error({ e, timestamp: new Date().toLocaleTimeString() });
-		});
+	if (!reward) {
+		if(!wrapped_in_test_mode) {
+			
+		}
+		const results = await makeCustomRewardCard(wrapped_in_test_mode, item.ircTarget);
 
 		if (results) {
 			if (results.data) {
@@ -433,12 +453,27 @@ async function createCustomReward(result, item, authenticated) {
 	return { channel_id: item.ircTarget, access_token: authenticated.access_token };
 }
 
+async function makeCustomRewardCard(title, channel_id) {
+	const data = {
+		title: title,
+		cost: is_production ? 100000 : 1,
+		prompt: CARD_PROMPT,
+		should_redemptions_skip_request_queue: false
+	};
+
+	return twitchRequest.createCustomReward(channel_id, data)
+		.catch(e => {
+			console.error({ e, timestamp: new Date().toLocaleTimeString() });
+		});
+}
+
 async function wrappedQueryPointsCardTitle(channel_id) {
 	try {
 		const { card_title } = await queryPointsCardInfo(channel_id);
 		return wrap_in_test_mode(card_title);
 	} catch (e) {
 		console.log(e);
+		return null;
 	}
 }
 

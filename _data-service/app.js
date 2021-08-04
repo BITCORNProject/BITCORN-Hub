@@ -84,12 +84,15 @@ async function init() {
 
 	settingsSocket.on('set-points-cards-all', ({ data }) => {
 		createOrUpdateChannelPointsCardsAll(data)
+			.then(() => settings_io.emit('send-created-points-cards-all', data))
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});
 
 	settingsSocket.on('set-points-card', ({ data }) => {
 		createOrUpdateChannelPointsCard(data)
+			.then(() => settings_io.emit('send-created-points-card', data))
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
+
 	});
 
 	settingsSocket.on('get-points-card', ({ data }) => {
