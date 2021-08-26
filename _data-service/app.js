@@ -82,25 +82,6 @@ async function init() {
 			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 	});
 
-	settingsSocket.on('set-points-cards-all', ({ data }) => {
-		createOrUpdateChannelPointsCardsAll(data)
-			.then(() => settings_io.emit('send-created-points-cards-all', data))
-			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
-	});
-
-	settingsSocket.on('set-points-card', ({ data }) => {
-		createOrUpdateChannelPointsCard(data)
-			.then(() => settings_io.emit('send-created-points-card', data))
-			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
-
-	});
-
-	settingsSocket.on('get-points-card', ({ data }) => {
-		queryChannelPointsCard({ channel_id: data.channel_id })
-			.then(results => settings_io.emit('send-points-card', results.map(x => ({ card_id: x.card_id, card_title: x.card_title, corn_per_redemption: x.corn_per_redemption }))))
-			.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
-	});
-
 	settingsSocket.on('disconnect', () => {
 		console.log({ message: 'disconnected settings service server', timestamp: new Date().toLocaleTimeString() });
 	});

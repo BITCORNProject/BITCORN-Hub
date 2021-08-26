@@ -13,9 +13,6 @@ const io_client = require('socket.io-client');
 const twitchRequest = require('./src/twitch-request');
 
 const pubsub = require('./src/pubsub');
-const settingsCache = require('../_settings-service/settings-cache');
-
-const NOT_RESPONDING_TIMEOUT = 1000;
 
 const app = express();
 app.use(bodyParser.json());
@@ -96,58 +93,15 @@ try {
 		settingsSocket.on('initial-settings', async req => {
 			console.log({ payload: req.payload });
 
-
-			settingsSocket.once('send-created-points-cards-all', async data => {
-				console.log({ 'send-created-points-cards-all': data });
-
-				await pubsub.initialSettings(req)
-					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
-			});
-
-			const cards_data = [];
-			for (const key in req.payload) {
-
-				const channel_id = key;
-				const card_id = req.payload[channel_id]['channelPointCardId'];
-				const cornPerRedemption = req.payload[channel_id]['bitcornPerChannelpointsRedemption'];
-				const cardValue = 10000 * cornPerRedemption;
-				const card_title = `BITCORNx${cardValue}`;
-
-				const card_data = {
-					channel_id,
-					card_id,
-					card_title,
-					corn_per_redemption: cornPerRedemption
-				};
-				cards_data.push(card_data);
-			}
-			settingsSocket.emit('set-points-cards-all', cards_data);
+			await pubsub.initialSettings(req)
+				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 		});
 
 		settingsSocket.on('update-livestream-settings', async req => {
 			console.log({ payload: req.payload, timestamp: new Date().toLocaleTimeString() });
 
-
-			settingsSocket.once('send-created-points-card', async data => {
-				console.log({ 'send-created-points-card': data });
-
-				await pubsub.updateLivestreamSettings(req)
-					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
-			});
-
-
-			const channel_id = req.payload['ircTarget'];
-			const card_id = req.payload['channelPointCardId'];
-			const cornPerRedemption = req.payload['bitcornPerChannelpointsRedemption'];
-			const cardValue = 10000 * cornPerRedemption;
-			const card_title = `BITCORNx${cardValue}`;
-			const card_data = {
-				channel_id,
-				card_id,
-				card_title,
-				corn_per_redemption: cornPerRedemption
-			};
-			settingsSocket.emit('set-points-card', card_data);
+			await pubsub.updateLivestreamSettings(req)
+				.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 		});
 
 		settingsSocket.on('disconnect', () => {
@@ -158,27 +112,7 @@ try {
 			settings_io.emit('reward-redemption', { data });
 		});
 
-		pubsub.onCardNameRequest(async (channel_id) => {
-			console.log({ channel_id, info: 'Card name request' });
-			const { data } = await getPointsCard(channel_id);
-
-			console.log({ 'data[0]': data[0] });
-			return data[0];
-		});
-
 		pubsub.connect();
-
-		async function getPointsCard(channel_id) {
-			return new Promise((resolve, reject) => {
-				try {
-					settingsSocket.once('send-points-card', resolve);
-					settingsSocket.emit('get-points-card', { channel_id });
-					setTimeout(() => reject(`Local data store not responding for getPointsCard timeout: ${NOT_RESPONDING_TIMEOUT}`), NOT_RESPONDING_TIMEOUT);
-				} catch (error) {
-					reject(error);
-				}
-			}).catch(error => console.error({ error, timestamp: new Date().toLocaleTimeString() }));
-		}
 
 	})();
 } catch (error) {
