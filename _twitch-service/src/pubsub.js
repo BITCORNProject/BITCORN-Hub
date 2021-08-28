@@ -168,8 +168,8 @@ function connect() {
 					const redemption = message.data.redemption;
 					const reward = redemption.reward;
 					const user = redemption.user;
-					
-					const bitcorn_per_redemption = channelsPayload[channel_id].bitcornPerChannelpointsRedemption;
+
+					const bitcorn_per_redemption = channelsPayload[redemption.channel_id].bitcornPerChannelpointsRedemption;
 					const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(bitcorn_per_redemption);
 					if (reward.title !== wrapped_in_test_mode) break;
 
@@ -289,30 +289,33 @@ async function updateLivestreamSettings({ payload }) {
 
 	const { twitchRefreshToken, ircTarget } = payload;
 	if (!twitchRefreshToken) return;
-	
-	const bitcorn_per_redemption = channelsPayload[ircTarget].bitcornPerChannelpointsRedemption;
 
 	channelsPayload[ircTarget] = payload;
 
 	const item = listening.find(x => x.channel_id === ircTarget);
 	if (item) {
 		if (item.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
-
-
-			const wrapped_in_test_mode_previous = await wrappedQueryPointsCardTitle(bitcorn_per_redemption);
-			const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload.bitcornPerChannelpointsRedemption);
-
-			const rewardsResult = await twitchRequest.getCustomRewards(ircTarget);
-
-			const reward = rewardsResult.data ? rewardsResult.data.find(x => x.title === wrapped_in_test_mode_previous) : null;
-
+	
+			const rewardsResult = await twitchRequest.getCustomRewards(ircTarget);		
+			const reward = rewardsResult.data ? rewardsResult.data.find(x => x.id === payload.channelPointCardId) : null;
+			
 			if (reward) {
+				const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload.bitcornPerChannelpointsRedemption);
 				const updateResult = await twitchRequest.updateCustomRewardTitle({ broadcaster_id: ircTarget, reward_id: reward.id, title: wrapped_in_test_mode });
 				console.log({ updateResult });
 			} else {
+				const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload.bitcornPerChannelpointsRedemption);
 				const createResult = await makeCustomRewardCard(wrapped_in_test_mode, ircTarget);
 				console.log({ createResult });
+				if (createResult) {
+					if (createResult.data) {
+						payload.channelPointCardId = createResult.data[0].id;
+					} else if (createResult.error) {
+						console.error(createResult.error);
+					}
+				}
 			}
+
 			return;
 		} else if (item.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
 			return;
@@ -429,50 +432,25 @@ async function handleChannelPointsCard(items, payload) {
 }
 
 async function createCustomReward(result, item, authenticated) {
-	const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(item.bitcornPerChannelpointsRedemption);
-	const reward = result.data ? result.data.find(x => x.title === wrapped_in_test_mode) : null;
-
+	const card_id = channelsPayload[item.ircTarget].channelPointCardId;
+	const reward = result.data ? result.data.find(x => x.id === card_id) : null;
+	
 	if (!reward) {
-		const results = await makeCustomRewardCard(wrapped_in_test_mode, item.ircTarget);
+		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(item.bitcornPerChannelpointsRedemption);
+		const createResult = await makeCustomRewardCard(wrapped_in_test_mode, item.ircTarget);
+		console.log({ createResult });
 
-		if (results) {
-			if (results.data) {
-				item.channelPointCardId = results.data[0].id;
-			} else if (results.error) {
-				console.error(results.error);
+		if (createResult) {
+			if (createResult.data) {
+				item.channelPointCardId = createResult.data[0].id;
+			} else if (createResult.error) {
+				console.error(createResult.error);
 			}
 		}
 	} else {
-
-		// --------------------------------------------------
-		// Add update title code here also
-		// --------------------------------------------------
-
-
-		// --------------------------------------------------
-		// Add update title code here also
-		// --------------------------------------------------
-
-
-		// --------------------------------------------------
-		// Add update title code here also
-		// --------------------------------------------------
-
-
-		// --------------------------------------------------
-		// Add update title code here also
-		// --------------------------------------------------
-
-
-		// --------------------------------------------------
-		// Add update title code here also
-		// --------------------------------------------------
-
-
-		// --------------------------------------------------
-		// Add update title code here also
-		// --------------------------------------------------
-
+		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(item.bitcornPerChannelpointsRedemption);
+		const updateResult = await twitchRequest.updateCustomRewardTitle({ broadcaster_id: item.ircTarget, reward_id: reward.id, title: wrapped_in_test_mode });
+		console.log({ updateResult });
 
 		item.channelPointCardId = reward.id;
 	}
