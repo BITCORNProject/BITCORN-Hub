@@ -76,12 +76,12 @@ function listen(channel_id, access_token) {
 	const non = nonce(15);
 	const topic = `channel-points-channel-v1.${channel_id}`;
 
-	const item = listening.find(x => x.channel_id === channel_id);
-	if (!item) {
+	const listeningItem = listening.find(x => x.channel_id === channel_id);
+	if (!listeningItem) {
 		listening.push({ channel_id, nonce: non, type: LISTEN_TYPES.LISTEN });
 	} else {
-		item.nonce = non;
-		item.type = LISTEN_TYPES.LISTEN;
+		listeningItem.nonce = non;
+		listeningItem.type = LISTEN_TYPES.LISTEN;
 	}
 
 	const message = {
@@ -106,11 +106,11 @@ function unlisten(channel_id, access_token) {
 	const non = nonce(15);
 	const topic = `channel-points-channel-v1.${channel_id}`;
 
-	const item = listening.find(x => x.channel_id === channel_id);
-	if (!item) return;
+	const listeningItem = listening.find(x => x.channel_id === channel_id);
+	if (!listeningItem) return;
 
-	item.nonce = non;
-	item.type = LISTEN_TYPES.UNLISTEN;
+	listeningItem.nonce = non;
+	listeningItem.type = LISTEN_TYPES.UNLISTEN;
 
 	const message = {
 		type: LISTEN_TYPES.UNLISTEN,
@@ -234,7 +234,7 @@ function connect() {
 				break;
 			case 'RESPONSE':
 
-				const item = listening.find(x => x.nonce === value.nonce);
+				const listeningItem = listening.find(x => x.nonce === value.nonce);
 				if (value.error) {
 					// TODO: add refresh token for bad auth error
 					// I think when the app is static (not being used) the 
@@ -242,7 +242,7 @@ function connect() {
 					console.log(value);
 					listening = listening.filter(x => x.nonce !== value.nonce);
 				} else {
-					const { channel_id, type } = item;
+					const { channel_id, type } = listeningItem;
 					console.log({ [type]: channel_id, timestamp: new Date().toLocaleTimeString() });
 				}
 				break;
@@ -292,9 +292,9 @@ async function updateLivestreamSettings({ payload }) {
 
 	channelsPayload[ircTarget] = payload;
 
-	const item = listening.find(x => x.channel_id === ircTarget);
-	if (item) {
-		if (item.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
+	const listeningItem = listening.find(x => x.channel_id === ircTarget);
+	if (listeningItem) {
+		if (listeningItem.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
 	
 			const rewardsResult = await twitchRequest.getCustomRewards(ircTarget);		
 			const reward = rewardsResult.data ? rewardsResult.data.find(x => x.id === payload.channelPointCardId) : null;
@@ -307,6 +307,7 @@ async function updateLivestreamSettings({ payload }) {
 				const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload.bitcornPerChannelpointsRedemption);
 				const createResult = await makeCustomRewardCard(wrapped_in_test_mode, ircTarget);
 				console.log({ createResult });
+				
 				if (createResult) {
 					if (createResult.data) {
 						payload.channelPointCardId = createResult.data[0].id;
@@ -317,7 +318,7 @@ async function updateLivestreamSettings({ payload }) {
 			}
 
 			return;
-		} else if (item.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
+		} else if (listeningItem.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
 			return;
 		}
 	}
@@ -374,20 +375,20 @@ async function initialSettings({ payload }) {
 	}
 }
 
-async function refreshToken(twitchRefreshToken, ircTarget) {
-	if (twitchRefreshToken) {
+async function refreshToken(refresh_token, irc_target) {
+	if (refresh_token) {
 		const authenticated = await twitchRequest.refreshAccessToken({
-			refresh_token: twitchRefreshToken,
+			refresh_token: refresh_token,
 			client_id: process.env.API_CLIENT_ID,
 			client_secret: process.env.API_SECRET
 		});
-		return { authenticated, ircTarget };
+		return { authenticated, ircTarget: irc_target };
 	} else {
-		return { authenticated: null, ircTarget };
+		return { authenticated: null, ircTarget: irc_target };
 	}
 }
 
-async function handleChannelPointsCard(items, payload) {
+async function handleChannelPointsCard(items, channels_payload) {
 
 	for (let i = 0; i < items.length; i++) {
 		// for (const key in items[i]) {
@@ -399,29 +400,29 @@ async function handleChannelPointsCard(items, payload) {
 		try {
 			const { authenticated, ircTarget } = items[i];
 
-			const item = payload[ircTarget];
+			const payload = channels_payload[ircTarget];
 
-			if (!item) throw new Error('Go, no go ??????');
+			if (!payload) throw new Error('Go, no go ??????');
 
-			console.log({ item, ircTarget });
+			console.log({ payload, ircTarget });
 
-			if (item.enableChannelpoints === true) {
+			if (payload.enableChannelpoints === true) {
 
 				await twitchRequest.getCustomRewards(ircTarget)
-					.then(result => createCustomReward(result, item, authenticated))
+					.then(result => createCustomReward(result, payload, authenticated))
 					.then(listenToChannel)
 					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 			} else {
 
 				if (authenticated) {
-					if (item.channelPointCardId) {
-						await twitchRequest.deleteCustomReward(ircTarget, item.channelPointCardId);
+					if (payload.channelPointCardId) {
+						await twitchRequest.deleteCustomReward(ircTarget, payload.channelPointCardId);
 					}
 					unlisten(ircTarget, authenticated.access_token);
 
-					item.channelPointCardId = null;
+					payload.channelPointCardId = null;
 				} else {
-					console.log({ message: 'Can not unlistenn no access token', item });
+					console.log({ message: 'Can not unlistenn no access token', payload });
 				}
 			}
 		} catch (error) {
@@ -431,30 +432,30 @@ async function handleChannelPointsCard(items, payload) {
 	}
 }
 
-async function createCustomReward(result, item, authenticated) {
-	const card_id = channelsPayload[item.ircTarget].channelPointCardId;
+async function createCustomReward(result, payload_item, authenticated) {
+	const card_id = channelsPayload[payload_item.ircTarget].channelPointCardId;
 	const reward = result.data ? result.data.find(x => x.id === card_id) : null;
-	
-	if (!reward) {
-		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(item.bitcornPerChannelpointsRedemption);
-		const createResult = await makeCustomRewardCard(wrapped_in_test_mode, item.ircTarget);
+
+	if (reward) {
+		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload_item.bitcornPerChannelpointsRedemption);
+		const updateResult = await twitchRequest.updateCustomRewardTitle({ broadcaster_id: payload_item.ircTarget, reward_id: reward.id, title: wrapped_in_test_mode });
+		console.log({ updateResult });
+
+		payload_item.channelPointCardId = reward.id;
+	} else {
+		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload_item.bitcornPerChannelpointsRedemption);
+		const createResult = await makeCustomRewardCard(wrapped_in_test_mode, payload_item.ircTarget);
 		console.log({ createResult });
 
 		if (createResult) {
 			if (createResult.data) {
-				item.channelPointCardId = createResult.data[0].id;
+				payload_item.channelPointCardId = createResult.data[0].id;
 			} else if (createResult.error) {
 				console.error(createResult.error);
 			}
 		}
-	} else {
-		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(item.bitcornPerChannelpointsRedemption);
-		const updateResult = await twitchRequest.updateCustomRewardTitle({ broadcaster_id: item.ircTarget, reward_id: reward.id, title: wrapped_in_test_mode });
-		console.log({ updateResult });
-
-		item.channelPointCardId = reward.id;
 	}
-	return { channel_id: item.ircTarget, access_token: authenticated.access_token };
+	return { channel_id: payload_item.ircTarget, access_token: authenticated.access_token };
 }
 
 async function makeCustomRewardCard(title, channel_id) {
