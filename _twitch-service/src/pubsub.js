@@ -283,60 +283,44 @@ function clearPongWaitTimeout() {
 	}
 }
 
-async function updateLivestreamSettings({ payload }) {
+async function updateLivestreamSettings({ payload: payload_item }) {
 
-	if (!payload) throw new Error('No payload from settings');
+	if (!payload_item) throw new Error('No payload from settings');
 
-	const { twitchRefreshToken, ircTarget } = payload;
-	if (!twitchRefreshToken) return;
+	if (!payload_item.twitchRefreshToken) throw new Error('No refresh token on payload');
 
-	channelsPayload[ircTarget] = payload;
+	channelsPayload[payload_item.ircTarget] = payload_item;
 
-	const listeningItem = listening.find(x => x.channel_id === ircTarget);
+	const listeningItem = listening.find(x => x.channel_id === payload_item.ircTarget);
 	if (listeningItem) {
-		if (listeningItem.type === LISTEN_TYPES.LISTEN && payload.enableChannelpoints === true) {
-	
-			const rewardsResult = await twitchRequest.getCustomRewards(ircTarget);		
-			const reward = rewardsResult.data ? rewardsResult.data.find(x => x.id === payload.channelPointCardId) : null;
-			
-			if (reward) {
-				const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload.bitcornPerChannelpointsRedemption);
-				const updateResult = await twitchRequest.updateCustomRewardTitle({ broadcaster_id: ircTarget, reward_id: reward.id, title: wrapped_in_test_mode });
-				console.log({ updateResult });
-			} else {
-				const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload.bitcornPerChannelpointsRedemption);
-				const createResult = await makeCustomRewardCard(wrapped_in_test_mode, ircTarget);
-				console.log({ createResult });
-				
-				if (createResult) {
-					if (createResult.data) {
-						payload.channelPointCardId = createResult.data[0].id;
-					} else if (createResult.error) {
-						console.error(createResult.error);
-					}
-				}
-			}
+		if (listeningItem.type === LISTEN_TYPES.LISTEN && payload_item.enableChannelpoints === true) {
 
-			return;
-		} else if (listeningItem.type === LISTEN_TYPES.UNLISTEN && payload.enableChannelpoints === false) {
-			return;
+			const rewardsResult = await twitchRequest.getCustomRewards(payload_item.ircTarget);
+			const reward = rewardsResult.data ? rewardsResult.data.find(x => x.id === payload_item.channelPointCardId) : null;
+			const channelPointCardId = await makeOrUpdateChannelPointsCard(reward, payload_item);
+			
+			if(payload_item.channelPointCardId !== channelPointCardId) {
+				payload_item.channelPointCardId = channelPointCardId;
+			} else {
+				return;
+			}
 		}
 	}
 
-	const tokenStore = twitchRequest.getTokenStore(ircTarget);
+	const tokenStore = twitchRequest.getTokenStore(payload_item.ircTarget);
 	const items = [];
 	if (!tokenStore) {
-		const { authenticated, ircTarget } = await refreshToken(twitchRefreshToken, ircTarget)
+		const { authenticated, ircTarget } = await refreshToken(payload_item.twitchRefreshToken, payload_item.ircTarget)
 			.catch(e => console.log(e));
 		items.push({ authenticated, ircTarget });
 		twitchRequest.storeTokens(items);
 	} else {
-		items.push({ authenticated: tokenStore, ircTarget });
+		items.push({ authenticated: tokenStore, ircTarget: payload_item.ircTarget });
 	}
 
-	await handleChannelPointsCard(items, { [ircTarget]: payload });
+	await handleChannelPointsCard(items, { [payload_item.ircTarget]: payload_item });
 
-	await sendTokensToApi(items, { [ircTarget]: payload });
+	await sendTokensToApi(items, { [payload_item.ircTarget]: payload_item });
 }
 
 async function initialSettings({ payload }) {
@@ -400,29 +384,29 @@ async function handleChannelPointsCard(items, channels_payload) {
 		try {
 			const { authenticated, ircTarget } = items[i];
 
-			const payload = channels_payload[ircTarget];
+			const payload_item = channels_payload[ircTarget];
 
-			if (!payload) throw new Error('Go, no go ??????');
+			if (!payload_item) throw new Error('Go, no go ??????');
 
-			console.log({ payload, ircTarget });
+			console.log({ payload: payload_item, ircTarget });
 
-			if (payload.enableChannelpoints === true) {
+			if (payload_item.enableChannelpoints === true) {
 
 				await twitchRequest.getCustomRewards(ircTarget)
-					.then(result => createCustomReward(result, payload, authenticated))
+					.then(result => createOrUpdateCustomReward(result, payload_item, authenticated))
 					.then(listenToChannel)
 					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 			} else {
 
 				if (authenticated) {
-					if (payload.channelPointCardId) {
-						await twitchRequest.deleteCustomReward(ircTarget, payload.channelPointCardId);
+					if (payload_item.channelPointCardId) {
+						await twitchRequest.deleteCustomReward(ircTarget, payload_item.channelPointCardId);
 					}
 					unlisten(ircTarget, authenticated.access_token);
 
-					payload.channelPointCardId = null;
+					payload_item.channelPointCardId = null;
 				} else {
-					console.log({ message: 'Can not unlistenn no access token', payload });
+					console.log({ message: 'Can not unlistenn no access token', payload: payload_item });
 				}
 			}
 		} catch (error) {
@@ -432,30 +416,43 @@ async function handleChannelPointsCard(items, channels_payload) {
 	}
 }
 
-async function createCustomReward(result, payload_item, authenticated) {
+async function createOrUpdateCustomReward(result, payload_item, authenticated) {
+
 	const card_id = channelsPayload[payload_item.ircTarget].channelPointCardId;
-	const reward = result.data ? result.data.find(x => x.id === card_id) : null;
+	const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload_item.bitcornPerChannelpointsRedemption);
+	const reward = result.data ? result.data.find(x => x.id === card_id || x.title === wrapped_in_test_mode) : null;
 
+	payload_item.channelPointCardId = await makeOrUpdateChannelPointsCard(reward, payload_item);
+
+	for (let i = 0; i < result.data.length; i++) {
+		if(result.data[i].id === payload_item.channelPointCardId) continue;
+		await twitchRequest.deleteCustomReward(payload_item.ircTarget, result.data[i].id);
+	}
+
+	return { channel_id: payload_item.ircTarget, access_token: authenticated.access_token };
+}
+
+async function makeOrUpdateChannelPointsCard(reward, { ircTarget, bitcornPerChannelpointsRedemption }) {
+	let channelPointCardId = null;
 	if (reward) {
-		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload_item.bitcornPerChannelpointsRedemption);
-		const updateResult = await twitchRequest.updateCustomRewardTitle({ broadcaster_id: payload_item.ircTarget, reward_id: reward.id, title: wrapped_in_test_mode });
+		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(bitcornPerChannelpointsRedemption);
+		const updateResult = await twitchRequest.updateCustomRewardTitle({ broadcaster_id: ircTarget, reward_id: reward.id, title: wrapped_in_test_mode });
+		channelPointCardId = updateResult.data[0].id;
 		console.log({ updateResult });
-
-		payload_item.channelPointCardId = reward.id;
 	} else {
-		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(payload_item.bitcornPerChannelpointsRedemption);
-		const createResult = await makeCustomRewardCard(wrapped_in_test_mode, payload_item.ircTarget);
+		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(bitcornPerChannelpointsRedemption);
+		const createResult = await makeCustomRewardCard(wrapped_in_test_mode, ircTarget);
 		console.log({ createResult });
 
 		if (createResult) {
 			if (createResult.data) {
-				payload_item.channelPointCardId = createResult.data[0].id;
+				channelPointCardId = createResult.data[0].id;
 			} else if (createResult.error) {
 				console.error(createResult.error);
 			}
 		}
 	}
-	return { channel_id: payload_item.ircTarget, access_token: authenticated.access_token };
+	return channelPointCardId;
 }
 
 async function makeCustomRewardCard(title, channel_id) {
