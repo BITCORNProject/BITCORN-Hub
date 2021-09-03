@@ -298,8 +298,8 @@ async function updateLivestreamSettings({ payload: payload_item }) {
 			const rewardsResult = await twitchRequest.getCustomRewards(payload_item.ircTarget);
 			const reward = rewardsResult.data ? rewardsResult.data.find(x => x.id === payload_item.channelPointCardId) : null;
 			const channelPointCardId = await makeOrUpdateChannelPointsCard(reward, payload_item);
-			
-			if(payload_item.channelPointCardId !== channelPointCardId) {
+
+			if (payload_item.channelPointCardId !== channelPointCardId) {
 				payload_item.channelPointCardId = channelPointCardId;
 			} else {
 				return;
@@ -399,9 +399,14 @@ async function handleChannelPointsCard(items, channels_payload) {
 			} else {
 
 				if (authenticated) {
-					if (payload_item.channelPointCardId) {
-						await twitchRequest.deleteCustomReward(ircTarget, payload_item.channelPointCardId);
-					}
+
+					await twitchRequest.getCustomRewards(ircTarget)
+						.then(async result => {
+							for (let i = 0; i < result.data.length; i++) {
+								await twitchRequest.deleteCustomReward(payload_item.ircTarget, result.data[i].id);
+							}
+						});
+
 					unlisten(ircTarget, authenticated.access_token);
 
 					payload_item.channelPointCardId = null;
@@ -425,7 +430,7 @@ async function createOrUpdateCustomReward(result, payload_item, authenticated) {
 	payload_item.channelPointCardId = await makeOrUpdateChannelPointsCard(reward, payload_item);
 
 	for (let i = 0; i < result.data.length; i++) {
-		if(result.data[i].id === payload_item.channelPointCardId) continue;
+		if (result.data[i].id === payload_item.channelPointCardId) continue;
 		await twitchRequest.deleteCustomReward(payload_item.ircTarget, result.data[i].id);
 	}
 
