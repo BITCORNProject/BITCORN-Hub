@@ -36,6 +36,11 @@ const LISTEN_TYPES = {
 
 const channelsPayload = {};
 
+const validChangeProperties = [
+	'bitcornPerChannelpointsRedemption',
+	'enableChannelpoints'
+];
+
 const CARD_PROMPT = wrap_in_test_mode(`Must be sync'd with BITCORNfarms in order to receive reward`);
 
 // Source: https://www.thepolyglotdeveloper.com/2015/03/create-a-random-nonce-string-using-javascript/
@@ -289,23 +294,20 @@ async function updateLivestreamSettings({ payload: payload_item }) {
 
 	if (!payload_item.twitchRefreshToken) throw new Error('No refresh token on payload');
 
-	channelsPayload[payload_item.ircTarget] = payload_item;
+	let changed = false;
+	const prevPayloadItem = channelsPayload[payload_item.ircTarget];
 
-	const listeningItem = listening.find(x => x.channel_id === payload_item.ircTarget);
-	if (listeningItem) {
-		if (listeningItem.type === LISTEN_TYPES.LISTEN && payload_item.enableChannelpoints === true) {
-
-			const rewardsResult = await twitchRequest.getCustomRewards(payload_item.ircTarget);
-			const reward = rewardsResult.data ? rewardsResult.data.find(x => x.id === payload_item.channelPointCardId) : null;
-			const channelPointCardId = await makeOrUpdateChannelPointsCard(reward, payload_item);
-
-			if (payload_item.channelPointCardId !== channelPointCardId) {
-				payload_item.channelPointCardId = channelPointCardId;
-			} else {
-				return;
-			}
-		}
+	for (let i = 0; i < validChangeProperties.length; i++) {
+		const propName = validChangeProperties[i];
+		if(prevPayloadItem[propName] !== payload_item[propName]) changed = true;	
 	}
+
+	if(!changed) {
+		console.log(`No relevant changes for this setting update: ${payload_item.twitchUsername}`);
+		return;
+	}
+
+	channelsPayload[payload_item.ircTarget] = payload_item;
 
 	const tokenStore = twitchRequest.getTokenStore(payload_item.ircTarget);
 	const items = [];
@@ -446,7 +448,7 @@ async function makeOrUpdateChannelPointsCard(reward, { ircTarget, bitcornPerChan
 		console.log({ updateResult });
 	} else {
 		const wrapped_in_test_mode = await wrappedQueryPointsCardTitle(bitcornPerChannelpointsRedemption);
-		const createResult = await makeCustomRewardCard(wrapped_in_test_mode, ircTarget);
+		const createResult = await requestCreateCustomRewardCard(wrapped_in_test_mode, ircTarget);
 		console.log({ createResult });
 
 		if (createResult) {
@@ -460,7 +462,7 @@ async function makeOrUpdateChannelPointsCard(reward, { ircTarget, bitcornPerChan
 	return channelPointCardId;
 }
 
-async function makeCustomRewardCard(title, channel_id) {
+async function requestCreateCustomRewardCard(title, channel_id) {
 	const data = {
 		title: title,
 		cost: is_production ? 100000 : 1,
