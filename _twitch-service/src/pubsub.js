@@ -478,7 +478,7 @@ async function requestCreateCustomRewardCard(title, channel_id) {
 
 async function wrappedQueryPointsCardTitle(bitcorn_per_redemption) {
 	try {
-		const cardValue = Math.ceil(10000 * bitcorn_per_redemption);
+		const cardValue = Math.ceil(100000 * bitcorn_per_redemption);
 		const card_title = `BITCORNx${cardValue}`;
 
 		return wrap_in_test_mode(card_title);
