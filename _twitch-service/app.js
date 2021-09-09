@@ -112,7 +112,6 @@ try {
 		pubsub.onRedemption(data => {
 			settings_io.emit('reward-redemption', { data });
 		});
-
 	})();
 } catch (error) {
 	console.error({ error, timestamp: new Date().toLocaleTimeString() });
