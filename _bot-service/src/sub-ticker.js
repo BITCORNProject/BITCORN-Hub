@@ -16,7 +16,7 @@ async function chunkRequests(stack, requester, mapper) {
 		const promise = requester(chunk)
 			.then(res => {
 				if (res.data && res.data.length > 0) {
-					console.log(res.data);
+					console.log('sub-ticker: ' + res.data.length);
 					return res.data.map(mapper);
 				} else {
 					return [];
