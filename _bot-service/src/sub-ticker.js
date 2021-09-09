@@ -15,10 +15,9 @@ async function chunkRequests(stack, requester, mapper) {
 		const chunk = stack.splice(0, 100);
 		const promise = requester(chunk)
 			.then(res => {
-				const { data } = res.data;
-				if (data && data.length > 0) {
-					console.log(data);
-					return data.map(mapper);
+				if (res.data && res.data.length > 0) {
+					console.log('sub-ticker: ' + res.data.length);
+					return res.data.map(mapper);
 				} else {
 					return [];
 				}
@@ -60,20 +59,25 @@ async function performPayout({ channel, channelId }) {
 async function init() {
 
 	setInterval(async () => {
-		const stack = Object.values(settingsHelper.getChannelsAndIds());
-		if (stack.length === 0) return;
 
-		const requester = async chunk => getStreamsByIds(chunk.map(x => x.channelId));
-		//const requester = async chunk => ({ data: chunk.map(x => ({ user_login: x.channel, user_id: x.channelId })) });
-		const mapper = x => ({ channel: x.user_login, channelId: x.user_id });
-		const results = await chunkRequests(stack, requester, mapper);
-
-		const payoutPromises = results.map(performPayout);
-		const result = await Promise.all(payoutPromises);
-		if (result.length && result.length > 0) {
-			console.log({ result });
-		} else if (!result.hasOwnProperty('length')) {
-			console.log({ 'sub-ticker-ERROR': result });
+		try {
+			const stack = Object.values(settingsHelper.getChannelsAndIds());
+			if (stack.length === 0) return;
+	
+			const requester = async chunk => getStreamsByIds(chunk.map(x => x.channelId));
+			//const requester = async chunk => ({ data: chunk.map(x => ({ user_login: x.channel, user_id: x.channelId })) });
+			const mapper = x => ({ channel: x.user_login, channelId: x.user_id });
+			const results = await chunkRequests(stack, requester, mapper);
+	
+			const payoutPromises = results.map(performPayout);
+			const result = await Promise.all(payoutPromises);
+			if (result.length && result.length > 0) {
+				console.log({ result });
+			} else if (!result.hasOwnProperty('length')) {
+				console.log({ 'sub-ticker-ERROR': result });
+			}
+		} catch (error) {
+			console.log({ 'sub-ticker-catch': error });
 		}
 	}, /*1000 * 30*/ timeValues.MINUTE * process.env.MINUTE_AWARD_MULTIPLIER);
 

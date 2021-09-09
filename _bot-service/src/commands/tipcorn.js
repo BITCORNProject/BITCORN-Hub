@@ -49,8 +49,8 @@ module.exports = {
 		twitchUsername = cleanParams.replaceAtSymbol(cleanParams.replaceBrackets(event.args.params[0]));
 		amount = parseInt(cleanParams.replaceBrackets(event.args.params[1]), 10);
 		if(!cleanParams.isNumber(amount)) {
-			message = `Can not use an amount value of ${amount} from ${event.args.params[1]} which is not a number`;
-
+			//message = `Can not use an amount value of ${amount} from ${event.args.params[1]} which is not a number`;
+			message = `Command '${this.configs.name}' execution failed @${event.twitchUsername} please try again later`;
 			return {
 				success: true,
 				message: message,
