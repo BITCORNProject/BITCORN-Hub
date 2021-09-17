@@ -55,6 +55,7 @@ function getItem(channel) {
 }
 
 function setItemsObjects(items) {
+
 	for (const key in items) {
 		const item = items[key];
 		const channel = cleanChannelName(item.twitchUsername).toLowerCase();

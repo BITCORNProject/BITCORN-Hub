@@ -64,6 +64,31 @@ async function connect() {
 
 			switch (obj.type) {
 				case 'initial-settings':
+
+					const newUser = {
+						bitcornhubFunded: false,
+						bitcornPerBit: 0,
+						bitcornPerChannelpointsRedemption: 0,
+						channelPointCardId: '10987f94-ff2c-458c-880a-b2bc108169b8',
+						enableChannelpoints: true,
+						enableTransactions: true,
+						enableTts: false,
+						ircEventPayments: true,
+						ircTarget: '209452995',
+						minRainAmount: 1,
+						minTipAmount: 1,
+						rainAlgorithm: 0,
+						tier1SubReward: 0,
+						tier2SubReward: 0,
+						tier3SubReward: 0,
+						twitchRefreshToken: '3iqhtebnkv8negz3o8pnxsacgf0hbzwe6ywv70q5vtl2i8985p',
+						twitchUsername: 'likeweedtv420',
+						txCooldownPerUser: 0,
+						txMessages: true,
+						userid: 5483
+					};
+
+					obj.payload.push(newUser)
 					settingsCache.applySettings(obj.payload);
 					io.emit(obj.type, { payload: settingsCache.getItems() });
 					break;
