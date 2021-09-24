@@ -1,7 +1,7 @@
 "use strict";
 
 const databaseAPI = require('../../_api-shared/database-api');
-const { getUsers, getChatters, getStreamsByIds } = require('./request-api');
+const { /*getIds,*/ getUsers, getChatters, getStreamsByIds } = require('./request-api');
 const settingsHelper = require('../settings-helper');
 
 const timeValues = {
@@ -63,8 +63,15 @@ async function init() {
 		if (stack.length === 0) return;
 
 		const requester = async chunk => getStreamsByIds(chunk.map(x => x.channelId));
-		//const requester = async chunk => ({ data: chunk.map(x => ({ user_login: x.channel, user_id: x.channelId })) });
 		const mapper = x => ({ channel: x.user_login, channelId: x.user_id });
+
+		// // TESTING ------ REMOVE
+		// // TESTING ------ REMOVE
+		// const requester = async chunk => getIds(chunk.map(x => x.channelId));
+		// const mapper = x => ({ channel: x.login, channelId: x.id });
+		// // TESTING ------ REMOVE
+		// // TESTING ------ REMOVE
+
 		const results = await chunkRequests(stack, requester, mapper);
 
 		const payoutPromises = results.map(performPayout);

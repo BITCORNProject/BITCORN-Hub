@@ -11,7 +11,6 @@ const MAX_JOIN_RETRIES = 5;
 let retrieCount = 0;
 
 const joinedChannels = [];
-const nameChangeChannelMap = {};
 
 function _Queue() {
 	this.items = new Queue();
@@ -89,7 +88,7 @@ async function joinChannelsFromQueue(tmi) {
 			const { data } = await getIds([channel_id]);
 			// console.log(data);
 
-			nameChangeChannelMap[item] = data[0].login;
+			settingsHelper.setNameChangeChannel(item, data[0].login);
 			queuedItems.replace(0, data[0].login);
 
 			result = { message: error, item, maxRetries: false };
@@ -140,8 +139,8 @@ module.exports = async (tmi) => {
 			// // ----- REMOVE TEST CODE
 
 			channels = channels.map(x => {
-				if(Object.keys(nameChangeChannelMap).includes(x)) {
-					return nameChangeChannelMap[x];
+				if(settingsHelper.nameChangeMapHasByOldName(x)) {
+					return settingsHelper.getNewChannelByOldName(x);
 				}
 				return x;
 			});

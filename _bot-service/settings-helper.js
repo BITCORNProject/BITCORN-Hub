@@ -7,6 +7,8 @@ const io_client = require('socket.io-client');
 
 const cache = {};
 const idMap = {};
+const nameChangeNewChannelMap = {};
+const nameChangeOldChannelMap = {};
 
 const NOT_RESPONDING_TIMEOUT = 1000;
 
@@ -37,6 +39,19 @@ if (!('toJSON' in Error.prototype)) {
 	});
 }
 
+function setNameChangeChannel(oldChannelName, newChannelName) {
+	nameChangeNewChannelMap[oldChannelName] = newChannelName;
+	nameChangeOldChannelMap[newChannelName] = oldChannelName;
+}
+
+function getNewChannelByOldName(oldChannelName) {
+	return nameChangeNewChannelMap[oldChannelName];
+}
+
+function nameChangeMapHasByOldName(oldChannelName) {
+	return Object.keys(nameChangeNewChannelMap).includes(oldChannelName);
+}
+
 function shuffleArray(array) {
 	array.sort(function () {
 		return Math.random() - .5;
@@ -50,8 +65,11 @@ function cleanChannelName(channel) {
 
 function getItem(channel) {
 	channel = cleanChannelName(channel).toLowerCase();
-	const channelId = idMap[channel];
-	return cache[channelId];
+
+	const oldName = nameChangeOldChannelMap[channel];
+	if(oldName) return cache[idMap[oldName]];
+
+	return cache[idMap[channel]];
 }
 
 function setItemsObjects(items) {
@@ -239,6 +257,9 @@ async function getChannelError(channel_id, limit_amount) {
 module.exports = {
 	OUTPUT_TYPE,
 	init,
+	setNameChangeChannel,
+	getNewChannelByOldName,
+	nameChangeMapHasByOldName,
 	cleanChannelName,
 	setItemsObjects,
 	getChannelNames,
