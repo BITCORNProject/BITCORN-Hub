@@ -3,5 +3,8 @@
 	"mttvbotcorn",
 	"bitcornhub",
 	"stay_hydrated_bot",
-	"fakecornfakecorn"
+	"fakecornfakecorn",
+	"restreambot",
+	"streamelements",
+	"wizebot"
 ]
