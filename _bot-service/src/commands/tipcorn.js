@@ -29,6 +29,7 @@ module.exports = {
 		let success = false;
 		let message = 'Command failed';
 		let irc_target = event.irc_target;
+		let force_chat = false;
 
 		if (!settingsHelper.getProperty(event.channel, 'enableTransactions')) return settingsHelper.txDisabledOutput({ irc_target, configs: this.configs });
 
@@ -97,7 +98,10 @@ module.exports = {
 
 				const result = await databaseAPI.request(event.twitchId, body).tipcorn();
 
-				({ message, success } = commandHelper.handelTipResponse(result, event.twitchUsername, twitchUsername, amount));
+				({ message, success, force_chat } = commandHelper.handelTipResponse(result, event.twitchUsername, twitchUsername, amount));
+				if(force_chat) {
+					configs.irc_out = MESSAGE_TYPE.irc_chat;
+				}
 			}
 		}
 

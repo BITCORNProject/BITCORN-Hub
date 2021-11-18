@@ -117,14 +117,24 @@ module.exports = {
 				if (successItems.length > 0 && failedItems.length > 0) {
 					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
 					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
-					message = `${successMessage}${(failedItems.length > 0 ? failedMessage : '')}`;
+					if(configs.irc_out === MESSAGE_TYPE.irc_none) {
+						message = `FeelsRainMan${failedMessage}`;
+						configs.irc_out = MESSAGE_TYPE.irc_chat;
+					} else {
+						message = `${successMessage}${failedMessage}`;
+					}
 				} else if (successItems.length == 0 && failedItems.length > 0) {
 					if (results[0].from.balance < rain_amount) {
 						message = `DogePls SourPls ${event.twitchUsername} You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`;
 					} else {
 						const successMessage = `${event.twitchUsername} FeelsRainMan`;
 						const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
-						message = `${successMessage}${failedMessage}`;
+						if(configs.irc_out === MESSAGE_TYPE.irc_none) {
+							message = `FeelsRainMan${failedMessage}`;
+							configs.irc_out = MESSAGE_TYPE.irc_chat;
+						} else {
+							message = `${successMessage}${failedMessage}`;
+						}
 					}
 				} else if (successItems.length > 0 && failedItems.length == 0) {
 					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;

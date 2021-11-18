@@ -17,6 +17,7 @@ function exampleOutput(configs, irc_target) {
 function handelTipResponse(results, fromUsername, toUsername, amount) {
 	let success = false;
 	let message = 'Command failed';
+	let force_chat = false;
 
 	if (results.status && results.status === 500) {
 		// NOTE needs to be logged to the locally as an error
@@ -46,6 +47,7 @@ function handelTipResponse(results, fromUsername, toUsername, amount) {
 			if (results[0].from.islocked) {
 				message = `@${event.twitchUsername} your wallet is locked and cannot perform this tx`;
 			} else {
+				force_chat = true;
 				success = true;
 				message = `@${toUsername} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
 			}
@@ -53,7 +55,7 @@ function handelTipResponse(results, fromUsername, toUsername, amount) {
 	} else {
 		message = util.format('Hmmmmm Bitcorn', fromUsername, amount);
 	}
-	return { message, success };
+	return { message, success, force_chat };
 }
 
 module.exports = {

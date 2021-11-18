@@ -143,7 +143,7 @@ async function handleTipRewards(type, channel, username, extras) {
 			throw new Error(`Unexpected reward type: ${type}`);
 	}
 
-	const { success, message } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, extras.amount);
+	const { success, message, force_chat } = commandHelper.handelTipResponse(result, settingsHelper.cleanChannelName(channel), toUser.login, extras.amount);
 
 	if (settingsHelper.getIrcMessageTarget(channel, MESSAGE_TYPE.irc_chat, MESSAGE_TYPE) === MESSAGE_TYPE.irc_none) {
 		return settingsHelper.txMessageOutput(settingsHelper.OUTPUT_TYPE.tipEvent);
