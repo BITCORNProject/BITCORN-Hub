@@ -26,3 +26,11 @@ MR_LOH_: so cryptodan1 was synced too. so some error with the auto-payment then 
 Steini20021: !tts can we make a feature so let's say i'm a streamer and i DISABLE transactions... THE BOT would say that to chat
 
 Steini20021: so let's say a streamer DISABLES rain or something
+
+
+
+
+caLLow: add message for unsrgister users to register for channel points
+-----   +and if tipped and broadcaster has send chat messages off
+-----   +(works as is I didn't fix anything) if user unchecks the streamer the bot should leave the channel
+-----   check for angel_ware

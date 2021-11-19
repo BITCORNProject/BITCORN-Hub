@@ -3,7 +3,6 @@
 if (module === require.main) {
 
 	(async () => {
-
 		const settingsHelper = require('./settings-helper');
 		const tmi = require('./src/tmi');
 		const messenger = require('./src/messenger');
@@ -26,7 +25,7 @@ if (module === require.main) {
 		console.log({ result, timestamp: new Date().toLocaleTimeString() });
 
 		tmi.addMessageOutputListener(d => {
-			if(d && d.message !== 'Just a message') console.log(d);
+			if (d && d.message !== 'Just a message') console.log(d);
 		});
 		tmi.addRewardOutputListener(console.log);
 
@@ -35,16 +34,20 @@ if (module === require.main) {
 			const target = redeemResult.broadcaster_login;
 
 			const txMessages = settingsHelper.getProperty(target, 'txMessages');
-			if (!txMessages) return;
+			if (!txMessages && !data.unregistered) return;
 
-			const message = {
-				//'UNFULFILLED': `@${redeemResult.user_name} redemption unfulfilled`, // <-- should never be a case it is just the other state
-				'CANCELED': `@${redeemResult.user_name} your request was canceled`,
-				'FULFILLED': `mttvCorn ${redeemResult.broadcaster_name} Just slipped @${redeemResult.user_name} a BITCORN redemption with a FIRM handshake. mttvCorn`
-			}[data.status];
+			const message = data.unregistered ?
+				`@${redeemResult.user_name} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`
+				: {
+					//'UNFULFILLED': `@${redeemResult.user_name} redemption unfulfilled`, // <-- should never be a case it is just the other state
+					'CANCELED': `@${redeemResult.user_name} your request was canceled`,
+					'FULFILLED': `mttvCorn ${redeemResult.broadcaster_name} Just slipped @${redeemResult.user_name} a BITCORN redemption with a FIRM handshake. mttvCorn`,
+				}[data.status];
 
 			messenger.enqueueMessageByType(MESSAGE_TYPE.irc_chat, target, message);
 			messenger.sendQueuedMessagesByType(MESSAGE_TYPE.irc_chat);
+
+			return data;
 		});
 
 		const subInit = await subTicker.init();

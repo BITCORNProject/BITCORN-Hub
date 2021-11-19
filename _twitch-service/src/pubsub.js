@@ -165,6 +165,7 @@ function connect() {
 					redemption_id: null,
 					reward_id: null,
 					status: null,
+					unregistered: false
 				};
 
 				try {
@@ -210,13 +211,18 @@ function connect() {
 						throw new Error(`Channel Points Request Status: ${result.status} ${result.statusText}`);
 					}
 
-					if (result.length > 0 && !result[0].txId) {
+					if(result[0].to) {
+						if (result.length > 0 && !result[0].txId) {
+							redemptionUpdate.status = 'CANCELED';
+							throw new Error(`Channel Points Request User: ${result[0].to.twitchusername}`);
+						}
+					} else {
 						redemptionUpdate.status = 'CANCELED';
-						throw new Error(`Channel Points Request User: ${result[0].to.twitchusername}`);
+						redemptionUpdate.unregistered = true;
+						throw new Error(`Channel Points Request User Unregistered: ${redemption.user.user_name}`);
 					}
-
+					
 					redemptionUpdate.status = 'FULFILLED';
-
 					console.log({ result, timestamp: new Date().toLocaleTimeString() });
 
 				} catch (error) {
@@ -224,7 +230,7 @@ function connect() {
 				}
 
 				const redeemed = await twitchRequest.updateRedemptionStatus(redemptionUpdate)
-					.then(redeemResult => invokeRedemptionCallbacks({ status: redemptionUpdate.status, redeemResult }))
+					.then(redeemResult => invokeRedemptionCallbacks({ status: redemptionUpdate.status, unregistered: redemptionUpdate.unregistered, redeemResult }))
 					.catch(e => console.error({ e, timestamp: new Date().toLocaleTimeString() }));
 
 				console.log({ redeemed, timestamp: new Date().toLocaleTimeString() });
