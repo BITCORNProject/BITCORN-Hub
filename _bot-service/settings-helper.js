@@ -60,11 +60,17 @@ function shuffleArray(array) {
 }
 
 function cleanChannelName(channel) {
-	return channel.toLowerCase().replace(/#/g, '');
+	try {
+		return channel.toLowerCase().replace(/#/g, '');
+	} catch (error) {
+		return channel;
+	}
 }
 
 function getItem(channel) {
-	channel = cleanChannelName(channel).toLowerCase();
+	channel = cleanChannelName(channel);
+	if(!channel) return null;
+	channel = channel.toLowerCase();
 
 	const oldName = nameChangeOldChannelMap[channel];
 	if(oldName) return cache[idMap[oldName]];
@@ -75,10 +81,14 @@ function getItem(channel) {
 function setItemsObjects(items) {
 	for (const key in items) {
 		const item = items[key];
-		const channel = cleanChannelName(item.twitchUsername).toLowerCase();
-
-		cache[key] = item;
-		idMap[channel] = item.ircTarget;
+		try {
+			const channel = cleanChannelName(item.twitchUsername).toLowerCase();
+	
+			cache[key] = item;
+			idMap[channel] = item.ircTarget;
+		} catch (err) {
+			console.error(err, item);
+		}
 	}
 }
 
@@ -129,14 +139,14 @@ function getRainAlgorithmResult(target, items) {
  */
 function getProperty(target, name) {
 	const item = getItem(target);
-	if (!item) throw new Error(`Missing settinge channel target ${target}`);
+	if (!item) throw new Error(`Missing settings channel target ${target}`);
 
 	const trimmed = {};
 	for (const key in item) {
 		trimmed[key.trim()] = item[key];
 	}
 
-	if (!trimmed.hasOwnProperty(name)) throw new Error(`Missing settinge property ${name} for target ${target}`);
+	if (!trimmed.hasOwnProperty(name)) throw new Error(`Missing settings property ${name} for target ${target}`);
 
 	return trimmed[name];
 }

@@ -69,7 +69,7 @@ module.exports = {
 					success = true;
 					message = `You failed to withdraw: insufficient funds`;
 				} else {
-					message = `ERROR: ${results.status || results.code} - Hmmmmm Withdraw Fail ${event.twitchUsername} ${amount}`;
+					message = `ERROR: ${result.status || result.code} - Hmmmmm Withdraw Fail ${event.twitchUsername} ${amount}`;
 				}
 			}
 		}

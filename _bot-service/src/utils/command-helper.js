@@ -35,13 +35,13 @@ function handelTipResponse(results, fromUsername, toUsername, amount) {
 			if (resultUser.isbanned === false) {
 				if (results[0].txId) {
 					success = true;
-					message = util.format('mttvCorn @%s Just slipped @%s %d BITCORN with a FIRM handshake. mttvCorn', fromUsername, resultUser.twitchusername, amount);
+					message = util.format('mttvCorn @%s Just slipped @%s %d BITCORN with a FIRM handshake. mttvCorn', fromUsername, toUsername, amount);
 				} else {
 					success = true;
 					message = util.format(`%s You do not have enough in your balance to tip %d CORN`, fromUsername, amount);
 				}
 			} else {
-				message = `User BANNED: ${resultUser.twitchusername}`;
+				message = `User BANNED: ${toUsername}`;
 			}
 		} else {
 			if (results[0].from.islocked) {

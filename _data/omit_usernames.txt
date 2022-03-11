@@ -6,5 +6,6 @@
 	"fakecornfakecorn",
 	"restreambot",
 	"streamelements",
-	"wizebot"
+	"wizebot",
+	"qrubot"
 ]

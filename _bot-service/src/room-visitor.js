@@ -21,7 +21,7 @@ function _Queue() {
 	this.peek = function () { return this.items.peek(); }
 	this.enqueue = function (item) { return this.items.enqueue(item); }
 	this.dequeue = function () { return this.items.dequeue(); }
-	this.replace = function (index, value ) { this.items.items.splice(index, 1, value); }
+	this.replace = function (index, value) { this.items.items.splice(index, 1, value); }
 }
 
 const queuedItems = new _Queue();
@@ -65,6 +65,20 @@ async function joinChannelsFromQueue(tmi) {
 
 	const item = queuedItems.peek();
 
+	let channel_id = '';
+	try {
+		channel_id = settingsHelper.getProperty(item, 'ircTarget');
+	} catch (err) {
+		console.error(err);
+		
+		queuedItems.dequeue();
+
+		queuedItems.isBusy = false;
+
+		joinChannelsFromQueue(tmi);
+		return null;
+	}
+
 	let result = null;
 	try {
 		const joined = await joinChannels(tmi, item);
@@ -84,7 +98,6 @@ async function joinChannelsFromQueue(tmi) {
 			result = { message: error, item, maxRetries: true };
 		} else if (error === 'No response from Twitch.') {
 
-			const channel_id = settingsHelper.getProperty(item, 'ircTarget');
 			const { data } = await getIds([channel_id]);
 			// console.log(data);
 
@@ -139,7 +152,7 @@ module.exports = async (tmi) => {
 			// // ----- REMOVE TEST CODE
 
 			channels = channels.map(x => {
-				if(settingsHelper.nameChangeMapHasByOldName(x)) {
+				if (settingsHelper.nameChangeMapHasByOldName(x)) {
 					return settingsHelper.getNewChannelByOldName(x);
 				}
 				return x;
