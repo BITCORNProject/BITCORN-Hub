@@ -100,12 +100,16 @@ async function joinChannelsFromQueue(tmi) {
 
 			const { data } = await getIds([channel_id]);
 			// console.log(data);
-
-			settingsHelper.setNameChangeChannel(item, data[0].login);
-			queuedItems.replace(0, data[0].login);
-
-			result = { message: error, item, maxRetries: false };
-
+			if(data.length > 0) {
+				settingsHelper.setNameChangeChannel(item, data[0].login);
+				queuedItems.replace(0, data[0].login);
+				result = { message: error, item, maxRetries: false };
+			} else {
+				console.log(`Can not find ${item} from the Twitch API, join aborted`);
+				queuedItems.dequeue();
+				retrieCount = 0;
+				result = { message: error, item, maxRetries: false };
+			}
 		} else {
 			if (retrieCount === MAX_JOIN_RETRIES) {
 				queuedItems.dequeue();
