@@ -30,7 +30,7 @@ Steini20021: so let's say a streamer DISABLES rain or something
 
 
 
-caLLow: add message for unsrgister users to register for channel points
+caLLow: +add message for unsrgister users to register for channel points
 -----   +and if tipped and broadcaster has send chat messages off
 -----   +(works as is I didn't fix anything) if user unchecks the streamer the bot should leave the channel
 -----   check for angel_ware

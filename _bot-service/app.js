@@ -51,7 +51,7 @@ if (module === require.main) {
 		});
 
 		const subInit = await subTicker.init();
-		console.log({ success: subInit.success, timestamp: new Date().toLocaleTimeString() });
+		console.log({ message: 'sub ticker init', success: subInit.success, timestamp: new Date().toLocaleTimeString() });
 
 		const roomResult = await roomVisitor(tmi);
 		console.log(roomResult);
