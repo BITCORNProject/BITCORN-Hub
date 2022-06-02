@@ -139,7 +139,7 @@ function getRainAlgorithmResult(target, items) {
  */
 function getProperty(target, name) {
 	const item = getItem(target);
-	if (!item) throw new Error(`Missing settings channel target ${target}`);
+	if (!item) throw new Error(`Missing settings channel target ${target} for property ${name}`);
 
 	const trimmed = {};
 	for (const key in item) {
