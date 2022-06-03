@@ -8,6 +8,7 @@ const databaseAPI = require('../../../_api-shared/database-api');
 const cleanParams = require('../utils/clean-params');
 const MESSAGE_TYPE = require('../utils/message-type');
 const settingsHelper = require('../../settings-helper');
+const messageStrings = require('../utils/message-strings');
 
 module.exports = {
 	configs: {
@@ -43,7 +44,7 @@ module.exports = {
 			configs.irc_out = MESSAGE_TYPE.irc_chat;
 
 			success = true;
-			message = `@${event.twitchUsername} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID to use the ${this.configs.name} command and join in on the fun!`;
+			message = `To use the ${this.configs.name} command, ` + messageStrings.register([event.twitchUsername]);
 		} else {
 			success = true;
 			message = 'Command Completed';

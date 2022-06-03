@@ -11,6 +11,7 @@ const math = require('../utils/math');
 const settingsHelper = require('../../settings-helper');
 const activityTracker = require('../../src/activity-tracker');
 const commandHelper = require('../utils/command-helper');
+const messageStrings = require('../utils/message-strings');
 
 module.exports = {
 	configs: {
@@ -115,8 +116,8 @@ module.exports = {
 				}
 
 				if (successItems.length > 0 && failedItems.length > 0) {
-					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
-					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;					
+					const failedMessage = ` // ` + messageStrings.register(failedItems);
 					if(configs.irc_out === MESSAGE_TYPE.irc_none) {
 						message = `FeelsRainMan${failedMessage}`;
 						configs.irc_out = MESSAGE_TYPE.irc_chat;
@@ -128,7 +129,7 @@ module.exports = {
 						message = `DogePls SourPls ${event.twitchUsername} You failed to summon rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`;
 					} else {
 						const successMessage = `${event.twitchUsername} FeelsRainMan`;
-						const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+						const failedMessage = ` // ` + messageStrings.register(failedItems);
 						if(configs.irc_out === MESSAGE_TYPE.irc_none) {
 							message = `FeelsRainMan${failedMessage}`;
 							configs.irc_out = MESSAGE_TYPE.irc_chat;

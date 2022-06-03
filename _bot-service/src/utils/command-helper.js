@@ -3,6 +3,7 @@
 
 const util = require('util');
 const MESSAGE_TYPE = require('../utils/message-type');
+const messageStrings = require('../utils/message-strings');
 
 function exampleOutput(configs, irc_target) {
 	configs.irc_out = MESSAGE_TYPE.irc_chat;
@@ -49,7 +50,7 @@ function handelTipResponse(results, fromUsername, toUsername, amount) {
 			} else {
 				force_chat = true;
 				success = true;
-				message = `@${toUsername} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+				message = messageStrings.register([toUsername]);
 			}
 		}
 	} else {

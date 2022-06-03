@@ -10,6 +10,7 @@ if (module === require.main) {
 		const subTicker = require('./src/sub-ticker');
 		const roomVisitor = require('./src/room-visitor');
 		const MESSAGE_TYPE = require('./src/utils/message-type');
+		const messageStrings = require('./src/utils/message-strings');
 
 		settingsHelper.init();
 
@@ -37,7 +38,7 @@ if (module === require.main) {
 			if (!txMessages && !data.unregistered) return;
 
 			const message = data.unregistered ?
-				`@${redeemResult.user_name} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`
+				messageStrings.register([redeemResult.user_name])
 				: {
 					//'UNFULFILLED': `@${redeemResult.user_name} redemption unfulfilled`, // <-- should never be a case it is just the other state
 					'CANCELED': `@${redeemResult.user_name} your request was canceled`,

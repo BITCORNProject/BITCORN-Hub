@@ -115,15 +115,15 @@ module.exports = {
 				}
 
 				if (successItems.length > 0 && failedItems.length > 0) {
-					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;
-					const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+					const successMessage = `FeelsRainMan ${successItems.join(', ')}, you all just received a glorious CORN shower of ${amount} BITCORN rained on you by ${event.twitchUsername}! FeelsRainMan`;	
+					const failedMessage = ` // ` + messageStrings.register(failedItems);
 					message = `${successMessage}${(failedItems.length > 0 ? failedMessage : '')}`;
 				} else if (successItems.length == 0 && failedItems.length > 0) {
 					if (results[0].from.balance < rain_amount) {
 						message = `DogePls SourPls ${event.twitchUsername} You failed to summon battlegrounds rain, with your weak ass rain dance. Check your silo, it is low on CORN! DogePls SourPls`;
 					} else {
 						const successMessage = `${event.twitchUsername} FeelsRainMan`;
-						const failedMessage = ` // ${failedItems.join(', ')} head on over to https://bitcornfarms.com/ to register a BITCORN ADDRESS to your TWITCHID and join in on the fun!`;
+						const failedMessage = ` // ` + messageStrings.register(failedItems);
 						message = `${successMessage}${failedMessage}`;
 					}
 				} else if (successItems.length > 0 && failedItems.length == 0) {
